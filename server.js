@@ -1,10 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // ใช้ CORS และ JSON middleware
 app.use(cors());
@@ -19,7 +20,7 @@ app.get(['/', '/index'], (req, res) => {
 });
 
 // MongoDB URI ของคุณ
-const uri = 'mongodb+srv://espuser:esp12345@cluster0.nbmml.mongodb.net/?retryWrites=true&w=majority';
+const uri = process.env.MONGO_URI;
 const client = new MongoClient(uri, {
   tls: true,
   tlsAllowInvalidCertificates: true,
