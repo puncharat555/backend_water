@@ -20,11 +20,11 @@ app.get(['/', '/index'], (req, res) => {
 });
 
 // MongoDB URI ของคุณ
-const uri = process.env.MONGO_URI;
 const client = new MongoClient(uri, {
   tls: true,
   tlsAllowInvalidCertificates: true,
 });
+
 
 async function connectDB() {
   try {
