@@ -1,0 +1,97 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  text-align: center;
+  background: #f9f9f9;
+}
+
+h1 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+#waterLevel {
+  font-size: 48px;
+  color: #007BFF;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+#rssiLevel {
+  font-size: 24px;
+  color: #28a745; /* สีเขียวแสดงว่าเชื่อมต่อดี */
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 8px 16px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.table-wrapper {
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: fixed;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+th {
+  background-color: #f4f4f4;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+th:nth-child(1), td:nth-child(1) {
+  width: 150px;
+}
+
+th:nth-child(2), td:nth-child(2) {
+  width: 180px;
+}
+
+th:nth-child(3), td:nth-child(3) {
+  width: 100px;
+  color: #000000;
+  font-weight: bold;
+}
+
+th:nth-child(4), td:nth-child(4) {
+  width: 200px;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}

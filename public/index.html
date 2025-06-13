@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Water Level Monitoring</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Water Level Monitoring</h1>
+
+  <h2 id="waterLevel">ระดับน้ำ: - cm</h2>
+  <h4>วัดจากความลึกของแหล่งน้ำ: 120 cm</h4>
+  <h3 id="rssiLevel">RSSI: - dBm</h3>
+
+  <div class="table-wrapper">
+    <table id="distanceTable">
+      <thead>
+        <tr>
+          <th>ระยะห่างจากผิวน้ำ (cm)</th>
+          <th>ระดับน้ำ (cm)</th>
+          <th>RSSI (dBm)</th>
+          <th>เวลาวัด</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const fixedDepth = 120; // ความลึกของแหล่งน้ำ 
+
+    async function loadData() {
+      try {
+        const res = await fetch('http://localhost:3000/distance');
+        const data = await res.json();
+
+        const tbody = document.querySelector('#distanceTable tbody');
+        tbody.innerHTML = '';
+
+        const latest = data.find(d => d.distance > 0);
+        const distance = latest ? latest.distance : 0;
+        const level = (fixedDepth - distance).toFixed(1);
+
+        document.getElementById('waterLevel').innerText =
+          `ระดับน้ำ: ${distance > 0 ? level + " cm" : "ไม่สามารถวัดได้"}`;
+
+        document.getElementById('rssiLevel').innerText =
+          `RSSI: ${latest && latest.rssi ? latest.rssi + " dBm" : "-"}`;
+
+        data.forEach(item => {
+          const level = (fixedDepth - item.distance).toFixed(1);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.distance}</td>
+            <td>${item.distance > 0 ? level : '-'}</td>
+            <td>${item.rssi ?? '-'}</td>
+            <td>${new Date(item.timestamp).toLocaleString()}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (error) {
+        document.getElementById('waterLevel').innerText = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+        document.getElementById('rssiLevel').innerText = '';
+        console.error('Load data error:', error);
+      }
+    }
+
+    loadData();
+    setInterval(loadData, 5000);
+  </script>
+</body>
+</html>
