@@ -31,7 +31,7 @@
 
     async function loadData() {
       try {
-        const res = await fetch('http://localhost:3000/distance');
+        const res = await fetch('https://backend-water-rf88.onrender.com/distance');
         const data = await res.json();
 
         const tbody = document.querySelector('#distanceTable tbody');
