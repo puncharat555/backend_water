@@ -4,47 +4,71 @@ const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const path = require('path');
 
-const db = client.db('distance');
-const collection = db.collection('distances');
-
 const app = express();
 const port = process.env.PORT || 3000;
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port}`);
-});
-
-
 const uri = process.env.MONGO_URI;
 
-// ใช้ CORS และ JSON middleware
-app.use(cors());
-app.use(express.json());
-
-// Serve static files จากโฟลเดอร์ public
-app.use(express.static(path.join(__dirname, '/public')));
-
-// Route สำหรับหน้า index (root) และ /index
-app.get(['/', '/index'], (req, res) => {
-  res.sendFile(path.join(__dirname, '/public', 'index.html'));
-});
-
-// MongoDB URI ของคุณ
 const client = new MongoClient(uri, {
   tls: true,
   tlsAllowInvalidCertificates: true,
 });
 
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '/public')));
 
-async function connectDB() {
+// Routes
+app.get(['/', '/index'], (req, res) => {
+  res.sendFile(path.join(__dirname, '/public', 'index.html'));
+});
+
+app.post('/distance', async (req, res) => {
+  const { distance, rssi } = req.body;
+
+  if (typeof distance !== 'number' || typeof rssi !== 'number') {
+    return res.status(400).json({ error: 'Distance and RSSI must be numbers' });
+  }
+
+  try {
+    const db = client.db('esp32_data');
+    const collection = db.collection('distances');
+    await collection.insertOne({ distance, rssi, timestamp: new Date() });
+
+    res.json({ message: '✅ Distance and RSSI saved', distance, rssi });
+  } catch (err) {
+    console.error('❌ Error saving data:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/distance', async (req, res) => {
+  try {
+    const db = client.db('esp32_data');
+    const collection = db.collection('distances');
+    const distances = await collection.find().sort({ timestamp: -1 }).limit(100).toArray();
+
+    res.json(distances);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+async function startServer() {
   try {
     await client.connect();
     console.log('✅ Connected to MongoDB');
+
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`🚀 ESP32 Distance API is running on port ${port}`);
+    });
   } catch (err) {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('❌ Failed to connect to MongoDB:', err);
   }
 }
-connectDB();
+
+startServer();
+
 
 // Endpoint POST: รับค่าจาก ESP32
 app.post('/distance', async (req, res) => {
