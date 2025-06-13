@@ -4,6 +4,9 @@ const { MongoClient } = require('mongodb');
 const cors = require('cors');
 const path = require('path');
 
+const db = client.db('distance');
+const collection = db.collection('distances');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
