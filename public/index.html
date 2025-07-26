@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8" />
   <title>Water Level Monitoring</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Water Level Monitoring</h1>
+  <h1 class="title">Water Level Monitoring</h1>
 
   <div class="container">
     <!-- Node 1 -->
     <div class="node-box">
-      <h2>Node 1</h2>
+      <h2>📡 Node 1</h2>
       <p id="waterLevelNode1">ระดับน้ำ: -</p>
       <p id="rssiNode1">RSSI: -</p>
       <p id="voltageNode1">แรงดัน: -</p>
@@ -21,7 +21,7 @@
 
     <!-- Node 2 -->
     <div class="node-box">
-      <h2>Node 2</h2>
+      <h2>🔁 Node 2</h2>
       <p id="rssiNode2">RSSI: -</p>
       <p id="voltageNode2">แรงดัน: -</p>
       <p id="currentNode2">กระแส: -</p>
@@ -29,45 +29,99 @@
     </div>
   </div>
 
+  <div class="table-wrapper">
+    <h3>ประวัติข้อมูล</h3>
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>ระดับน้ำ (cm)</th>
+          <th>RSSI Node1</th>
+          <th>RSSI Node2</th>
+          <th>V Node1</th>
+          <th>I Node1</th>
+          <th>V Node2</th>
+          <th>I Node2</th>
+          <th>เวลาวัด Node1</th>
+          <th>เวลาวัด Node2</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
   <script>
-    const fixedDepth = 120;
+  const fixedDepth = 120;
 
-    async function loadData() {
-      try {
-        const res = await fetch('https://backend-water-rf88.onrender.com/distance');
-        const data = await res.json();
+  async function loadData() {
+    try {
+      const res = await fetch('https://backend-water-rf88.onrender.com/distance');
+      const data = await res.json();
 
-        // Node 1: ต้องมี distance > 0
-        const latestNode1 = [...data].reverse().find(item => item.distance > 0);
-        const latestNode2 = [...data].reverse().find(item =>
-          item.rssi_node2 !== undefined || item.v_node2 !== undefined || item.i_node2 !== undefined
-        );
+      console.log('Data from API:', data);
 
-        // Node 1 display
-        if (latestNode1) {
-          const level = (fixedDepth - latestNode1.distance).toFixed(1);
-          document.getElementById('waterLevelNode1').innerText = `ระดับน้ำ: ${level} cm`;
-          document.getElementById('rssiNode1').innerText = `RSSI: ${latestNode1.rssi_node1 ?? '-'}`;
-          document.getElementById('voltageNode1').innerText = `แรงดัน: ${latestNode1.v_node1 ?? '-'}`;
-          document.getElementById('currentNode1').innerText = `กระแส: ${latestNode1.i_node1 ?? '-'}`;
-          document.getElementById('timeNode1').innerText = `เวลาวัด: ${latestNode1.time_node1 ?? '-'}`;
-        }
+      // อัปเดตตาราง
+      const tbody = document.querySelector('#dataTable tbody');
+      tbody.innerHTML = '';
 
-        // Node 2 display
-        if (latestNode2) {
-          document.getElementById('rssiNode2').innerText = `RSSI: ${latestNode2.rssi_node2 ?? '-'}`;
-          document.getElementById('voltageNode2').innerText = `แรงดัน: ${latestNode2.v_node2 ?? '-'}`;
-          document.getElementById('currentNode2').innerText = `กระแส: ${latestNode2.i_node2 ?? '-'}`;
-          document.getElementById('timeNode2').innerText = `เวลาวัด: ${latestNode2.time_node2 ?? '-'}`;
-        }
+      data.forEach(item => {
+        const level = (fixedDepth - item.distance).toFixed(1);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.distance > 0 ? level : '-'}</td>
+          <td>${item.rssi_node1 ?? '-'}</td>
+          <td>${item.rssi_node2 ?? '-'}</td>
+          <td>${item.v_node1 ?? '-'}</td>
+          <td>${item.i_node1 ?? '-'}</td>
+          <td>${item.v_node2 ?? '-'}</td>
+          <td>${item.i_node2 ?? '-'}</td>
+          <td>${item.time_node1 ?? '-'}</td>
+          <td>${item.time_node2 ?? '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
 
-      } catch (error) {
-        console.error('Load data error:', error);
+      // หา latest ของแต่ละ Node แยกกัน
+      const latestNode1 = [...data].reverse().find(item => item.distance > 0);
+      const latestNode2 = [...data].reverse().find(item =>
+        item.rssi_node2 !== undefined || item.v_node2 !== undefined || item.i_node2 !== undefined
+      );
+
+      console.log('Latest Node1:', latestNode1);
+      console.log('Latest Node2:', latestNode2);
+
+      // อัพเดตกล่อง Node 1
+      if (latestNode1) {
+        const level = (fixedDepth - latestNode1.distance).toFixed(1);
+        document.getElementById('waterLevelNode1').innerText = `ระดับน้ำ: ${level} cm`;
+        document.getElementById('rssiNode1').innerText = `RSSI: ${latestNode1.rssi_node1 ?? '-'}`;
+        document.getElementById('voltageNode1').innerText = `แรงดัน: ${latestNode1.v_node1 ?? '-'}`;
+        document.getElementById('currentNode1').innerText = `กระแส: ${latestNode1.i_node1 ?? '-'}`;
+        document.getElementById('timeNode1').innerText = `เวลาวัด: ${latestNode1.time_node1 ?? '-'}`;
       }
-    }
 
-    loadData();
-    setInterval(loadData, 5000);
-  </script>
-</body>
-</html>
+      // อัพเดตกล่อง Node 2
+      if (latestNode2) {
+        document.getElementById('rssiNode2').innerText = `RSSI: ${latestNode2.rssi_node2 ?? '-'}`;
+        document.getElementById('voltageNode2').innerText = `แรงดัน: ${latestNode2.v_node2 ?? '-'}`;
+        document.getElementById('currentNode2').innerText = `กระแส: ${latestNode2.i_node2 ?? '-'}`;
+        document.getElementById('timeNode2').innerText = `เวลาวัด: ${latestNode2.time_node2 ?? '-'}`;
+      }
+
+    } catch (error) {
+      console.error('Load data error:', error);
+      document.getElementById('waterLevelNode1').innerText = 'โหลดข้อมูลล้มเหลว';
+      document.getElementById('rssiNode1').innerText = '-';
+      document.getElementById('voltageNode1').innerText = '-';
+      document.getElementById('currentNode1').innerText = '-';
+      document.getElementById('timeNode1').innerText = '-';
+
+      document.getElementById('rssiNode2').innerText = '-';
+      document.getElementById('voltageNode2').innerText = '-';
+      document.getElementById('currentNode2').innerText = '-';
+      document.getElementById('timeNode2').innerText = '-';
+    }
+  }
+
+  loadData();
+  setInterval(loadData, 5000);
+</script>
