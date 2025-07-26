@@ -1,68 +1,69 @@
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f5f7fa;
-  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
   padding: 20px;
+  margin: 0;
   color: #333;
 }
 
 .title {
   text-align: center;
   color: #1b1944;
-  margin-bottom: 40px;
 }
 
 .container {
   display: flex;
-  justify-content: space-between;
-  gap: 20px;
+  justify-content: space-around;
   flex-wrap: wrap;
+  margin-top: 30px;
 }
 
 .node-box {
-  background-color: #ffffff;
-  border-radius: 12px;
+  background: white;
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  flex: 1 1 45%;
-  min-width: 300px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  margin: 10px;
 }
 
 .node-box h2 {
-  margin-bottom: 16px;
   color: #1b1944;
+  margin-bottom: 15px;
 }
 
 .node-box p {
-  margin: 6px 0;
   font-size: 16px;
+  margin: 6px 0;
 }
 
 .table-wrapper {
   margin-top: 40px;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  overflow-x: auto;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  min-width: 700px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 th, td {
-  padding: 10px 12px;
   border: 1px solid #ddd;
+  padding: 10px;
   text-align: center;
+  font-size: 14px;
 }
 
 th {
   background-color: #1b1944;
-  color: #fff;
+  color: white;
+  font-weight: normal;
 }
 
-tr:nth-child(even) {
-  background-color: #f0f4f8;
+h3 {
+  margin-bottom: 10px;
+  color: #1b1944;
 }

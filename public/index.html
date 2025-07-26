@@ -50,78 +50,96 @@
   </div>
 
   <script>
-  const fixedDepth = 120;
+    const fixedDepth = 120;
 
-  async function loadData() {
-    try {
-      const res = await fetch('https://backend-water-rf88.onrender.com/distance');
-      const data = await res.json();
+    async function loadData() {
+      try {
+        const res = await fetch('https://backend-water-rf88.onrender.com/distance');
+        const data = await res.json();
 
-      console.log('Data from API:', data);
+        console.log('Data from API:', data);
 
-      // อัปเดตตาราง
-      const tbody = document.querySelector('#dataTable tbody');
-      tbody.innerHTML = '';
+        // อัพเดตตาราง
+        const tbody = document.querySelector('#dataTable tbody');
+        tbody.innerHTML = '';
+        data.forEach(item => {
+          const level = (fixedDepth - item.distance).toFixed(1);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.distance > 0 ? level : '-'}</td>
+            <td>${item.rssi_node1 ?? '-'}</td>
+            <td>${item.rssi_node2 ?? '-'}</td>
+            <td>${item.v_node1 ?? '-'}</td>
+            <td>${item.i_node1 ?? '-'}</td>
+            <td>${item.v_node2 ?? '-'}</td>
+            <td>${item.i_node2 ?? '-'}</td>
+            <td>${item.time_node1 ?? '-'}</td>
+            <td>${item.time_node2 ?? '-'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
 
-      data.forEach(item => {
-        const level = (fixedDepth - item.distance).toFixed(1);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${item.distance > 0 ? level : '-'}</td>
-          <td>${item.rssi_node1 ?? '-'}</td>
-          <td>${item.rssi_node2 ?? '-'}</td>
-          <td>${item.v_node1 ?? '-'}</td>
-          <td>${item.i_node1 ?? '-'}</td>
-          <td>${item.v_node2 ?? '-'}</td>
-          <td>${item.i_node2 ?? '-'}</td>
-          <td>${item.time_node1 ?? '-'}</td>
-          <td>${item.time_node2 ?? '-'}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+        // หา latest ของแต่ละ Node แยกกัน
+        const latestNode1 = [...data].reverse().find(item => item.distance > 0);
+        const latestNode2 = [...data].reverse().find(item =>
+          item.rssi_node2 !== undefined || item.v_node2 !== undefined || item.i_node2 !== undefined
+        );
 
-      // หา latest ของแต่ละ Node แยกกัน
-      const latestNode1 = [...data].reverse().find(item => item.distance > 0);
-      const latestNode2 = [...data].reverse().find(item =>
-        item.rssi_node2 !== undefined || item.v_node2 !== undefined || item.i_node2 !== undefined
-      );
+        console.log('Latest Node1:', latestNode1);
+        console.log('Latest Node2:', latestNode2);
 
-      console.log('Latest Node1:', latestNode1);
-      console.log('Latest Node2:', latestNode2);
+        // อัพเดตกล่อง Node 1
+        if (latestNode1) {
+          const level = (fixedDepth - latestNode1.distance).toFixed(1);
+          const waterLevelEl = document.getElementById('waterLevelNode1');
+          if (waterLevelEl) waterLevelEl.innerText = `ระดับน้ำ: ${level} cm`;
 
-      // อัพเดตกล่อง Node 1
-      if (latestNode1) {
-        const level = (fixedDepth - latestNode1.distance).toFixed(1);
-        document.getElementById('waterLevelNode1').innerText = `ระดับน้ำ: ${level} cm`;
-        document.getElementById('rssiNode1').innerText = `RSSI: ${latestNode1.rssi_node1 ?? '-'}`;
-        document.getElementById('voltageNode1').innerText = `แรงดัน: ${latestNode1.v_node1 ?? '-'}`;
-        document.getElementById('currentNode1').innerText = `กระแส: ${latestNode1.i_node1 ?? '-'}`;
-        document.getElementById('timeNode1').innerText = `เวลาวัด: ${latestNode1.time_node1 ?? '-'}`;
+          const rssiNode1El = document.getElementById('rssiNode1');
+          if (rssiNode1El) rssiNode1El.innerText = `RSSI: ${latestNode1.rssi_node1 ?? '-'}`;
+
+          const voltageNode1El = document.getElementById('voltageNode1');
+          if (voltageNode1El) voltageNode1El.innerText = `แรงดัน: ${latestNode1.v_node1 ?? '-'}`;
+
+          const currentNode1El = document.getElementById('currentNode1');
+          if (currentNode1El) currentNode1El.innerText = `กระแส: ${latestNode1.i_node1 ?? '-'}`;
+
+          const timeNode1El = document.getElementById('timeNode1');
+          if (timeNode1El) timeNode1El.innerText = `เวลาวัด: ${latestNode1.time_node1 ?? '-'}`;
+        }
+
+        // อัพเดตกล่อง Node 2
+        if (latestNode2) {
+          const rssiNode2El = document.getElementById('rssiNode2');
+          if (rssiNode2El) rssiNode2El.innerText = `RSSI: ${latestNode2.rssi_node2 ?? '-'}`;
+
+          const voltageNode2El = document.getElementById('voltageNode2');
+          if (voltageNode2El) voltageNode2El.innerText = `แรงดัน: ${latestNode2.v_node2 ?? '-'}`;
+
+          const currentNode2El = document.getElementById('currentNode2');
+          if (currentNode2El) currentNode2El.innerText = `กระแส: ${latestNode2.i_node2 ?? '-'}`;
+
+          const timeNode2El = document.getElementById('timeNode2');
+          if (timeNode2El) timeNode2El.innerText = `เวลาวัด: ${latestNode2.time_node2 ?? '-'}`;
+        }
+
+      } catch (error) {
+        console.error('Load data error:', error);
+
+        // ถ้า error ล้างข้อมูลในกล่อง
+        ['waterLevelNode1', 'rssiNode1', 'voltageNode1', 'currentNode1', 'timeNode1',
+         'rssiNode2', 'voltageNode2', 'currentNode2', 'timeNode2'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerText = '-';
+        });
+
+        // แจ้ง error ที่ Node 1 กล่องแรก
+        const waterLevelEl = document.getElementById('waterLevelNode1');
+        if (waterLevelEl) waterLevelEl.innerText = 'โหลดข้อมูลล้มเหลว';
       }
-
-      // อัพเดตกล่อง Node 2
-      if (latestNode2) {
-        document.getElementById('rssiNode2').innerText = `RSSI: ${latestNode2.rssi_node2 ?? '-'}`;
-        document.getElementById('voltageNode2').innerText = `แรงดัน: ${latestNode2.v_node2 ?? '-'}`;
-        document.getElementById('currentNode2').innerText = `กระแส: ${latestNode2.i_node2 ?? '-'}`;
-        document.getElementById('timeNode2').innerText = `เวลาวัด: ${latestNode2.time_node2 ?? '-'}`;
-      }
-
-    } catch (error) {
-      console.error('Load data error:', error);
-      document.getElementById('waterLevelNode1').innerText = 'โหลดข้อมูลล้มเหลว';
-      document.getElementById('rssiNode1').innerText = '-';
-      document.getElementById('voltageNode1').innerText = '-';
-      document.getElementById('currentNode1').innerText = '-';
-      document.getElementById('timeNode1').innerText = '-';
-
-      document.getElementById('rssiNode2').innerText = '-';
-      document.getElementById('voltageNode2').innerText = '-';
-      document.getElementById('currentNode2').innerText = '-';
-      document.getElementById('timeNode2').innerText = '-';
     }
-  }
 
-  loadData();
-  setInterval(loadData, 5000);
-</script>
+    loadData();
+    setInterval(loadData, 5000);
+  </script>
+</body>
+</html>
