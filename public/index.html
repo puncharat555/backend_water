@@ -4,27 +4,56 @@
   <meta charset="UTF-8" />
   <title>Water Level Monitoring</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .table-wrapper {
+      margin-bottom: 2rem;
+    }
+  </style>
 </head>
 <body>
   <h1>Water Level Monitoring</h1>
 
-  <h2 id="waterLevel">ระดับน้ำ: - cm</h2>
-  <h4>วัดจากความลึกของแหล่งน้ำ: 120 cm</h4>
-  <h3 id="rssiLevel">RSSI: - dBm</h3>
+  <!-- Node 1 -->
+  <section>
+    <h2>Node 1</h2>
+    <h3 id="waterLevelNode1">ระดับน้ำ: - cm</h3>
+    <h4>วัดจากความลึกของแหล่งน้ำ: 120 cm</h4>
+    <h3 id="rssiLevelNode1">RSSI: - dBm</h3>
+    <div class="table-wrapper">
+      <table id="distanceTableNode1">
+        <thead>
+          <tr>
+            <th>ระยะห่างจากผิวน้ำ (cm)</th>
+            <th>ระดับน้ำ (cm)</th>
+            <th>RSSI (dBm)</th>
+            <th>เวลาวัด</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
 
-  <div class="table-wrapper">
-    <table id="distanceTable">
-      <thead>
-        <tr>
-          <th>ระยะห่างจากผิวน้ำ (cm)</th>
-          <th>ระดับน้ำ (cm)</th>
-          <th>RSSI (dBm)</th>
-          <th>เวลาวัด</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <!-- Node 2 -->
+  <section>
+    <h2>Node 2</h2>
+    <h3 id="waterLevelNode2">ระดับน้ำ: - cm</h3>
+    <h4>วัดจากความลึกของแหล่งน้ำ: 120 cm</h4>
+    <h3 id="rssiLevelNode2">RSSI: - dBm</h3>
+    <div class="table-wrapper">
+      <table id="distanceTableNode2">
+        <thead>
+          <tr>
+            <th>ระยะห่างจากผิวน้ำ (cm)</th>
+            <th>ระดับน้ำ (cm)</th>
+            <th>RSSI (dBm)</th>
+            <th>เวลาวัด</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
 
   <script>
     const fixedDepth = 120; // ความลึกของแหล่งน้ำ 
@@ -34,33 +63,48 @@
         const res = await fetch('https://backend-water-rf88.onrender.com/distance');
         const data = await res.json();
 
-        const tbody = document.querySelector('#distanceTable tbody');
-        tbody.innerHTML = '';
+        // แยกข้อมูล Node 1 และ Node 2
+        const dataNode1 = data.filter(d => d.node === 1);
+        const dataNode2 = data.filter(d => d.node === 2);
 
-        const latest = data.find(d => d.distance > 0);
-        const distance = latest ? latest.distance : 0;
-        const level = (fixedDepth - distance).toFixed(1);
+        // ฟังก์ชันช่วยแสดงข้อมูลในแต่ละ node
+        function updateNodeUI(nodeNumber, dataArray) {
+          const tbody = document.querySelector(`#distanceTableNode${nodeNumber} tbody`);
+          tbody.innerHTML = '';
 
-        document.getElementById('waterLevel').innerText =
-          `ระดับน้ำ: ${distance > 0 ? level + " cm" : "ไม่สามารถวัดได้"}`;
+          // เลือกข้อมูลล่าสุดที่มี distance > 0
+          const latest = dataArray.find(d => d.distance > 0);
+          const distance = latest ? latest.distance : 0;
+          const level = (fixedDepth - distance).toFixed(1);
 
-        document.getElementById('rssiLevel').innerText =
-          `RSSI: ${latest && latest.rssi ? latest.rssi + " dBm" : "-"}`;
+          document.getElementById(`waterLevelNode${nodeNumber}`).innerText =
+            `ระดับน้ำ: ${distance > 0 ? level + " cm" : "ไม่สามารถวัดได้"}`;
 
-        data.forEach(item => {
-          const level = (fixedDepth - item.distance).toFixed(1);
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${item.distance}</td>
-            <td>${item.distance > 0 ? level : '-'}</td>
-            <td>${item.rssi ?? '-'}</td>
-            <td>${new Date(item.timestamp).toLocaleString()}</td>
-          `;
-          tbody.appendChild(tr);
-        });
+          document.getElementById(`rssiLevelNode${nodeNumber}`).innerText =
+            `RSSI: ${latest && latest.rssi ? latest.rssi + " dBm" : "-"}`;
+
+          dataArray.forEach(item => {
+            const level = (fixedDepth - item.distance).toFixed(1);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${item.distance}</td>
+              <td>${item.distance > 0 ? level : '-'}</td>
+              <td>${item.rssi ?? '-'}</td>
+              <td>${new Date(item.timestamp).toLocaleString()}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        updateNodeUI(1, dataNode1);
+        updateNodeUI(2, dataNode2);
+
       } catch (error) {
-        document.getElementById('waterLevel').innerText = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
-        document.getElementById('rssiLevel').innerText = '';
+        // แสดง error สำหรับทั้งสอง node
+        document.getElementById('waterLevelNode1').innerText = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+        document.getElementById('rssiLevelNode1').innerText = '';
+        document.getElementById('waterLevelNode2').innerText = 'เกิดข้อผิดพลาดในการโหลดข้อมูล';
+        document.getElementById('rssiLevelNode2').innerText = '';
         console.error('Load data error:', error);
       }
     }
