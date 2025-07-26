@@ -5,48 +5,77 @@
   <title>Water Level Monitoring</title>
   <link rel="stylesheet" href="style.css" />
   <style>
+    .container {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      gap: 40px;
+      margin: 20px;
+    }
+    .node-box {
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 10px;
+      width: 45%;
+    }
+    .node-box h2, .node-box h3, .node-box p {
+      margin: 8px 0;
+    }
     .table-wrapper {
-      margin-bottom: 2rem;
+      margin-top: 40px;
+      padding: 0 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
     }
   </style>
 </head>
 <body>
-  <h1>Water Level Monitoring</h1>
+  <h1 style="text-align: center;">Water Level Monitoring</h1>
 
-  <!-- Node 1 -->
-  <section>
-    <h2>Node 1</h2>
-    <h3 id="waterLevelNode1">ระดับน้ำ: - cm</h3>
-    <h3 id="rssiNode1">RSSI: - dBm</h3>
-    <h4 id="voltageNode1">แรงดัน: - V</h4>
-    <h4 id="currentNode1">กระแส: - mA</h4>
-    <h4 id="timeNode1">เวลาวัด: -</h4>
-  </section>
+  <div class="container">
+    <!-- Node 1 -->
+    <div class="node-box">
+      <h2>📡 Node 1</h2>
+      <p id="waterLevelNode1">ระดับน้ำ: -</p>
+      <p id="rssiNode1">RSSI: -</p>
+      <p id="voltageNode1">แรงดัน: -</p>
+      <p id="currentNode1">กระแส: -</p>
+      <p id="timeNode1">เวลาวัด: -</p>
+    </div>
 
-  <!-- Node 2 -->
-  <section>
-    <h2>Node 2</h2>
-    <h3 id="rssiNode2">RSSI: - dBm</h3>
-    <h4 id="voltageNode2">แรงดัน: - V</h4>
-    <h4 id="currentNode2">กระแส: - mA</h4>
-    <h4 id="timeNode2">เวลาวัด: -</h4>
-  </section>
+    <!-- Node 2 -->
+    <div class="node-box">
+      <h2>🔁 Node 2</h2>
+      <p id="rssiNode2">RSSI: -</p>
+      <p id="voltageNode2">แรงดัน: -</p>
+      <p id="currentNode2">กระแส: -</p>
+      <p id="timeNode2">เวลาวัด: -</p>
+    </div>
+  </div>
 
-  <!-- ตารางรวม -->
   <div class="table-wrapper">
-    <h2>ข้อมูลทั้งหมด</h2>
     <table id="dataTable">
       <thead>
         <tr>
           <th>ระดับน้ำ (cm)</th>
-          <th>RSSI Node 1</th>
-          <th>RSSI Node 2</th>
-          <th>V1</th>
-          <th>I1</th>
-          <th>V2</th>
-          <th>I2</th>
-          <th>Time Node 1</th>
-          <th>Time Node 2</th>
+          <th>RSSI Node1</th>
+          <th>RSSI Node2</th>
+          <th>V Node1</th>
+          <th>I Node1</th>
+          <th>V Node2</th>
+          <th>I Node2</th>
+          <th>เวลาวัด Node1</th>
+          <th>เวลาวัด Node2</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -61,15 +90,17 @@
         const res = await fetch('https://backend-water-rf88.onrender.com/distance');
         const data = await res.json();
 
-        const latest = data[data.length - 1]; // แถวล่าสุด
         const tbody = document.querySelector('#dataTable tbody');
         tbody.innerHTML = '';
+
+        // หา record ล่าสุดที่มีข้อมูลครบ
+        const latest = [...data].reverse().find(item => item.distance > 0);
 
         data.forEach(item => {
           const level = (fixedDepth - item.distance).toFixed(1);
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${level}</td>
+            <td>${item.distance > 0 ? level : '-'}</td>
             <td>${item.rssi_node1 ?? '-'}</td>
             <td>${item.rssi_node2 ?? '-'}</td>
             <td>${item.v_node1 ?? '-'}</td>
@@ -87,23 +118,21 @@
 
           // Node 1
           document.getElementById('waterLevelNode1').innerText = `ระดับน้ำ: ${level} cm`;
-          document.getElementById('rssiNode1').innerText = `RSSI: ${latest.rssi_node1 ?? '-'} dBm`;
-          document.getElementById('voltageNode1').innerText = `แรงดัน: ${latest.v_node1 ?? '-'} V`;
-          document.getElementById('currentNode1').innerText = `กระแส: ${latest.i_node1 ?? '-'} mA`;
+          document.getElementById('rssiNode1').innerText = `RSSI: ${latest.rssi_node1 ?? '-'}`;
+          document.getElementById('voltageNode1').innerText = `แรงดัน: ${latest.v_node1 ?? '-'}`;
+          document.getElementById('currentNode1').innerText = `กระแส: ${latest.i_node1 ?? '-'}`;
           document.getElementById('timeNode1').innerText = `เวลาวัด: ${latest.time_node1 ?? '-'}`;
 
           // Node 2 (ไม่มีระดับน้ำ)
-          document.getElementById('rssiNode2').innerText = `RSSI: ${latest.rssi_node2 ?? '-'} dBm`;
-          document.getElementById('voltageNode2').innerText = `แรงดัน: ${latest.v_node2 ?? '-'} V`;
-          document.getElementById('currentNode2').innerText = `กระแส: ${latest.i_node2 ?? '-'} mA`;
+          document.getElementById('rssiNode2').innerText = `RSSI: ${latest.rssi_node2 ?? '-'}`;
+          document.getElementById('voltageNode2').innerText = `แรงดัน: ${latest.v_node2 ?? '-'}`;
+          document.getElementById('currentNode2').innerText = `กระแส: ${latest.i_node2 ?? '-'}`;
           document.getElementById('timeNode2').innerText = `เวลาวัด: ${latest.time_node2 ?? '-'}`;
         }
 
       } catch (error) {
-        console.error('เกิดข้อผิดพลาด:', error);
+        console.error('Load data error:', error);
         document.getElementById('waterLevelNode1').innerText = 'โหลดข้อมูลล้มเหลว';
-        document.getElementById('rssiNode1').innerText = '';
-        document.getElementById('rssiNode2').innerText = '';
       }
     }
 
