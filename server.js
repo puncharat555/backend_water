@@ -92,11 +92,17 @@ app.get('/distance', async (req, res) => {
     const collection = db.collection('distances');
     const distances = await collection.find().sort({ timestamp: -1 }).limit(100).toArray();
 
+    // ป้องกัน cache ฝั่ง client และ proxy
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
     res.json(distances);
   } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 async function startServer() {
   try {
