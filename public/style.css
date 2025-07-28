@@ -23,7 +23,6 @@ body {
 .main-water-level {
   font-size: 3rem;
   font-weight: 700;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
   color: #ffffff;
   min-width: 240px;
   text-align: center;
@@ -32,7 +31,7 @@ body {
 .container {
   display: flex;
   justify-content: center;
-  gap: 0;            /
+  gap: 10;            /
   flex-wrap: wrap;
   max-width: 600px;
   margin: 0 auto 50px;
@@ -74,7 +73,7 @@ body {
 
 /* ตารางข้อมูล */
 .table-wrapper {
-  max-width: 900px;
+  max-width: 11000px;
   margin: 0 auto;
   background: rgba(255, 255, 255, 0.1);
   padding: 20px;
