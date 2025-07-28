@@ -21,10 +21,6 @@ body {
 }
 
 .main-water-level {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(6px);
-  padding: 25px 50px;
-  border-radius: 25px;
   font-size: 3rem;
   font-weight: 700;
   box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
@@ -33,12 +29,10 @@ body {
   text-align: center;
 }
 
-/* รวมกล่อง Node1 และ Node2 ไว้ใน container เดียว */
-/* ใช้ flexbox ให้เป็นระเบียบ */
 .container {
   display: flex;
   justify-content: center;
-  gap: 30px;
+  gap: 0;            /
   flex-wrap: wrap;
   max-width: 600px;
   margin: 0 auto 50px;
@@ -49,15 +43,15 @@ body {
   box-shadow: 0 5px 18px rgba(0, 0, 0, 0.3);
 }
 
-/* กล่องแต่ละ Node */
 .node-box {
-  flex: 1 1 260px;
+  flex: 1 1 50%;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 15px;
   padding: 18px 22px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
   color: #eee;
   transition: background 0.3s ease;
+  box-sizing: border-box;  
 }
 
 .node-box:hover {
