@@ -1,120 +1,149 @@
 body {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(to bottom, #2c3e50, #4ca1af);
-  color: #ffffff;
+  color: #fff;
   margin: 0;
   padding: 20px;
 }
 
 .title {
-  font-size: 2.2rem;
-  font-weight: bold;
+  font-size: 2.4rem;
+  font-weight: 700;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
 
 .water-level-display {
   display: flex;
   justify-content: center;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
 }
 
 .main-water-level {
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(6px);
-  padding: 20px 40px;
-  border-radius: 20px;
-  font-size: 2.8rem;
+  padding: 25px 50px;
+  border-radius: 25px;
+  font-size: 3rem;
   font-weight: 700;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
   color: #ffffff;
+  min-width: 240px;
+  text-align: center;
 }
 
-/* รวมกล่องทั้งหมดเข้าเป็นกล่องเดียว */
+/* รวมกล่อง Node1 และ Node2 ไว้ใน container เดียว */
+/* ใช้ flexbox ให้เป็นระเบียบ */
 .container {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  max-width: 600px;
+  margin: 0 auto 50px;
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(5px);
   border-radius: 20px;
   padding: 20px;
-  max-width: 600px;
-  margin: 0 auto 40px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.3);
 }
 
-.main-card {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-  border-radius: 20px;
-  padding: 20px;
-  max-width: 800px;
-  margin: 0 auto 30px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-}
-.container {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-/* กล่อง Node แต่ละตัว */
+/* กล่องแต่ละ Node */
 .node-box {
-  flex: 1 1 45%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex: 1 1 260px;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 15px;
-  padding: 15px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  min-width: 260px;
+  padding: 18px 22px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  color: #eee;
+  transition: background 0.3s ease;
 }
+
+.node-box:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
 .node-box h2 {
   margin-top: 0;
-  color: #ffffff;
+  margin-bottom: 15px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.7);
 }
+
 .node-box p {
-  margin: 5px 0;
+  margin: 8px 0;
+  font-size: 1rem;
   color: #ddd;
 }
 
+/* ตารางข้อมูล */
 .table-wrapper {
-  background: rgba(255, 255, 255, 0.08);
+  max-width: 900px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.1);
   padding: 20px;
   border-radius: 15px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
   overflow-x: auto;
-  backdrop-filter: blur(5px);
 }
 
 .table-wrapper h3 {
-  margin-bottom: 15px;
-  font-size: 1.3rem;
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  color: #fff;
+  color: #f0f0f0;
   font-size: 0.95rem;
+  min-width: 700px;
 }
 
 thead th {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 10px;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 12px 15px;
   text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid rgba(255,255,255,0.4);
 }
 
 tbody td {
-  padding: 8px 10px;
+  padding: 10px 15px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-@media (max-width: 600px) {
-  .main-water-level {
-    font-size: 2rem;
-    padding: 15px 20px;
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.15);
+  cursor: default;
+  transition: background 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 650px) {
+  .container {
+    flex-direction: column;
+    max-width: 90%;
   }
 
-  .container {
-    width: 95%;
-    padding: 15px;
+  .node-box {
+    flex: 1 1 100%;
+    margin-bottom: 20px;
+  }
+
+  .main-water-level {
+    font-size: 2.5rem;
+    padding: 20px 30px;
+    min-width: auto;
+  }
+
+  table {
+    font-size: 0.9rem;
+    min-width: 100%;
   }
 }
