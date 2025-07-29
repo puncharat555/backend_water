@@ -32,8 +32,6 @@ body {
   display: flex;
   justify-content: center;
   gap: 10px;            
-  flex-wrap: wrap;
-  max-width: 600px;
   margin: 0 auto 50px;
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(5px);
@@ -139,4 +137,16 @@ tbody tr:hover {
     font-size: 0.9rem;
     min-width: 100%;
   }
+  .chart-container {
+  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+canvas {
+  width: 100% !important;
+  height: 200px !important;
+}
+
 }
