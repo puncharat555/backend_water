@@ -42,31 +42,31 @@ body {
 
 .node-box {
   flex: 1 1 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 1);
   border-radius: 15px;
   padding: 18px 22px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-  color: #eee;
+  color: #222;
   transition: background 0.3s ease;
   box-sizing: border-box;  
 }
 
 .node-box:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .node-box h2 {
   margin-top: 0;
   margin-bottom: 15px;
   font-weight: 700;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+  color: #111;
+  text-shadow: none;
 }
 
 .node-box p {
   margin: 8px 0;
   font-size: 1rem;
-  color: #ddd;
+  color: #444;
 }
 
 /* ตารางข้อมูล */
@@ -115,6 +115,21 @@ tbody tr:hover {
   transition: background 0.3s ease;
 }
 
+/* กราฟ wrapper */
+.chart-wrapper {
+  margin-top: 15px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+canvas {
+  width: 100% !important;
+  height: 240px !important;
+  display: block;
+}
+
 /* Responsive */
 @media (max-width: 650px) {
   .container {
@@ -137,16 +152,4 @@ tbody tr:hover {
     font-size: 0.9rem;
     min-width: 100%;
   }
-  .chart-container {
-  margin-top: 20px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 10px;
-}
-
-canvas {
-  width: 100% !important;
-  height: 200px !important;
-}
-
 }

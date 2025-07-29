@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <title>Water Level Monitoring</title>
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Chart.js และ Zoom plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
 </head>
 <body>
   <h1 class="title">Water Level Monitoring</h1>
@@ -16,26 +19,34 @@
   </div>
 
   <div class="container">
+    <!-- Node 1 -->
     <div class="node-box">
       <h2>Node 1</h2>
       <p id="rssiNode1">RSSI: -</p>
       <p id="voltageNode1">แรงดัน: -</p>
       <p id="currentNode1">กระแส: -</p>
       <p id="timeNode1">เวลาวัด: -</p>
+
+      <div class="chart-wrapper">
+        <canvas id="waterLevelChart"></canvas>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="currentNode1Chart"></canvas>
+      </div>
     </div>
 
+    <!-- Node 2 -->
     <div class="node-box">
       <h2>Node 2</h2>
       <p id="rssiNode2">RSSI: -</p>
       <p id="voltageNode2">แรงดัน: -</p>
       <p id="currentNode2">กระแส: -</p>
       <p id="timeNode2">เวลาวัด: -</p>
-    </div>
-  </div>
 
-  <div class="chart-section">
-    <h3>📈 กราฟระดับน้ำและแรงดันไฟฟ้า</h3>
-    <canvas id="levelChart"></canvas>
+      <div class="chart-wrapper">
+        <canvas id="currentNode2Chart"></canvas>
+      </div>
+    </div>
   </div>
 
   <div class="table-wrapper">
@@ -61,53 +72,90 @@
 
   <script>
     const fixedDepth = 120;
-    const ctx = document.getElementById('levelChart').getContext('2d');
-    const levelChart = new Chart(ctx, {
+
+    const waterLevelCtx = document.getElementById('waterLevelChart').getContext('2d');
+    const currentNode1Ctx = document.getElementById('currentNode1Chart').getContext('2d');
+    const currentNode2Ctx = document.getElementById('currentNode2Chart').getContext('2d');
+
+    const labels = [];
+    const waterLevelData = [];
+    const currentNode1Data = [];
+    const currentNode2Data = [];
+
+    const commonOptions = {
+      responsive: true,
+      plugins: {
+        legend: { display: true },
+        zoom: {
+          pan: { enabled: true, mode: 'x' },
+          zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+        }
+      },
+      scales: {
+        x: { display: true },
+        y: { display: true }
+      }
+    };
+
+    const waterLevelChart = new Chart(waterLevelCtx, {
       type: 'line',
       data: {
-        labels: [],
-        datasets: [
-          {
-            label: 'ระดับน้ำ (cm)',
-            borderColor: 'blue',
-            data: [],
-            fill: false
-          },
-          {
-            label: 'แรงดัน Node1 (V)',
-            borderColor: 'green',
-            data: [],
-            fill: false
-          }
-        ]
+        labels: labels,
+        datasets: [{
+          label: 'ระดับน้ำ (cm)',
+          data: waterLevelData,
+          borderColor: '#007bff',
+          backgroundColor: 'rgba(0,123,255,0.1)',
+          fill: true,
+          tension: 0.3
+        }]
       },
-      options: {
-        responsive: true,
-        scales: {
-          x: {
-            title: { display: true, text: 'เวลา' }
-          },
-          y: {
-            title: { display: true, text: 'ค่า' }
-          }
-        }
-      }
+      options: commonOptions
+    });
+
+    const currentNode1Chart = new Chart(currentNode1Ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'กระแส Node 1 (mA)',
+          data: currentNode1Data,
+          borderColor: '#28a745',
+          backgroundColor: 'rgba(40,167,69,0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: commonOptions
+    });
+
+    const currentNode2Chart = new Chart(currentNode2Ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'กระแส Node 2 (mA)',
+          data: currentNode2Data,
+          borderColor: '#dc3545',
+          backgroundColor: 'rgba(220,53,69,0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: commonOptions
     });
 
     async function loadData() {
       try {
         const url = `https://backend-water-rf88.onrender.com/distance?_=${Date.now()}`;
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-store' });
         const data = await res.json();
 
+        // ตารางข้อมูล
         const tbody = document.querySelector('#dataTable tbody');
         tbody.innerHTML = '';
 
-        levelChart.data.labels = [];
-        levelChart.data.datasets[0].data = [];
-        levelChart.data.datasets[1].data = [];
-
-        data.forEach(item => {
+        data.reverse().forEach(item => {
           const level = (fixedDepth - item.distance).toFixed(1);
           const distanceRaw = item.distance > 0 ? item.distance.toFixed(1) : '-';
 
@@ -115,25 +163,17 @@
           tr.innerHTML = `
             <td>${distanceRaw}</td>
             <td>${item.distance > 0 ? level : '-'}</td>
-            <td>${item.rssi_node1 ?? '-'}</td>
-            <td>${item.rssi_node2 ?? '-'}</td>
-            <td>${item.v_node1 ? item.v_node1 + ' V' : '-'}</td>
-            <td>${item.i_node1 ? item.i_node1 + ' mA' : '-'}</td>
-            <td>${item.v_node2 ? item.v_node2 + ' V' : '-'}</td>
-            <td>${item.i_node2 ? item.i_node2 + ' mA' : '-'}</td>
+            <td>${item.rssi_node1 !== undefined ? item.rssi_node1 : '-'}</td>
+            <td>${item.rssi_node2 !== undefined ? item.rssi_node2 : '-'}</td>
+            <td>${item.v_node1 !== undefined ? item.v_node1 + ' V' : '-'}</td>
+            <td>${item.i_node1 !== undefined ? item.i_node1 + ' mA' : '-'}</td>
+            <td>${item.v_node2 !== undefined ? item.v_node2 + ' V' : '-'}</td>
+            <td>${item.i_node2 !== undefined ? item.i_node2 + ' mA' : '-'}</td>
             <td>${item.time_node1 || '-'}</td>
             <td>${item.time_node2 || '-'}</td>
           `;
           tbody.appendChild(tr);
-
-          if (item.time_node1 && item.distance > 0) {
-            levelChart.data.labels.push(item.time_node1);
-            levelChart.data.datasets[0].data.push(level);
-            levelChart.data.datasets[1].data.push(item.v_node1);
-          }
         });
-
-        levelChart.update();
 
         const latest = data[0];
         if (latest) {
@@ -142,24 +182,58 @@
           document.getElementById('waterLevelNode1').innerText =
             latest.distance > 0 ? `ระดับน้ำ: ${level} cm` : 'ระดับน้ำ: -';
 
-          document.getElementById('rssiNode1').innerText = `RSSI: ${latest.rssi_node1 ?? '-'}`;
-          document.getElementById('voltageNode1').innerText = `แรงดัน: ${latest.v_node1 ?? '-'} V`;
-          document.getElementById('currentNode1').innerText = `กระแส: ${latest.i_node1 ?? '-'} mA`;
-          document.getElementById('timeNode1').innerText = latest.time_node1 || '-';
+          document.getElementById('rssiNode1').innerText =
+            latest.rssi_node1 !== undefined ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
 
-          document.getElementById('rssiNode2').innerText = `RSSI: ${latest.rssi_node2 ?? '-'}`;
-          document.getElementById('voltageNode2').innerText = `แรงดัน: ${latest.v_node2 ?? '-'} V`;
-          document.getElementById('currentNode2').innerText = `กระแส: ${latest.i_node2 ?? '-'} mA`;
-          document.getElementById('timeNode2').innerText = latest.time_node2 || '-';
+          document.getElementById('voltageNode1').innerText =
+            latest.v_node1 !== undefined ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
+
+          document.getElementById('currentNode1').innerText =
+            latest.i_node1 !== undefined ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
+
+          document.getElementById('timeNode1').innerText =
+            latest.time_node1 || 'เวลาวัด: -';
+
+          document.getElementById('rssiNode2').innerText =
+            latest.rssi_node2 !== undefined ? `RSSI: ${latest.rssi_node2}` : 'RSSI: -';
+
+          document.getElementById('voltageNode2').innerText =
+            latest.v_node2 !== undefined ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
+
+          document.getElementById('currentNode2').innerText =
+            latest.i_node2 !== undefined ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
+
+          document.getElementById('timeNode2').innerText =
+            latest.time_node2 || 'เวลาวัด: -';
+
+          // อัพเดตกราฟ
+          // เพิ่มเวลา
+          const timeLabel = latest.time_node1 || new Date().toLocaleTimeString();
+          if (labels.length === 0 || labels[labels.length-1] !== timeLabel) {
+            labels.push(timeLabel);
+            if (labels.length > 20) labels.shift();
+
+            // ระดับน้ำ
+            waterLevelData.push(level);
+            if (waterLevelData.length > 20) waterLevelData.shift();
+
+            // กระแส Node 1
+            currentNode1Data.push(latest.i_node1 || 0);
+            if (currentNode1Data.length > 20) currentNode1Data.shift();
+
+            // กระแส Node 2
+            currentNode2Data.push(latest.i_node2 || 0);
+            if (currentNode2Data.length > 20) currentNode2Data.shift();
+
+            // อัพเดตกราฟ
+            waterLevelChart.update();
+            currentNode1Chart.update();
+            currentNode2Chart.update();
+          }
         }
 
       } catch (error) {
         console.error('Load data error:', error);
-        ['waterLevelNode1','rssiNode1','voltageNode1','currentNode1','timeNode1','rssiNode2','voltageNode2','currentNode2','timeNode2'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.innerText = '-';
-        });
-        document.getElementById('waterLevelNode1').innerText = 'โหลดข้อมูลล้มเหลว';
       }
     }
 
