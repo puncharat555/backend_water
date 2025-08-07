@@ -230,16 +230,58 @@ function updateErrorList(data) {
   const errorList = document.getElementById('errorList');
   if (!errorList) return;
 
-  // ตัวอย่าง: กรองข้อมูลที่มี distance <= 0
-  const errorItems = data.filter(item => item.distance <= 0);
+  // กรองข้อมูลที่มีค่า error ในแต่ละฟิลด์
+  const errorItems = data.filter(item => {
+    return (
+      !item.distance || item.distance <= 0 || item.distance > fixedDepth ||
+      !item.rssi_node1 || item.rssi_node1 === 0 ||
+      !item.rssi_node2 || item.rssi_node2 === 0 ||
+      !item.v_node1 || item.v_node1 <= 0 ||
+      !item.v_node2 || item.v_node2 <= 0 ||
+      !item.i_node1 || item.i_node1 <= 0 ||
+      !item.i_node2 || item.i_node2 <= 0 ||
+      !item.time_node1 ||
+      !item.time_node2
+    );
+  });
 
   if (errorItems.length === 0) {
     errorList.innerHTML = '<li>ไม่มีข้อมูลผิดปกติ</li>';
   } else {
     errorList.innerHTML = '';
     errorItems.forEach((item, i) => {
+      const errors = [];
+
+      if (!item.distance || item.distance <= 0 || item.distance > fixedDepth) {
+        errors.push(`ระดับน้ำดิบผิดปกติ: ${item.distance}`);
+      }
+      if (!item.rssi_node1 || item.rssi_node1 === 0) {
+        errors.push(`RSSI Node1 ผิดปกติ: ${item.rssi_node1}`);
+      }
+      if (!item.rssi_node2 || item.rssi_node2 === 0) {
+        errors.push(`RSSI Node2 ผิดปกติ: ${item.rssi_node2}`);
+      }
+      if (!item.v_node1 || item.v_node1 <= 0) {
+        errors.push(`แรงดัน Node1 ผิดปกติ: ${item.v_node1}`);
+      }
+      if (!item.v_node2 || item.v_node2 <= 0) {
+        errors.push(`แรงดัน Node2 ผิดปกติ: ${item.v_node2}`);
+      }
+      if (!item.i_node1 || item.i_node1 <= 0) {
+        errors.push(`กระแส Node1 ผิดปกติ: ${item.i_node1}`);
+      }
+      if (!item.i_node2 || item.i_node2 <= 0) {
+        errors.push(`กระแส Node2 ผิดปกติ: ${item.i_node2}`);
+      }
+      if (!item.time_node1) {
+        errors.push(`เวลาวัด Node1 ขาดหาย`);
+      }
+      if (!item.time_node2) {
+        errors.push(`เวลาวัด Node2 ขาดหาย`);
+      }
+
       const li = document.createElement('li');
-      li.textContent = `แถวที่ ${i + 1}: ระดับน้ำดิบ = ${item.distance}`;
+      li.innerHTML = `<strong>ข้อมูลที่เวลาวัด Node1: ${item.time_node1 || '-'} / Node2: ${item.time_node2 || '-'}</strong><br>${errors.join('<br>')}`;
       errorList.appendChild(li);
     });
   }
