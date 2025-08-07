@@ -10,18 +10,18 @@ async function loadData() {
     const res = await fetch(url, { cache: 'no-store' });
     const data = await res.json();
 
-    allData = data.filter(item => item.distance > 0); // เก็บข้อมูลทั้งหมดที่กรองแล้ว
-    currentIndex = 0;  // เริ่มแสดงจากแถวแรก
+    allData = data.filter(item => item.distance > 0);
+    currentIndex = 0;  // เริ่มแสดงหน้าแรก
 
-    updateTable();    // แสดงตารางแค่ 10 แถวแรก
+    // แสดงแค่ 10 แถวแรก (ล้างตารางก่อน)
+    updateTable(true);
 
-    // อัปเดตกล่อง error
     updateErrorList(data);
 
+    // อัพเดทข้อมูล Node ปัจจุบัน (ตามเดิม)
     const latest = allData[0];
     if (latest) {
       const level = (fixedDepth - latest.distance).toFixed(1);
-
       document.getElementById('waterLevelNode1').innerText = `ระดับน้ำ: ${level} cm`;
       document.getElementById('rssiNode1').innerText = (latest.rssi_node1 && latest.rssi_node1 !== 0) ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
       document.getElementById('voltageNode1').innerText = (latest.v_node1 && latest.v_node1 > 0) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
@@ -36,6 +36,7 @@ async function loadData() {
 
   } catch (error) {
     console.error('Load data error:', error);
+    // กรณี error
     ['waterLevelNode1', 'rssiNode1', 'voltageNode1', 'currentNode1', 'timeNode1',
      'rssiNode2', 'voltageNode2', 'currentNode2', 'timeNode2'].forEach(id => {
       const el = document.getElementById(id);
@@ -46,12 +47,15 @@ async function loadData() {
   }
 }
 
-// ฟังก์ชันแสดงตารางข้อมูลทีละ pageSize แถว
-function updateTable() {
+// อัพเดทตาราง, ถ้า clear = true จะล้างข้อมูลเก่าก่อนเพิ่มใหม่
+function updateTable(clear = false) {
   const tbody = document.querySelector('#dataTable tbody');
-  //tbody.innerHTML = '';
+  
+  if (clear) {
+    tbody.innerHTML = '';   // ล้างข้อมูลเก่า
+    currentIndex = 0;       // เริ่มนับแถวใหม่
+  }
 
-  // กำหนดช่วงข้อมูลที่จะเอามาแสดง
   const sliceData = allData.slice(currentIndex, currentIndex + pageSize);
 
   sliceData.forEach(item => {
@@ -73,9 +77,11 @@ function updateTable() {
     tbody.appendChild(tr);
   });
 
-  // อัปเดตปุ่ม "ดูข้อมูลเพิ่มเติม"
+  currentIndex += sliceData.length;
+
   updateMoreButton();
 }
+
 
 // ฟังก์ชันจัดการปุ่ม "ดูข้อมูลเพิ่มเติม"
 function updateMoreButton() {
