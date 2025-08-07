@@ -211,8 +211,9 @@ async function createCharts() {
           backgroundColor: 'rgba(0,255,0,0.2)',
           fill: true,
           tension: 0.3,
-          pointRadius: ctx => ctx.chart.data.labels.length - 1 ? 6 : 0,
-          pointBackgroundColor: 'rgba(0,255,0,0.2)',
+          pointRadius: ctx => ctx.dataIndex === ctx.chart.data.labels.length - 1 ? 6 : 0,
+          pointBackgroundColor: ctx => ctx.dataIndex === ctx.chart.data.labels.length - 1 ? 'rgba(0,255,0,1)' : 'rgba(0,0,0,0)',
+
         }],
       },
       options: {
