@@ -1,4 +1,3 @@
-<link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet"></link>
 const fixedDepth = 120;
 let allData = [];      
 let currentIndex = 0;  
