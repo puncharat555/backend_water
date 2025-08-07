@@ -49,7 +49,7 @@ async function loadData() {
 // ฟังก์ชันแสดงตารางข้อมูลทีละ pageSize แถว
 function updateTable() {
   const tbody = document.querySelector('#dataTable tbody');
-  tbody.innerHTML = '';
+  //tbody.innerHTML = '';
 
   // กำหนดช่วงข้อมูลที่จะเอามาแสดง
   const sliceData = allData.slice(currentIndex, currentIndex + pageSize);
