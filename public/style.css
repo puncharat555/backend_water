@@ -235,3 +235,30 @@ tbody tr:hover {
   display: block;
   margin: 0 auto;
 }
+#moreButtonContainer {
+  text-align: center;
+  margin-top: 15px;
+}
+
+#moreButtonContainer button {
+  background: linear-gradient(45deg, #00c0ff, #007fff);
+  border: none;
+  color: white;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 192, 255, 0.5);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+#moreButtonContainer button:hover {
+  background: linear-gradient(45deg, #007fff, #00c0ff);
+  box-shadow: 0 6px 15px rgba(0, 192, 255, 0.8);
+}
+
+#moreButtonContainer button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 192, 255, 0.7);
+}
