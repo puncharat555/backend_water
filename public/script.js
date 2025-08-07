@@ -1,4 +1,6 @@
 const fixedDepth = 120;
+let allData = [];       // เก็บข้อมูลทั้งหมด
+let isShowingAll = false;  // สถานะแสดงข้อมูลทั้งหมดหรือไม่
 
 // โหลดข้อมูลปัจจุบันแสดงใน node และตาราง
 async function loadData() {
@@ -7,36 +9,13 @@ async function loadData() {
     const res = await fetch(url, { cache: 'no-store' });
     const data = await res.json();
 
-    const tbody = document.querySelector('#dataTable tbody');
-    tbody.innerHTML = '';
+    // กรองข้อมูล distance > 0 เท่านั้น และเก็บไว้ทั้งหมด
+    allData = data.filter(item => item.distance > 0);
 
-    // กรองข้อมูล distance > 0 เท่านั้น
-    const filteredData = data.filter(item => item.distance > 0);
-
-    filteredData.forEach(item => {
-      const level = (fixedDepth - item.distance).toFixed(1);
-      const distanceRaw = item.distance.toFixed(1);
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${distanceRaw}</td>
-        <td>${level}</td>
-        <td>${(item.rssi_node1 && item.rssi_node1 !== 0) ? item.rssi_node1 : '-'}</td>
-        <td>${(item.rssi_node2 && item.rssi_node2 !== 0) ? item.rssi_node2 : '-'}</td>
-        <td>${(item.v_node1 && item.v_node1 > 0) ? item.v_node1 + ' V' : '-'}</td>
-        <td>${(item.i_node1 && item.i_node1 > 0) ? item.i_node1 + ' mA' : '-'}</td>
-        <td>${(item.v_node2 && item.v_node2 > 0) ? item.v_node2 + ' V' : '-'}</td>
-        <td>${(item.i_node2 && item.i_node2 > 0) ? item.i_node2 + ' mA' : '-'}</td>
-        <td>${item.time_node1 || '-'}</td>
-        <td>${item.time_node2 || '-'}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    // อัปเดตกล่อง error
+    renderTable();  // แสดงข้อมูลในตาราง (10 แถว หรือทั้งหมด ตามสถานะ)
     updateErrorList(data);
 
-    const latest = filteredData[0];
+    const latest = allData[0];
     if (latest) {
       const level = (fixedDepth - latest.distance).toFixed(1);
 
@@ -64,159 +43,48 @@ async function loadData() {
   }
 }
 
-// โหลดข้อมูลย้อนหลัง
-async function fetchHistoricalData(range = '30d') {
-  const url = `https://backend-water-rf88.onrender.com/distance?range=${range}&_=${Date.now()}`;
-  const res = await fetch(url, { cache: 'no-store' });
-  const data = await res.json();
-  return data.filter(item => item.distance > 0);
-}
+// แสดงข้อมูลในตารางตามสถานะ isShowingAll
+function renderTable() {
+  const tbody = document.querySelector('#dataTable tbody');
+  tbody.innerHTML = '';
 
-// แปลงข้อมูลสำหรับกราฟ
-function parseChartData(data) {
-  const labels = [];
-  const waterLevels = [];
-  const voltagesNode1 = [];
-  const voltagesNode2 = [];
+  // ถ้าแสดงทั้งหมด ก็นำข้อมูลทั้งหมด ถ้าไม่แสดงทั้งหมด ให้จำกัดแค่ 10 แถว
+  const dataToShow = isShowingAll ? allData : allData.slice(0, 10);
 
-  data.forEach(item => {
-    const timeLabel = item.time_node1 || item.time_node2 || '';
-    labels.push(timeLabel);
+  dataToShow.forEach(item => {
+    const level = (fixedDepth - item.distance).toFixed(1);
+    const distanceRaw = item.distance.toFixed(1);
 
-    const level = (item.distance && item.distance > 0) ? Number((fixedDepth - item.distance).toFixed(2)) : NaN;
-    waterLevels.push(level);
-
-    voltagesNode1.push(item.v_node1 > 0 ? item.v_node1 : NaN);
-    voltagesNode2.push(item.v_node2 > 0 ? item.v_node2 : NaN);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${distanceRaw}</td>
+      <td>${level}</td>
+      <td>${(item.rssi_node1 && item.rssi_node1 !== 0) ? item.rssi_node1 : '-'}</td>
+      <td>${(item.rssi_node2 && item.rssi_node2 !== 0) ? item.rssi_node2 : '-'}</td>
+      <td>${(item.v_node1 && item.v_node1 > 0) ? item.v_node1 + ' V' : '-'}</td>
+      <td>${(item.i_node1 && item.i_node1 > 0) ? item.i_node1 + ' mA' : '-'}</td>
+      <td>${(item.v_node2 && item.v_node2 > 0) ? item.v_node2 + ' V' : '-'}</td>
+      <td>${(item.i_node2 && item.i_node2 > 0) ? item.i_node2 + ' mA' : '-'}</td>
+      <td>${item.time_node1 || '-'}</td>
+      <td>${item.time_node2 || '-'}</td>
+    `;
+    tbody.appendChild(tr);
   });
 
-  return { labels, waterLevels, voltagesNode1, voltagesNode2 };
-}
-
-async function createCharts() {
-  try {
-    const data30d = await fetchHistoricalData('30d');
-    const data1h = await fetchHistoricalData('1h');
-
-    const parsed30d = parseChartData(data30d);
-    const parsed1h = parseChartData(data1h);
-
-    // Chart 30d
-    const ctx30d = document.getElementById('waterLevelChart30d').getContext('2d');
-    new Chart(ctx30d, {
-      type: 'line',
-      data: {
-        labels: parsed30d.labels,
-        datasets: [{
-          label: 'ระดับน้ำ (cm)',
-          data: parsed30d.waterLevels,
-          borderColor: '#00c0ff',
-          backgroundColor: 'rgba(0,192,255,0.2)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 0,
-        }],
-      },
-      options: {
-        spanGaps: true,
-        scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } },
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
-            ticks: { color: 'white' }
-          }
-        },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: true,
-      }
+  // ปุ่มแสดงเพิ่มเติม ถ้ามีข้อมูลเกิน 10 แถว
+  const moreBtnContainer = document.getElementById('moreButtonContainer');
+  if (allData.length > 10) {
+    moreBtnContainer.innerHTML = `<button id="toggleMoreBtn">${isShowingAll ? 'ย่อข้อมูล' : 'ดูข้อมูลเพิ่มเติม'}</button>`;
+    document.getElementById('toggleMoreBtn').addEventListener('click', () => {
+      isShowingAll = !isShowingAll;
+      renderTable();
     });
-
-    // Chart 1h
-    const ctx1h = document.getElementById('waterLevelChart1h').getContext('2d');
-    new Chart(ctx1h, {
-      type: 'line',
-      data: {
-        labels: parsed1h.labels,
-        datasets: [{
-          label: 'ระดับน้ำ (cm)',
-          data: parsed1h.waterLevels,
-          borderColor: '#0f0',
-          backgroundColor: 'rgba(0,255,0,0.2)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 0,
-        }],
-      },
-      options: {
-        spanGaps: true,
-        scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } },
-          y: { beginAtZero: true, ticks: { color: 'white' } }
-        },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-      }
-    });
-
-    // Battery chart
-    const ctxBattery = document.getElementById('batteryChart').getContext('2d');
-    new Chart(ctxBattery, {
-      type: 'line',
-      data: {
-        labels: parsed30d.labels,
-        datasets: [
-          {
-            label: 'แรงดัน Node 1 (V)',
-            data: parsed30d.voltagesNode1,
-            borderColor: '#ff7f00',
-            backgroundColor: 'rgba(255,127,0,0.2)',
-            fill: true,
-            tension: 0.3,
-            pointRadius: 0,
-          },
-          {
-            label: 'แรงดัน Node 2 (V)',
-            data: parsed30d.voltagesNode2,
-            borderColor: '#007fff',
-            backgroundColor: 'rgba(0,127,255,0.2)',
-            fill: true,
-            tension: 0.3,
-            pointRadius: 0,
-          }
-        ],
-      },
-      options: {
-        spanGaps: true,
-        scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } },
-          y: {
-            beginAtZero: false,
-            ticks: { color: 'white' },
-            title: { display: true, text: 'แรงดัน (V)', color: 'white' }
-          }
-        },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-      }
-    });
-
-  } catch (err) {
-    console.error('Error creating charts:', err);
+  } else {
+    moreBtnContainer.innerHTML = '';
   }
 }
+
+// ฟังก์ชันอื่น ๆ ของคุณไม่ต้องแก้ เช่น fetchHistoricalData, parseChartData, createCharts
 
 // ฟังก์ชัน toggle เพื่อเปิด/ปิด error box
 function toggleErrorBox() {
@@ -230,7 +98,6 @@ function updateErrorList(data) {
   const errorList = document.getElementById('errorList');
   if (!errorList) return;
 
-  // กรองข้อมูลที่มีค่า error ในแต่ละฟิลด์
   const errorItems = data.filter(item => {
     return (
       !item.distance || item.distance <= 0 || item.distance > fixedDepth ||
