@@ -49,27 +49,39 @@
     </div>
   </div>
   <div class="chart-box map-box">
-  <h3>ตำแหน่งอุปกรณ์ (พิกัด 19.030471, 99.884592)</h3>
-  <iframe
-    src="https://www.openstreetmap.org/export/embed.html?bbox=99.88309288024901%2C19.02912179695632%2C99.88599729537963%2C19.03181455375484&layer=mapnik&marker=19.030471%2C99.884592"
-    frameborder="0"
-    scrolling="no"
-    marginheight="0"
-    marginwidth="0"
-    width="100%"
-    height="300"
-    style="border:1px solid rgba(255,255,255,0.3); border-radius: 10px;"
-  ></iframe>
-  <br/>
-  <small style="text-align:center; display:block;">
-    <a href="https://www.openstreetmap.org/?mlat=19.030471&mlon=99.884592#map=18/19.030471/99.884592" target="_blank" rel="noopener noreferrer" style="color:#00c0ff; text-decoration:none;">
-      ดูแผนที่ขนาดใหญ่
-    </a>
-  </small>
-</div>
+    <h3>ตำแหน่งอุปกรณ์ (พิกัด 19.030471, 99.884592)</h3>
+    <iframe
+      src="https://www.openstreetmap.org/export/embed.html?bbox=99.88309288024901%2C19.02912179695632%2C99.88599729537963%2C19.03181455375484&layer=mapnik&marker=19.030471%2C99.884592"
+      frameborder="0"
+      scrolling="no"
+      marginheight="0"
+      marginwidth="0"
+      width="100%"
+      height="300"
+      style="border:1px solid rgba(255,255,255,0.3); border-radius: 10px;"
+    ></iframe>
+    <br/>
+    <small style="text-align:center; display:block;">
+      <a href="https://www.openstreetmap.org/?mlat=19.030471&mlon=99.884592#map=18/19.030471/99.884592" target="_blank" rel="noopener noreferrer" style="color:#00c0ff; text-decoration:none;">
+        ดูแผนที่ขนาดใหญ่
+      </a>
+    </small>
+  </div>
 
+  <!-- ตารางและกล่องแจ้งเตือน error รวมกัน -->
   <div class="table-wrapper">
-    <h3>📋 ประวัติข้อมูล</h3>
+    <h3>
+      📋 ประวัติข้อมูล
+      <span class="error-toggle" onclick="toggleErrorBox()" title="คลิกเพื่อแสดงข้อมูลผิดปกติ">❗</span>
+    </h3>
+    
+    <div id="errorBox" class="error-box hidden">
+      <h4>รายการข้อมูลผิดปกติ</h4>
+      <ul id="errorList">
+        <!-- เติมจาก JS -->
+      </ul>
+    </div>
+
     <table id="dataTable">
       <thead>
         <tr>
@@ -88,37 +100,6 @@
       <tbody></tbody>
     </table>
   </div>
-  <div class="table-wrapper">
-  <h3>
-    📋 ประวัติข้อมูล
-    <span class="error-toggle" onclick="toggleErrorBox()">❗</span>
-  </h3>
-  
-  <div id="errorBox" class="error-box hidden">
-    <h4>รายการข้อมูลผิดปกติ</h4>
-    <ul id="errorList">
-      <!-- เติมจาก JS -->
-    </ul>
-  </div>
-
-  <table id="dataTable">
-    <thead>
-      <tr>
-        <th>ระดับน้ำดิบ (cm)</th>
-        <th>ระดับน้ำ (cm)</th>
-        <th>RSSI Node1</th>
-        <th>RSSI Node2</th>
-        <th>V Node1</th>
-        <th>I Node1</th>
-        <th>V Node2</th>
-        <th>I Node2</th>
-        <th>เวลาวัด Node1</th>
-        <th>เวลาวัด Node2</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
 
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
