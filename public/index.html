@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <title>Water Level Monitoring</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <h1 class="title">Water Level Monitoring</h1>
 
   <div class="water-level-display">
-    <div class="water-depth">
-      <p id="waterLevelNode1" class="main-water-level">ระดับน้ำ: -</p>
-    </div>
+    <p id="waterLevelNode1" class="main-water-level">ระดับน้ำ: -</p>
   </div>
 
   <div class="container">
@@ -34,6 +34,16 @@
     </div>
   </div>
 
+  <div class="chart-section">
+    <h3>📊 กราฟระดับน้ำย้อนหลัง</h3>
+    <canvas id="waterLevelChart" height="100"></canvas>
+  </div>
+
+  <div class="chart-section">
+    <h3>🔋 กราฟแบตเตอรี่ Node 1</h3>
+    <canvas id="batteryChartNode1" height="100"></canvas>
+  </div>
+
   <div class="table-wrapper">
     <h3>📋 ประวัติข้อมูล</h3>
     <table id="dataTable">
@@ -54,7 +64,6 @@
       <tbody></tbody>
     </table>
   </div>
-
   <script>
     const fixedDepth = 120;
 
