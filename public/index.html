@@ -48,6 +48,10 @@
       <h3>กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2</h3>
       <canvas id="batteryChart" height="300"></canvas>
     </div>
+    <div class="chart-box">
+      <h3>กราฟกระแส (Current mA)</h3>
+      <canvas id="currentChart" width="400" height="200"></canvas>
+      </div>
   </div>
   <div class="chart-box map-box">
     <h3>ตำแหน่งอุปกรณ์</h3>
@@ -69,7 +73,6 @@
     </small>
   </div>
 
-  <!-- ตารางและกล่องแจ้งเตือน error รวมกัน -->
   <div class="table-wrapper">
     <h3>
       📋 ประวัติข้อมูล
@@ -79,7 +82,6 @@
     <div id="errorBox" class="error-box hidden">
       <h4>รายการข้อมูลผิดปกติ</h4>
       <ul id="errorList">
-        <!-- เติมจาก JS -->
       </ul>
     </div>
 
