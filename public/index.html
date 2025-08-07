@@ -1,99 +1,48 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Water Level Monitoring</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>แผนที่ Leaflet</title>
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="style.css" />
+  <!-- ✅ Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
-  <!-- Leaflet CSS -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-sA+4Z9n9DQG9Pk5VZI17jxog0RpLFbqGXwLhGh6c6GI="
-    crossorigin=""
-  />
+  <!-- ✅ Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    #map {
+      height: 400px;
+      width: 100%;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
-  <h1 class="title">Water Level Monitoring</h1>
 
-  <div class="water-level-display">
-    <div class="water-depth">
-      <p id="waterLevelNode1" class="main-water-level">ระดับน้ำ: -</p>
-    </div>
-  </div>
+  <h2>แผนที่ตำแหน่งอุปกรณ์</h2>
+  <div id="map"></div>
 
-  <div class="container">
-    <!-- Node 1 -->
-    <div class="node-box">
-      <h2>Node 1</h2>
-      <p id="rssiNode1">RSSI: -</p>
-      <p id="voltageNode1">แรงดัน: -</p>
-      <p id="currentNode1">กระแส: -</p>
-      <p id="timeNode1">เวลาวัด: -</p>
-    </div>
+  <script>
+    // ✅ สร้างแผนที่ที่ตำแหน่ง 19.030471, 99.884592
+    const map = L.map('map').setView([19.030471, 99.884592], 15);
 
-    <!-- Node 2 -->
-    <div class="node-box">
-      <h2>Node 2</h2>
-      <p id="rssiNode2">RSSI: -</p>
-      <p id="voltageNode2">แรงดัน: -</p>
-      <p id="currentNode2">กระแส: -</p>
-      <p id="timeNode2">เวลาวัด: -</p>
-    </div>
-  </div>
+    // ✅ เพิ่ม tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-  <div class="charts-container">
-    <div class="chart-box">
-      <h3>ระดับน้ำย้อนหลัง 30 วัน</h3>
-      <canvas id="waterLevelChart30d"></canvas>
-    </div>
-    <div class="chart-box">
-      <h3>ระดับน้ำย้อนหลัง 1 ชั่วโมง</h3>
-      <canvas id="waterLevelChart1h"></canvas>
-    </div>
-    <div class="chart-box">
-      <h3>แรงดันแบตเตอรี่ (Node 1 & 2)</h3>
-      <canvas id="batteryChart"></canvas>
-    </div>
-    <div id="map" class="chart-box">
-      <h3>ตำแหน่งอุปกรณ์</h3>
-    </div>
-  </div>
+    // ✅ ปักหมุด
+    L.marker([19.030471, 99.884592]).addTo(map)
+      .bindPopup('Node 1<br>Wat Huay Pla Kang')
+      .openPopup();
+  </script>
 
-  <div class="table-wrapper">
-    <h3>📋 ประวัติข้อมูล</h3>
-    <table id="dataTable">
-      <thead>
-        <tr>
-          <th>ระดับน้ำดิบ (cm)</th>
-          <th>ระดับน้ำ (cm)</th>
-          <th>RSSI Node1</th>
-          <th>RSSI Node2</th>
-          <th>V Node1</th>
-          <th>I Node1</th>
-          <th>V Node2</th>
-          <th>I Node2</th>
-          <th>เวลาวัด Node1</th>
-          <th>เวลาวัด Node2</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Leaflet JS -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-o9N1j3R4eL7kZFtqJ0m+dVqEGKkPtxT1N0uJ7+MoC0M="
-    crossorigin=""
-  ></script>
-
-  <!-- Script -->
-  <script src="script.js"></script>
 </body>
 </html>
