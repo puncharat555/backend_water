@@ -173,3 +173,10 @@ tbody tr:hover {
     max-width: 100%;
   }
 }
+.chart-box canvas {
+  width: 100% !important;
+  max-width: 600px;
+  height: 300px !important;
+  display: block;
+  margin: 0 auto;
+}

@@ -146,7 +146,7 @@ async function createCharts() {
           tooltip: { mode: 'index', intersect: false }
         },
         responsive: true,
-        maintainAspectRatio: false,
+        maintainAspectRatio: true,
       }
     });
 
