@@ -1,7 +1,8 @@
+<link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet"></link>
 const fixedDepth = 120;
-let allData = [];      // เก็บข้อมูลทั้งหมด
-let currentIndex = 0;  // ตำแหน่งเริ่มแสดงใน allData
-const pageSize = 10;   // จำนวนแถวต่อหน้า
+let allData = [];      
+let currentIndex = 0;  
+const pageSize = 10;   
 
 // โหลดข้อมูลปัจจุบันแสดงใน node และตาราง
 async function loadData() {
