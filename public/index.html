@@ -34,6 +34,21 @@
     </div>
   </div>
 
+  <div class="charts-container">
+    <div class="chart-box">
+      <h3>กราฟระดับน้ำย้อนหลัง 30 วัน</h3>
+      <canvas id="waterLevelChart30d" height="300"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>กราฟระดับน้ำย้อนหลัง 1 ชั่วโมง</h3>
+      <canvas id="waterLevelChart1h" height="300"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2</h3>
+      <canvas id="batteryChart" height="300"></canvas>
+    </div>
+  </div>
+
   <div class="table-wrapper">
     <h3>📋 ประวัติข้อมูล</h3>
     <table id="dataTable">
@@ -55,88 +70,8 @@
     </table>
   </div>
 
-  <script>
-    const fixedDepth = 120;
-
-    async function loadData() {
-      try {
-        const url = `https://backend-water-rf88.onrender.com/distance?_=${Date.now()}`;
-        const res = await fetch(url, { cache: 'no-store' });
-        const data = await res.json();
-
-        console.log('Data from API:', data);
-
-        const tbody = document.querySelector('#dataTable tbody');
-        tbody.innerHTML = '';
-
-        data.forEach(item => {
-          const level = (fixedDepth - item.distance).toFixed(1);
-          const distanceRaw = item.distance > 0 ? item.distance.toFixed(1) : '-';
-
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${distanceRaw}</td>
-            <td>${item.distance > 0 ? level : '-'}</td>
-            <td>${item.rssi_node1 !== undefined ? item.rssi_node1 : '-'}</td>
-            <td>${item.rssi_node2 !== undefined ? item.rssi_node2 : '-'}</td>
-            <td>${item.v_node1 !== undefined ? item.v_node1 + ' V' : '-'}</td>
-            <td>${item.i_node1 !== undefined ? item.i_node1 + ' mA' : '-'}</td>
-            <td>${item.v_node2 !== undefined ? item.v_node2 + ' V' : '-'}</td>
-            <td>${item.i_node2 !== undefined ? item.i_node2 + ' mA' : '-'}</td>
-            <td>${item.time_node1 || '-'}</td>
-            <td>${item.time_node2 || '-'}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        const latest = data[0];
-        if (latest) {
-          const level = (fixedDepth - latest.distance).toFixed(1);
-
-          document.getElementById('waterLevelNode1').innerText =
-            latest.distance > 0 ? `ระดับน้ำ: ${level} cm` : 'ระดับน้ำ: -';
-
-          document.getElementById('rssiNode1').innerText =
-            latest.rssi_node1 !== undefined ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
-
-          document.getElementById('voltageNode1').innerText =
-            latest.v_node1 !== undefined ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
-
-          document.getElementById('currentNode1').innerText =
-            latest.i_node1 !== undefined ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
-
-          document.getElementById('timeNode1').innerText =
-            latest.time_node1 || 'เวลาวัด: -';
-
-          document.getElementById('rssiNode2').innerText =
-            latest.rssi_node2 !== undefined ? `RSSI: ${latest.rssi_node2}` : 'RSSI: -';
-
-          document.getElementById('voltageNode2').innerText =
-            latest.v_node2 !== undefined ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
-
-          document.getElementById('currentNode2').innerText =
-            latest.i_node2 !== undefined ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
-
-          document.getElementById('timeNode2').innerText =
-            latest.time_node2 || 'เวลาวัด: -';
-        }
-
-      } catch (error) {
-        console.error('Load data error:', error);
-
-        ['waterLevelNode1', 'rssiNode1', 'voltageNode1', 'currentNode1', 'timeNode1',
-         'rssiNode2', 'voltageNode2', 'currentNode2', 'timeNode2'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.innerText = '-';
-        });
-
-        const waterLevelEl = document.getElementById('waterLevelNode1');
-        if (waterLevelEl) waterLevelEl.innerText = 'โหลดข้อมูลล้มเหลว';
-      }
-    }
-
-    loadData();
-    setInterval(loadData, 5000);
-  </script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

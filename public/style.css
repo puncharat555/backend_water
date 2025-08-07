@@ -71,14 +71,15 @@ body {
 
 /* ตารางข้อมูล */
 .table-wrapper {
-  max-width: 11000px;
-  margin: 0 auto;
+  max-width: 1100px;
+  margin: 0 auto 50px;
   background: rgba(255, 255, 255, 0.1);
   padding: 20px;
   border-radius: 15px;
   backdrop-filter: blur(4px);
   box-shadow: 0 5px 20px rgba(0,0,0,0.3);
   overflow-x: auto;
+  color: white;
 }
 
 .table-wrapper h3 {
@@ -115,6 +116,31 @@ tbody tr:hover {
   transition: background 0.3s ease;
 }
 
+/* กราฟ */
+.charts-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.chart-box {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 600px;
+  color: white;
+}
+
+.chart-box h3 {
+  margin-bottom: 15px;
+  text-align: center;
+}
+
 /* Responsive */
 @media (max-width: 650px) {
   .container {
@@ -137,5 +163,13 @@ tbody tr:hover {
     font-size: 0.9rem;
     min-width: 100%;
   }
+
+  .charts-container {
+    flex-direction: column;
+    max-width: 90%;
+  }
   
+  .chart-box {
+    max-width: 100%;
+  }
 }
