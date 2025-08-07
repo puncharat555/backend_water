@@ -226,17 +226,14 @@ async function createCharts() {
   }
 }
 
-// สร้างแผนที่ Leaflet
+
 function initMap() {
-  // สร้างแผนที่ที่พิกัด 19.030471, 99.884592
 const map = L.map('map').setView([19.030471, 99.884592], 15);
 
-// โหลด tiles
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// ปักหมุดตำแหน่ง
 L.marker([19.030471, 99.884592]).addTo(map)
   .bindPopup('Node 1<br>ตำแหน่งอุปกรณ์')
   .openPopup();

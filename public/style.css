@@ -143,9 +143,10 @@ tbody tr:hover {
 }
 
 #map {
-  height: 300px;
-  width: 100%;
-  border-radius: 15px;
+  height: 400px;
+  width: 600px;
+  margin: 0 auto;
+  border: 1px solid #ccc;
 }
 
 /* Responsive */
