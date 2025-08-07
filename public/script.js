@@ -228,15 +228,19 @@ async function createCharts() {
 
 // สร้างแผนที่ Leaflet
 function initMap() {
-  const map = L.map('map').setView([19.030471, 99.884592], 15);
+  // สร้างแผนที่ที่พิกัด 19.030471, 99.884592
+const map = L.map('map').setView([19.030471, 99.884592], 15);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
+// โหลด tiles
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
 
-  const marker = L.marker([19.030471, 99.884592]).addTo(map);
-  marker.bindPopup("<b>ตำแหน่งอุปกรณ์</b><br>19.030471, 99.884592").openPopup();
+// ปักหมุดตำแหน่ง
+L.marker([19.030471, 99.884592]).addTo(map)
+  .bindPopup('Node 1<br>ตำแหน่งอุปกรณ์')
+  .openPopup();
+
 }
 
 // โหลดข้อมูลทุก 5 วินาที
