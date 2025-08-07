@@ -36,7 +36,7 @@ async function loadData() {
 
       document.getElementById('waterLevelNode1').innerText =
         latest.distance > 0 ? `ระดับน้ำ: ${level} cm` : 'ระดับน้ำ: -';
-        
+
       document.getElementById('rssiNode1').innerText =
         latest.rssi_node1 !== undefined ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
 
@@ -95,11 +95,12 @@ function parseChartData(data) {
     const timeLabel = item.time_node1 || item.time_node2 || '';
     labels.push(timeLabel);
 
-    const level = item.distance > 0 ? (120 - item.distance).toFixed(2) : null;
+    // ถ้าค่าผิดปกติหรือ 0 ให้เก็บเป็น null เพื่อไม่แสดงจุดในกราฟ
+    const level = (item.distance && item.distance > 0) ? Number((120 - item.distance).toFixed(2)) : null;
     waterLevels.push(level);
 
-    voltagesNode1.push(item.v_node1 || null);
-    voltagesNode2.push(item.v_node2 || null);
+    voltagesNode1.push(item.v_node1 > 0 ? item.v_node1 : null);
+    voltagesNode2.push(item.v_node2 > 0 ? item.v_node2 : null);
   });
 
   return { labels, waterLevels, voltagesNode1, voltagesNode2 };
@@ -132,8 +133,8 @@ async function createCharts() {
       options: {
         scales: {
           x: { 
-            ticks: { color: 'white', maxRotation: 45, minRotation: 30 },
-            title: { display: true, text: 'เวลา', color: 'white' }
+            ticks: { display: false }, // ซ่อนเวลาใต้แกน X
+            grid: { drawTicks: false }
           },
           y: {
             beginAtZero: true,
@@ -168,7 +169,7 @@ async function createCharts() {
       },
       options: {
         scales: {
-          x: { ticks: { color: 'white' }, title: { display: true, text: 'เวลา', color: 'white' } },
+          x: { ticks: { display: false }, grid: { drawTicks: false } }, // ซ่อนเวลาใต้แกน X
           y: { beginAtZero: true, ticks: { color: 'white' } }
         },
         plugins: {
@@ -209,8 +210,12 @@ async function createCharts() {
       },
       options: {
         scales: {
-          x: { ticks: { color: 'white' }, title: { display: true, text: 'เวลา', color: 'white' } },
-          y: { beginAtZero: false, ticks: { color: 'white' }, title: { display: true, text: 'แรงดัน (V)', color: 'white' } }
+          x: { ticks: { display: false }, grid: { drawTicks: false } }, // ซ่อนเวลาใต้แกน X
+          y: {
+            beginAtZero: false,
+            ticks: { color: 'white' },
+            title: { display: true, text: 'แรงดัน (V)', color: 'white' }
+          }
         },
         plugins: {
           legend: { labels: { color: 'white' } },
@@ -226,26 +231,9 @@ async function createCharts() {
   }
 }
 
-
-function initMap() {
-const map = L.map('map').setView([19.030471, 99.884592], 15);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-
-L.marker([19.030471, 99.884592]).addTo(map)
-  .bindPopup('Node 1<br>ตำแหน่งอุปกรณ์')
-  .openPopup();
-
-}
-
 // โหลดข้อมูลทุก 5 วินาที
 loadData();
 setInterval(loadData, 5000);
 
-// สร้างกราฟและแผนที่ตอนโหลดหน้าเว็บ
-window.onload = () => {
-  createCharts();
-  initMap();
-};
+// สร้างกราฟตอนโหลดหน้าเว็บ
+createCharts();
