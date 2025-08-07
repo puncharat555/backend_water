@@ -10,15 +10,14 @@ async function loadData() {
     const res = await fetch(url, { cache: 'no-store' });
     const data = await res.json();
 
+    // กรองข้อมูลที่มี distance > 0
     allData = data.filter(item => item.distance > 0);
     currentIndex = 0;  // เริ่มแสดงหน้าแรก
 
-    // แสดงแค่ 10 แถวแรก (ล้างตารางก่อน)
-    updateTable(true);
-
+    updateTable(true);  // clear = true เพื่อเคลียร์ตารางก่อนเพิ่มข้อมูลใหม่
     updateErrorList(data);
 
-    // อัพเดทข้อมูล Node ปัจจุบัน (ตามเดิม)
+    // แสดงข้อมูลปัจจุบัน (latest)
     const latest = allData[0];
     if (latest) {
       const level = (fixedDepth - latest.distance).toFixed(1);
@@ -36,7 +35,7 @@ async function loadData() {
 
   } catch (error) {
     console.error('Load data error:', error);
-    // กรณี error
+    // กรณี error ให้เคลียร์ข้อมูลบนหน้า
     ['waterLevelNode1', 'rssiNode1', 'voltageNode1', 'currentNode1', 'timeNode1',
      'rssiNode2', 'voltageNode2', 'currentNode2', 'timeNode2'].forEach(id => {
       const el = document.getElementById(id);
@@ -44,18 +43,28 @@ async function loadData() {
     });
     const waterLevelEl = document.getElementById('waterLevelNode1');
     if (waterLevelEl) waterLevelEl.innerText = 'โหลดข้อมูลล้มเหลว';
+
+    // เคลียร์ตารางและปุ่มเพิ่มเติมด้วย
+    const tbody = document.querySelector('#dataTable tbody');
+    if(tbody) tbody.innerHTML = '';
+    const moreButtonContainer = document.getElementById('moreButtonContainer');
+    if(moreButtonContainer) moreButtonContainer.innerHTML = '';
   }
 }
 
-// อัพเดทตาราง, ถ้า clear = true จะล้างข้อมูลเก่าก่อนเพิ่มใหม่
+// อัพเดทตารางข้อมูล
+// clear=true จะเคลียร์ตารางก่อนเพิ่มข้อมูลใหม่ (ใช้ตอนโหลดข้อมูลชุดใหม่)
+// clear=false จะเพิ่มข้อมูลต่อท้าย (ใช้ตอนกดดูข้อมูลเพิ่มเติม)
 function updateTable(clear = false) {
   const tbody = document.querySelector('#dataTable tbody');
-  
+  if (!tbody) return;
+
   if (clear) {
-    tbody.innerHTML = '';   // ล้างข้อมูลเก่า
-    currentIndex = 0;       // เริ่มนับแถวใหม่
+    tbody.innerHTML = '';   // เคลียร์ข้อมูลเก่า
+    currentIndex = 0;       // เริ่มแสดงแถวแรกใหม่
   }
 
+  // ตัดข้อมูลช่วงที่จะแสดง
   const sliceData = allData.slice(currentIndex, currentIndex + pageSize);
 
   sliceData.forEach(item => {
@@ -82,14 +91,15 @@ function updateTable(clear = false) {
   updateMoreButton();
 }
 
-
-// ฟังก์ชันจัดการปุ่ม "ดูข้อมูลเพิ่มเติม"
+// จัดการปุ่ม "ดูข้อมูลเพิ่มเติม"
 function updateMoreButton() {
   const moreButtonContainer = document.getElementById('moreButtonContainer');
-  moreButtonContainer.innerHTML = ''; // เคลียร์ก่อน
+  if (!moreButtonContainer) return;
+
+  moreButtonContainer.innerHTML = ''; // เคลียร์ปุ่มก่อน
 
   // เช็คว่ามีข้อมูลเหลือให้โหลดเพิ่มหรือไม่
-  if (currentIndex + pageSize < allData.length) {
+  if (currentIndex < allData.length) {
     const btn = document.createElement('button');
     btn.innerText = 'ดูข้อมูลเพิ่มเติม';
     btn.style.padding = '8px 16px';
@@ -98,15 +108,14 @@ function updateMoreButton() {
     btn.style.cursor = 'pointer';
 
     btn.onclick = () => {
-      currentIndex += pageSize;
-      updateTable();
+      updateTable(false);  // false = ไม่เคลียร์ข้อมูลเก่า
     };
 
     moreButtonContainer.appendChild(btn);
   }
 }
 
-// โหลดข้อมูลย้อนหลัง
+// โหลดข้อมูลย้อนหลัง (เช่น สำหรับกราฟ)
 async function fetchHistoricalData(range = '30d') {
   const url = `https://backend-water-rf88.onrender.com/distance?range=${range}&_=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
@@ -135,6 +144,7 @@ function parseChartData(data) {
   return { labels, waterLevels, voltagesNode1, voltagesNode2 };
 }
 
+// สร้างกราฟทั้งหมด
 async function createCharts() {
   try {
     const data30d = await fetchHistoricalData('30d');
@@ -143,7 +153,7 @@ async function createCharts() {
     const parsed30d = parseChartData(data30d);
     const parsed1h = parseChartData(data1h);
 
-    // Chart 30d
+    // กราฟ 30 วัน
     const ctx30d = document.getElementById('waterLevelChart30d').getContext('2d');
     new Chart(ctx30d, {
       type: 'line',
@@ -178,7 +188,7 @@ async function createCharts() {
       }
     });
 
-    // Chart 1h
+    // กราฟ 1 ชั่วโมง
     const ctx1h = document.getElementById('waterLevelChart1h').getContext('2d');
     new Chart(ctx1h, {
       type: 'line',
@@ -209,7 +219,7 @@ async function createCharts() {
       }
     });
 
-    // Battery chart
+    // กราฟแบตเตอรี่
     const ctxBattery = document.getElementById('batteryChart').getContext('2d');
     new Chart(ctxBattery, {
       type: 'line',
@@ -260,19 +270,19 @@ async function createCharts() {
   }
 }
 
-// ฟังก์ชัน toggle เพื่อเปิด/ปิด error box
+// toggle เปิด/ปิดกล่องแสดง error
 function toggleErrorBox() {
   const errorBox = document.getElementById('errorBox');
   if (!errorBox) return;
   errorBox.classList.toggle('hidden');
 }
 
-// ฟังก์ชันอัปเดตรายการ error (เช่นข้อมูลที่ผิดปกติ)
+// อัปเดตรายการ error ที่เจอในข้อมูล
 function updateErrorList(data) {
   const errorList = document.getElementById('errorList');
   if (!errorList) return;
 
-  // กรองข้อมูลที่มีค่า error ในแต่ละฟิลด์
+  // กรองข้อมูลที่มี error
   const errorItems = data.filter(item => {
     return (
       !item.distance || item.distance <= 0 || item.distance > fixedDepth ||
@@ -291,7 +301,7 @@ function updateErrorList(data) {
     errorList.innerHTML = '<li>ไม่มีข้อมูลผิดปกติ</li>';
   } else {
     errorList.innerHTML = '';
-    errorItems.forEach((item, i) => {
+    errorItems.forEach(item => {
       const errors = [];
 
       if (!item.distance || item.distance <= 0 || item.distance > fixedDepth) {
@@ -327,10 +337,9 @@ function updateErrorList(data) {
       errorList.appendChild(li);
     });
   }
-  
 }
 
-// เริ่มโหลดข้อมูล และตั้ง interval
+// เริ่มโหลดข้อมูลและอัปเดตทุก 5 วินาที
 loadData();
 setInterval(loadData, 5000);
 
