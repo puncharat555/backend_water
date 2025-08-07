@@ -64,8 +64,61 @@
       <tbody></tbody>
     </table>
   </div>
+
   <script>
     const fixedDepth = 120;
+
+    const waterLevelChartCtx = document.getElementById('waterLevelChart').getContext('2d');
+    const batteryChartCtx = document.getElementById('batteryChartNode1').getContext('2d');
+
+    const waterChart = new Chart(waterLevelChartCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'ระดับน้ำ (cm)',
+          data: [],
+          borderColor: 'blue',
+          borderWidth: 2,
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true,
+        animation: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            suggestedMax: 120
+          }
+        }
+      }
+    });
+
+    const batteryChart = new Chart(batteryChartCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'แรงดันแบตเตอรี่ (V)',
+          data: [],
+          borderColor: 'green',
+          borderWidth: 2,
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true,
+        animation: false,
+        scales: {
+          y: {
+            beginAtZero: false,
+            suggestedMin: 3.0,
+            suggestedMax: 4.3
+          }
+        }
+      }
+    });
 
     async function loadData() {
       try {
@@ -128,13 +181,38 @@
 
           document.getElementById('timeNode2').innerText =
             latest.time_node2 || 'เวลาวัด: -';
+
+          // ==== กราฟ: เพิ่มข้อมูลใหม่ ====
+          const now = new Date().toLocaleTimeString();
+
+          if (latest.distance > 0) {
+            waterChart.data.labels.push(now);
+            waterChart.data.datasets[0].data.push(level);
+            if (waterChart.data.labels.length > 15) {
+              waterChart.data.labels.shift();
+              waterChart.data.datasets[0].data.shift();
+            }
+            waterChart.update();
+          }
+
+          if (latest.v_node1 > 0) {
+            batteryChart.data.labels.push(now);
+            batteryChart.data.datasets[0].data.push(latest.v_node1);
+            if (batteryChart.data.labels.length > 15) {
+              batteryChart.data.labels.shift();
+              batteryChart.data.datasets[0].data.shift();
+            }
+            batteryChart.update();
+          }
         }
 
       } catch (error) {
         console.error('Load data error:', error);
-
-        ['waterLevelNode1', 'rssiNode1', 'voltageNode1', 'currentNode1', 'timeNode1',
-         'rssiNode2', 'voltageNode2', 'currentNode2', 'timeNode2'].forEach(id => {
+        const fields = [
+          'waterLevelNode1', 'rssiNode1', 'voltageNode1', 'currentNode1', 'timeNode1',
+          'rssiNode2', 'voltageNode2', 'currentNode2', 'timeNode2'
+        ];
+        fields.forEach(id => {
           const el = document.getElementById(id);
           if (el) el.innerText = '-';
         });
