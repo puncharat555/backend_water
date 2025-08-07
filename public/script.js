@@ -18,12 +18,12 @@ async function loadData() {
       tr.innerHTML = `
         <td>${distanceRaw}</td>
         <td>${item.distance > 0 ? level : '-'}</td>
-        <td>${item.rssi_node1 !== undefined ? item.rssi_node1 : '-'}</td>
-        <td>${item.rssi_node2 !== undefined ? item.rssi_node2 : '-'}</td>
-        <td>${item.v_node1 !== undefined ? item.v_node1 + ' V' : '-'}</td>
-        <td>${item.i_node1 !== undefined ? item.i_node1 + ' mA' : '-'}</td>
-        <td>${item.v_node2 !== undefined ? item.v_node2 + ' V' : '-'}</td>
-        <td>${item.i_node2 !== undefined ? item.i_node2 + ' mA' : '-'}</td>
+        <td>${(item.rssi_node1 !== undefined && item.rssi_node1 !== 0) ? item.rssi_node1 : '-'}</td>
+        <td>${(item.rssi_node2 !== undefined && item.rssi_node2 !== 0) ? item.rssi_node2 : '-'}</td>
+        <td>${(item.v_node1 !== undefined && item.v_node1 > 0) ? item.v_node1 + ' V' : '-'}</td>
+        <td>${(item.i_node1 !== undefined && item.i_node1 > 0) ? item.i_node1 + ' mA' : '-'}</td>
+        <td>${(item.v_node2 !== undefined && item.v_node2 > 0) ? item.v_node2 + ' V' : '-'}</td>
+        <td>${(item.i_node2 !== undefined && item.i_node2 > 0) ? item.i_node2 + ' mA' : '-'}</td>
         <td>${item.time_node1 || '-'}</td>
         <td>${item.time_node2 || '-'}</td>
       `;
@@ -38,25 +38,25 @@ async function loadData() {
         latest.distance > 0 ? `ระดับน้ำ: ${level} cm` : 'ระดับน้ำ: -';
 
       document.getElementById('rssiNode1').innerText =
-        latest.rssi_node1 !== undefined ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
+        (latest.rssi_node1 !== undefined && latest.rssi_node1 !== 0) ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
 
       document.getElementById('voltageNode1').innerText =
-        latest.v_node1 !== undefined ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
+        (latest.v_node1 !== undefined && latest.v_node1 > 0) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
 
       document.getElementById('currentNode1').innerText =
-        latest.i_node1 !== undefined ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
+        (latest.i_node1 !== undefined && latest.i_node1 > 0) ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
 
       document.getElementById('timeNode1').innerText =
         latest.time_node1 || 'เวลาวัด: -';
 
       document.getElementById('rssiNode2').innerText =
-        latest.rssi_node2 !== undefined ? `RSSI: ${latest.rssi_node2}` : 'RSSI: -';
+        (latest.rssi_node2 !== undefined && latest.rssi_node2 !== 0) ? `RSSI: ${latest.rssi_node2}` : 'RSSI: -';
 
       document.getElementById('voltageNode2').innerText =
-        latest.v_node2 !== undefined ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
+        (latest.v_node2 !== undefined && latest.v_node2 > 0) ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
 
       document.getElementById('currentNode2').innerText =
-        latest.i_node2 !== undefined ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
+        (latest.i_node2 !== undefined && latest.i_node2 > 0) ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
 
       document.getElementById('timeNode2').innerText =
         latest.time_node2 || 'เวลาวัด: -';
@@ -95,8 +95,8 @@ function parseChartData(data) {
     const timeLabel = item.time_node1 || item.time_node2 || '';
     labels.push(timeLabel);
 
-    // ถ้าค่าผิดปกติหรือ 0 ให้เก็บเป็น null เพื่อไม่แสดงจุดในกราฟ
-    const level = (item.distance && item.distance > 0) ? Number((120 - item.distance).toFixed(2)) : null;
+    // กรองข้อมูล ไม่เอาค่า 0 หรือต่ำกว่า 0 สำหรับกราฟ (ใช้ null เพื่อไม่แสดงจุด)
+    const level = (item.distance && item.distance > 0) ? Number((fixedDepth - item.distance).toFixed(2)) : null;
     waterLevels.push(level);
 
     voltagesNode1.push(item.v_node1 > 0 ? item.v_node1 : null);
@@ -133,7 +133,7 @@ async function createCharts() {
       options: {
         scales: {
           x: { 
-            ticks: { display: false }, // ซ่อนเวลาใต้แกน X
+            ticks: { display: false },
             grid: { drawTicks: false }
           },
           y: {
@@ -169,7 +169,7 @@ async function createCharts() {
       },
       options: {
         scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } }, // ซ่อนเวลาใต้แกน X
+          x: { ticks: { display: false }, grid: { drawTicks: false } },
           y: { beginAtZero: true, ticks: { color: 'white' } }
         },
         plugins: {
@@ -210,7 +210,7 @@ async function createCharts() {
       },
       options: {
         scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } }, // ซ่อนเวลาใต้แกน X
+          x: { ticks: { display: false }, grid: { drawTicks: false } },
           y: {
             beginAtZero: false,
             ticks: { color: 'white' },
