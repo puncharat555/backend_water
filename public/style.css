@@ -1,6 +1,6 @@
 body {
-  font-family: 'Kanit', sans-serif;
-  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(to bottom, #2c3e50, #4ca1af);
   color: #fff;
   margin: 0;
   padding: 20px;
@@ -31,7 +31,7 @@ body {
 .container {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 10px;            
   margin: 0 auto 50px;
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(5px);
@@ -48,7 +48,7 @@ body {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
   color: #eee;
   transition: background 0.3s ease;
-  box-sizing: border-box;
+  box-sizing: border-box;  
 }
 
 .node-box:hover {
@@ -69,8 +69,9 @@ body {
   color: #ddd;
 }
 
+/* ตารางข้อมูล */
 .table-wrapper {
-  max-width: 1100px;
+  max-width: 11000px;
   margin: 0 auto;
   background: rgba(255, 255, 255, 0.1);
   padding: 20px;
@@ -114,15 +115,7 @@ tbody tr:hover {
   transition: background 0.3s ease;
 }
 
-.chart-section {
-  margin: 40px auto;
-  max-width: 1000px;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-}
-
+/* Responsive */
 @media (max-width: 650px) {
   .container {
     flex-direction: column;
@@ -144,4 +137,5 @@ tbody tr:hover {
     font-size: 0.9rem;
     min-width: 100%;
   }
+  
 }
