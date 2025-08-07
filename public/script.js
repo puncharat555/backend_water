@@ -3,8 +3,6 @@ let allData = [];      // เก็บข้อมูลทั้งหมด
 let currentIndex = 0;  // ตำแหน่งเริ่มแสดงใน allData
 const pageSize = 10;   // จำนวนแถวต่อหน้า
 
-let chart30d, chart1h, batteryChart;
-
 // โหลดข้อมูลปัจจุบันแสดงใน node และตาราง
 async function loadData() {
   try {
@@ -34,9 +32,6 @@ async function loadData() {
       document.getElementById('currentNode2').innerText = (latest.i_node2 && latest.i_node2 > 0) ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
       document.getElementById('timeNode2').innerText = latest.time_node2 || 'เวลาวัด: -';
     }
-
-    // อัปเดตกราฟทุกครั้งที่โหลดข้อมูลเสร็จ
-    await updateCharts();
 
   } catch (error) {
     console.error('Load data error:', error);
@@ -149,153 +144,142 @@ function parseChartData(data) {
   return { labels, waterLevels, voltagesNode1, voltagesNode2 };
 }
 
-// สร้างกราฟตอนโหลดหน้า
+// สร้างกราฟทั้งหมด พร้อมสลับจุดข้อมูลให้กลับด้าน
 async function createCharts() {
-  const data30d = await fetchHistoricalData('30d');
-  const data1h = await fetchHistoricalData('1h');
+  try {
+    const data30d = await fetchHistoricalData('30d');
+    const data1h = await fetchHistoricalData('1h');
 
-  const parsed30d = parseChartData(data30d);
-  const parsed1h = parseChartData(data1h);
+    const parsed30d = parseChartData(data30d);
+    const parsed1h = parseChartData(data1h);
 
-  const ctx30d = document.getElementById('waterLevelChart30d').getContext('2d');
-  chart30d = new Chart(ctx30d, {
-    type: 'line',
-    data: {
-      labels: parsed30d.labels,
-      datasets: [{
-        label: 'ระดับน้ำ (cm)',
-        data: parsed30d.waterLevels,
-        borderColor: '#00c0ff',
-        backgroundColor: 'rgba(0,192,255,0.2)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
-        pointBackgroundColor: '#00c0ff',
-      }],
-    },
-    options: {
-      spanGaps: true,
-      scales: {
-        x: { ticks: { display: false }, grid: { drawTicks: false } },
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
-          ticks: { color: 'white' }
-        }
-      },
-      plugins: {
-        legend: { labels: { color: 'white' } },
-        tooltip: { mode: 'index', intersect: false }
-      },
-      responsive: true,
-      maintainAspectRatio: true,
-    }
-  });
+    // สลับลำดับข้อมูลกลับด้าน (เพื่อสลับจุดกราฟ)
+    parsed30d.labels.reverse();
+    parsed30d.waterLevels.reverse();
+    parsed30d.voltagesNode1.reverse();
+    parsed30d.voltagesNode2.reverse();
 
-  const ctx1h = document.getElementById('waterLevelChart1h').getContext('2d');
-  chart1h = new Chart(ctx1h, {
-    type: 'line',
-    data: {
-      labels: parsed1h.labels,
-      datasets: [{
-        label: 'ระดับน้ำ (cm)',
-        data: parsed1h.waterLevels,
-        borderColor: '#0f0',
-        backgroundColor: 'rgba(0,255,0,0.2)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
-        pointBackgroundColor: 'rgba(0,255,0,0.7)',
-      }],
-    },
-    options: {
-      spanGaps: true,
-      scales: {
-        x: { ticks: { display: false }, grid: { drawTicks: false } },
-        y: { beginAtZero: true, ticks: { color: 'white' } }
-      },
-      plugins: {
-        legend: { labels: { color: 'white' } },
-        tooltip: { mode: 'index', intersect: false }
-      },
-      responsive: true,
-      maintainAspectRatio: false,
-    }
-  });
+    parsed1h.labels.reverse();
+    parsed1h.waterLevels.reverse();
 
-  const ctxBattery = document.getElementById('batteryChart').getContext('2d');
-  batteryChart = new Chart(ctxBattery, {
-    type: 'line',
-    data: {
-      labels: parsed30d.labels,
-      datasets: [
-        {
-          label: 'แรงดัน Node 1 (V)',
-          data: parsed30d.voltagesNode1,
-          borderColor: '#ff7f00',
-          backgroundColor: 'rgba(255,127,0,0.2)',
+    // กราฟ 30 วัน
+    const ctx30d = document.getElementById('waterLevelChart30d').getContext('2d');
+    new Chart(ctx30d, {
+      type: 'line',
+      data: {
+        labels: parsed30d.labels,
+        datasets: [{
+          label: 'ระดับน้ำ (cm)',
+          data: parsed30d.waterLevels,
+          borderColor: '#00c0ff',
+          backgroundColor: 'rgba(0,192,255,0.2)',
           fill: true,
           tension: 0.3,
           pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
-          pointBackgroundColor: '#ff7f00',
+          pointBackgroundColor: '#00c0ff',
+        }],
+      },
+      options: {
+        spanGaps: true,
+        scales: {
+          x: { ticks: { display: false }, grid: { drawTicks: false } },
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
+            ticks: { color: 'white' }
+          }
         },
-        {
-          label: 'แรงดัน Node 2 (V)',
-          data: parsed30d.voltagesNode2,
-          borderColor: '#007fff',
-          backgroundColor: 'rgba(0,127,255,0.2)',
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: true,
+      }
+    });
+
+    // กราฟ 1 ชั่วโมง
+    const ctx1h = document.getElementById('waterLevelChart1h').getContext('2d');
+    new Chart(ctx1h, {
+      type: 'line',
+      data: {
+        labels: parsed1h.labels,
+        datasets: [{
+          label: 'ระดับน้ำ (cm)',
+          data: parsed1h.waterLevels,
+          borderColor: '#0f0',
+          backgroundColor: 'rgba(0,255,0,0.2)',
           fill: true,
           tension: 0.3,
           pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
-          pointBackgroundColor: '#007fff',
-        }
-      ],
-    },
-    options: {
-      spanGaps: true,
-      scales: {
-        x: { ticks: { display: false }, grid: { drawTicks: false } },
-        y: {
-          beginAtZero: false,
-          ticks: { color: 'white' },
-          title: { display: true, text: 'แรงดัน (V)', color: 'white' }
-        }
+          pointBackgroundColor: 'rgba(0,255,0,0.2)',
+        }],
       },
-      plugins: {
-        legend: { labels: { color: 'white' } },
-        tooltip: { mode: 'index', intersect: false }
+      options: {
+        spanGaps: true,
+        scales: {
+          x: { ticks: { display: false }, grid: { drawTicks: false } },
+          y: { beginAtZero: true, ticks: { color: 'white' } }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    });
+
+    // กราฟแบตเตอรี่
+    const ctxBattery = document.getElementById('batteryChart').getContext('2d');
+    new Chart(ctxBattery, {
+      type: 'line',
+      data: {
+        labels: parsed30d.labels,
+        datasets: [
+          {
+            label: 'แรงดัน Node 1 (V)',
+            data: parsed30d.voltagesNode1,
+            borderColor: '#ff7f00',
+            backgroundColor: 'rgba(255,127,0,0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+            pointBackgroundColor: '#ff7f00',
+          },
+          {
+            label: 'แรงดัน Node 2 (V)',
+            data: parsed30d.voltagesNode2,
+            borderColor: '#007fff',
+            backgroundColor: 'rgba(0,127,255,0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+            pointBackgroundColor: '#007fff',
+          }
+        ],
       },
-      responsive: true,
-      maintainAspectRatio: false,
-    }
-  });
-}
+      options: {
+        spanGaps: true,
+        scales: {
+          x: { ticks: { display: false }, grid: { drawTicks: false } },
+          y: {
+            beginAtZero: false,
+            ticks: { color: 'white' },
+            title: { display: true, text: 'แรงดัน (V)', color: 'white' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    });
 
-// ฟังก์ชันอัปเดตข้อมูลกราฟเมื่อข้อมูลเปลี่ยน
-async function updateCharts() {
-  const data30d = await fetchHistoricalData('30d');
-  const data1h = await fetchHistoricalData('1h');
-
-  const parsed30d = parseChartData(data30d);
-  const parsed1h = parseChartData(data1h);
-
-  if (chart30d) {
-    chart30d.data.labels = parsed30d.labels;
-    chart30d.data.datasets[0].data = parsed30d.waterLevels;
-    chart30d.update();
-  }
-
-  if (chart1h) {
-    chart1h.data.labels = parsed1h.labels;
-    chart1h.data.datasets[0].data = parsed1h.waterLevels;
-    chart1h.update();
-  }
-
-  if (batteryChart) {
-    batteryChart.data.labels = parsed30d.labels;
-    batteryChart.data.datasets[0].data = parsed30d.voltagesNode1;
-    batteryChart.data.datasets[1].data = parsed30d.voltagesNode2;
-    batteryChart.update();
+  } catch (err) {
+    console.error('Error creating charts:', err);
   }
 }
 
