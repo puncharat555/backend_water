@@ -3,7 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <title>Water Level Monitoring</title>
+
+  <!-- CSS -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+4Z9n9DQG9Pk5VZI17jxog0RpLFbqGXwLhGh6c6GI="
+    crossorigin=""
+  />
 </head>
 <body>
   <h1 class="title">Water Level Monitoring</h1>
@@ -36,16 +46,19 @@
 
   <div class="charts-container">
     <div class="chart-box">
-      <h3>กราฟระดับน้ำย้อนหลัง 30 วัน</h3>
-      <canvas id="waterLevelChart30d" height="300"></canvas>
+      <h3>ระดับน้ำย้อนหลัง 30 วัน</h3>
+      <canvas id="waterLevelChart30d"></canvas>
     </div>
     <div class="chart-box">
-      <h3>กราฟระดับน้ำย้อนหลัง 1 ชั่วโมง</h3>
-      <canvas id="waterLevelChart1h" height="300"></canvas>
+      <h3>ระดับน้ำย้อนหลัง 1 ชั่วโมง</h3>
+      <canvas id="waterLevelChart1h"></canvas>
     </div>
     <div class="chart-box">
-      <h3>กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2</h3>
-      <canvas id="batteryChart" height="300"></canvas>
+      <h3>แรงดันแบตเตอรี่ (Node 1 & 2)</h3>
+      <canvas id="batteryChart"></canvas>
+    </div>
+    <div id="map" class="chart-box">
+      <h3>ตำแหน่งอุปกรณ์</h3>
     </div>
   </div>
 
@@ -70,8 +83,17 @@
     </table>
   </div>
 
-  <!-- Chart.js CDN -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-o9N1j3R4eL7kZFtqJ0m+dVqEGKkPtxT1N0uJ7+MoC0M="
+    crossorigin=""
+  ></script>
+
+  <!-- Script -->
   <script src="script.js"></script>
 </body>
 </html>

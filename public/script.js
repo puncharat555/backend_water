@@ -36,7 +36,7 @@ async function loadData() {
 
       document.getElementById('waterLevelNode1').innerText =
         latest.distance > 0 ? `ระดับน้ำ: ${level} cm` : 'ระดับน้ำ: -';
-
+        
       document.getElementById('rssiNode1').innerText =
         latest.rssi_node1 !== undefined ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
 
@@ -95,12 +95,11 @@ function parseChartData(data) {
     const timeLabel = item.time_node1 || item.time_node2 || '';
     labels.push(timeLabel);
 
-    // ถ้าค่าผิดปกติหรือ 0 ให้เก็บเป็น null เพื่อไม่แสดงจุดในกราฟ
-    const level = (item.distance && item.distance > 0) ? Number((120 - item.distance).toFixed(2)) : null;
+    const level = item.distance > 0 ? (120 - item.distance).toFixed(2) : null;
     waterLevels.push(level);
 
-    voltagesNode1.push(item.v_node1 > 0 ? item.v_node1 : null);
-    voltagesNode2.push(item.v_node2 > 0 ? item.v_node2 : null);
+    voltagesNode1.push(item.v_node1 || null);
+    voltagesNode2.push(item.v_node2 || null);
   });
 
   return { labels, waterLevels, voltagesNode1, voltagesNode2 };
@@ -133,107 +132,4 @@ async function createCharts() {
       options: {
         scales: {
           x: { 
-            ticks: { display: false }, // ซ่อนเวลาใต้แกน X
-            grid: { drawTicks: false }
-          },
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
-            ticks: { color: 'white' }
-          }
-        },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: true,
-      }
-    });
-
-    // กราฟระดับน้ำ 1 ชั่วโมง
-    const ctx1h = document.getElementById('waterLevelChart1h').getContext('2d');
-    new Chart(ctx1h, {
-      type: 'line',
-      data: {
-        labels: parsed1h.labels,
-        datasets: [{
-          label: 'ระดับน้ำ (cm)',
-          data: parsed1h.waterLevels,
-          borderColor: '#0f0',
-          backgroundColor: 'rgba(0,255,0,0.2)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 0,
-        }],
-      },
-      options: {
-        scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } }, // ซ่อนเวลาใต้แกน X
-          y: { beginAtZero: true, ticks: { color: 'white' } }
-        },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-      }
-    });
-
-    // กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2 (30 วัน)
-    const ctxBattery = document.getElementById('batteryChart').getContext('2d');
-    new Chart(ctxBattery, {
-      type: 'line',
-      data: {
-        labels: parsed30d.labels,
-        datasets: [
-          {
-            label: 'แรงดัน Node 1 (V)',
-            data: parsed30d.voltagesNode1,
-            borderColor: '#ff7f00',
-            backgroundColor: 'rgba(255,127,0,0.2)',
-            fill: true,
-            tension: 0.3,
-            pointRadius: 0,
-          },
-          {
-            label: 'แรงดัน Node 2 (V)',
-            data: parsed30d.voltagesNode2,
-            borderColor: '#007fff',
-            backgroundColor: 'rgba(0,127,255,0.2)',
-            fill: true,
-            tension: 0.3,
-            pointRadius: 0,
-          }
-        ],
-      },
-      options: {
-        scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } }, // ซ่อนเวลาใต้แกน X
-          y: {
-            beginAtZero: false,
-            ticks: { color: 'white' },
-            title: { display: true, text: 'แรงดัน (V)', color: 'white' }
-          }
-        },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-      }
-    });
-
-  } catch(err) {
-    console.error('Error creating charts:', err);
-  }
-}
-
-// โหลดข้อมูลทุก 5 วินาที
-loadData();
-setInterval(loadData, 5000);
-
-// สร้างกราฟตอนโหลดหน้าเว็บ
-createCharts();
+            ticks: { color: 'white',
