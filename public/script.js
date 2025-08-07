@@ -409,4 +409,5 @@ function updateErrorList(data) {
 
 // เริ่มโหลดข้อมูลและอัปเดตทุก 5 วินาที
 loadData(); 
-setInterval(loadData, 5000); // สร้างกราฟตอนโหลดหน้า createCharts();
+setInterval(loadData, 5000); // สร้างกราฟตอนโหลดหน้า 
+createCharts();
