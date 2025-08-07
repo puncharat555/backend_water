@@ -88,6 +88,37 @@
       <tbody></tbody>
     </table>
   </div>
+  <div class="table-wrapper">
+  <h3>
+    📋 ประวัติข้อมูล
+    <span class="error-toggle" onclick="toggleErrorBox()">❗</span>
+  </h3>
+  
+  <div id="errorBox" class="error-box hidden">
+    <h4>รายการข้อมูลผิดปกติ</h4>
+    <ul id="errorList">
+      <!-- เติมจาก JS -->
+    </ul>
+  </div>
+
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>ระดับน้ำดิบ (cm)</th>
+        <th>ระดับน้ำ (cm)</th>
+        <th>RSSI Node1</th>
+        <th>RSSI Node2</th>
+        <th>V Node1</th>
+        <th>I Node1</th>
+        <th>V Node2</th>
+        <th>I Node2</th>
+        <th>เวลาวัด Node1</th>
+        <th>เวลาวัด Node2</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
 
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

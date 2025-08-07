@@ -168,6 +168,32 @@ tbody tr:hover {
   margin-top: 8px;
 }
 
+.error-toggle {
+  cursor: pointer;
+  color: red;
+  margin-left: 10px;
+  font-size: 18px;
+}
+
+.error-box {
+  background-color: #ffe6e6;
+  border: 1px solid #ff0000;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.error-box.hidden {
+  display: none;
+}
+
+.error-box h4 {
+  margin-top: 0;
+  color: #cc0000;
+}
+
 
 #map {
   height: 400px;
