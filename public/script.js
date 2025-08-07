@@ -203,7 +203,8 @@ async function createCharts() {
           backgroundColor: 'rgba(0,255,0,0.2)',
           fill: true,
           tension: 0.3,
-          pointRadius: 0,
+          pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+          pointBackgroundColor: 'rgba(0,255,0,0.2)',
         }],
       },
       options: {
@@ -235,7 +236,8 @@ async function createCharts() {
             backgroundColor: 'rgba(255,127,0,0.2)',
             fill: true,
             tension: 0.3,
-            pointRadius: 0,
+            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+            pointBackgroundColor: '#ff7f00',
           },
           {
             label: 'แรงดัน Node 2 (V)',
@@ -244,7 +246,8 @@ async function createCharts() {
             backgroundColor: 'rgba(0,127,255,0.2)',
             fill: true,
             tension: 0.3,
-            pointRadius: 0,
+            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+            pointBackgroundColor: '#007fff',
           }
         ],
       },
