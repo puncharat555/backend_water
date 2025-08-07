@@ -141,15 +141,8 @@ tbody tr:hover {
   margin-bottom: 15px;
   text-align: center;
 }
+
 .chart-box.map-box {
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  width: 100%;
-  max-width: 600px;
-  color: white;
   margin: 20px auto;
   text-align: center;
 }
@@ -176,6 +169,7 @@ tbody tr:hover {
 }
 
 .error-box {
+  color: #000000;
   background-color: #ffe6e6;
   border: 1px solid #ff0000;
   padding: 10px;
@@ -193,33 +187,6 @@ tbody tr:hover {
   margin-top: 0;
   color: #cc0000;
 }
-.error-toggle {
-  cursor: pointer;
-  color: red;
-  margin-left: 10px;
-  font-size: 18px;
-}
-
-.error-box {
-  background-color: #ffe6e6;
-  border: 1px solid #ff0000;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 6px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.error-box.hidden {
-  display: none;
-}
-
-.error-box h4 {
-  margin-top: 0;
-  color: #cc0000;
-}
-
-
 
 #map {
   height: 400px;
@@ -260,6 +227,7 @@ tbody tr:hover {
     max-width: 100%;
   }
 }
+
 .chart-box canvas {
   width: 100% !important;
   max-width: 600px;
