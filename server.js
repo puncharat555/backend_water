@@ -85,26 +85,12 @@ app.post('/distance', async (req, res) => {
   }
 });
 
-// GET /distance ดึงข้อมูล โดยรองรับ range=30d หรือ 1h
+// GET /distance ดึงข้อมูล 100 รายการล่าสุด
 app.get('/distance', async (req, res) => {
-  const { range } = req.query;
-  let filter = {};
-
-  if (range) {
-    const now = new Date();
-    let fromDate;
-    if (range === '1h') {
-      fromDate = new Date(now.getTime() - 60 * 60 * 1000); // 1 ชั่วโมงก่อน
-    } else if (range === '30d') {
-      fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 วันก่อน
-    }
-    if (fromDate) filter.timestamp = { $gte: fromDate };
-  }
-
   try {
     const db = client.db('esp32_data');
     const collection = db.collection('distances');
-    const distances = await collection.find(filter).sort({ timestamp: -1 }).limit(1000).toArray();
+    const distances = await collection.find().sort({ timestamp: -1 }).limit(100).toArray();
 
     // ป้องกัน cache ฝั่ง client และ proxy
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -113,10 +99,10 @@ app.get('/distance', async (req, res) => {
 
     res.json(distances);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 async function startServer() {
   try {
