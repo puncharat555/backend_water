@@ -208,11 +208,11 @@ async function createCharts() {
           label: 'ระดับน้ำ (cm)',
           data: parsed1h.waterLevels,
           borderColor: '#0f0',
-          backgroundColor: 'rgba(0,255,0,0.2)',
+          backgroundColor: 'rgba(29, 233, 29, 0.2)',
           fill: true,
           tension: 0.3,
           pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
-          pointBackgroundColor: 'rgba(0,255,0,0.2)',
+          pointBackgroundColor: 'rgba(29, 241, 29, 0.83)',
         }],
       },
       options: {
