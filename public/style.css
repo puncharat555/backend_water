@@ -179,4 +179,5 @@ tbody tr:hover {
   height: 300px !important;
   display: block;
   margin: 0 auto;
+  object-fit: contain;
 }
