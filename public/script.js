@@ -223,18 +223,37 @@ async function createCharts() {
         }],
       },
       options: {
-        spanGaps: true,
-        scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } },
-          y: { beginAtZero: true, ticks: { color: 'white' } }
-        },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
+  spanGaps: true,
+  scales: {
+    x: {
+      ticks: { display: false },
+      grid: { drawTicks: false }
+    },
+    y: {
+      beginAtZero: true,
+      ticks: { color: 'white' }
+    }
+  },
+  plugins: {
+    legend: {
+      labels: { color: 'white' }
+    },
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+      filter: function (tooltipItem) {
+        const dataset = tooltipItem.dataset;
+        const index = tooltipItem.dataIndex;
+        return typeof dataset.pointRadius === 'function'
+          ? dataset.pointRadius({ dataIndex: index }) > 0
+          : dataset.pointRadius > 0;
       }
+    }
+  },
+  responsive: true,
+  maintainAspectRatio: false,
+}
+
     });
 
     // กราฟแบตเตอรี่
