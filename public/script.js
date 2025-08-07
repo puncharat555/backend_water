@@ -132,4 +132,119 @@ async function createCharts() {
       options: {
         scales: {
           x: { 
-            ticks: { color: 'white',
+            ticks: { color: 'white', maxRotation: 45, minRotation: 30 },
+            title: { display: true, text: 'เวลา', color: 'white' }
+          },
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
+            ticks: { color: 'white' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: true,
+      }
+    });
+
+    // กราฟระดับน้ำ 1 ชั่วโมง
+    const ctx1h = document.getElementById('waterLevelChart1h').getContext('2d');
+    new Chart(ctx1h, {
+      type: 'line',
+      data: {
+        labels: parsed1h.labels,
+        datasets: [{
+          label: 'ระดับน้ำ (cm)',
+          data: parsed1h.waterLevels,
+          borderColor: '#0f0',
+          backgroundColor: 'rgba(0,255,0,0.2)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+        }],
+      },
+      options: {
+        scales: {
+          x: { ticks: { color: 'white' }, title: { display: true, text: 'เวลา', color: 'white' } },
+          y: { beginAtZero: true, ticks: { color: 'white' } }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    });
+
+    // กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2 (30 วัน)
+    const ctxBattery = document.getElementById('batteryChart').getContext('2d');
+    new Chart(ctxBattery, {
+      type: 'line',
+      data: {
+        labels: parsed30d.labels,
+        datasets: [
+          {
+            label: 'แรงดัน Node 1 (V)',
+            data: parsed30d.voltagesNode1,
+            borderColor: '#ff7f00',
+            backgroundColor: 'rgba(255,127,0,0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+          },
+          {
+            label: 'แรงดัน Node 2 (V)',
+            data: parsed30d.voltagesNode2,
+            borderColor: '#007fff',
+            backgroundColor: 'rgba(0,127,255,0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+          }
+        ],
+      },
+      options: {
+        scales: {
+          x: { ticks: { color: 'white' }, title: { display: true, text: 'เวลา', color: 'white' } },
+          y: { beginAtZero: false, ticks: { color: 'white' }, title: { display: true, text: 'แรงดัน (V)', color: 'white' } }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      }
+    });
+
+  } catch(err) {
+    console.error('Error creating charts:', err);
+  }
+}
+
+// สร้างแผนที่ Leaflet
+function initMap() {
+  const map = L.map('map').setView([19.030471, 99.884592], 15);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  const marker = L.marker([19.030471, 99.884592]).addTo(map);
+  marker.bindPopup("<b>ตำแหน่งอุปกรณ์</b><br>19.030471, 99.884592").openPopup();
+}
+
+// โหลดข้อมูลทุก 5 วินาที
+loadData();
+setInterval(loadData, 5000);
+
+// สร้างกราฟและแผนที่ตอนโหลดหน้าเว็บ
+window.onload = () => {
+  createCharts();
+  initMap();
+};
