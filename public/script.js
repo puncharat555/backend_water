@@ -36,7 +36,7 @@ async function loadData() {
 
       document.getElementById('waterLevelNode1').innerText =
         latest.distance > 0 ? `ระดับน้ำ: ${level} cm` : 'ระดับน้ำ: -';
-
+        
       document.getElementById('rssiNode1').innerText =
         latest.rssi_node1 !== undefined ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
 
