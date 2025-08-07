@@ -1,40 +1,29 @@
-const fixedDepth = 120; // ความลึกตายตัว
+const fixedDepth = 120;
 
-// ฟังก์ชันช่วยแสดงค่าหากเป็น 0 หรือ undefined ให้แสดง "-"
-function displayValue(val, unit = '') {
-  if (val === undefined || val === null || val === 0) {
-    return '-';
-  }
-  return `${val} ${unit}`.trim();
-}
-
-let waterLevelChart, waterLevelChart1h, batteryChart;
-
+// โหลดข้อมูลปัจจุบันแสดงใน node และตาราง
 async function loadData() {
   try {
     const url = `https://backend-water-rf88.onrender.com/distance?_=${Date.now()}`;
     const res = await fetch(url, { cache: 'no-store' });
     const data = await res.json();
 
-    // console.log('Data from API:', data);
-
     const tbody = document.querySelector('#dataTable tbody');
     tbody.innerHTML = '';
 
     data.forEach(item => {
       const level = (fixedDepth - item.distance).toFixed(1);
-      const distanceRaw = (item.distance && item.distance !== 0) ? item.distance.toFixed(1) : '-';
+      const distanceRaw = item.distance > 0 ? item.distance.toFixed(1) : '-';
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${distanceRaw}</td>
         <td>${item.distance > 0 ? level : '-'}</td>
-        <td>${item.rssi_node1 !== undefined && item.rssi_node1 !== 0 ? item.rssi_node1 : '-'}</td>
-        <td>${item.rssi_node2 !== undefined && item.rssi_node2 !== 0 ? item.rssi_node2 : '-'}</td>
-        <td>${item.v_node1 !== undefined && item.v_node1 !== 0 ? item.v_node1 + ' V' : '-'}</td>
-        <td>${item.i_node1 !== undefined && item.i_node1 !== 0 ? item.i_node1 + ' mA' : '-'}</td>
-        <td>${item.v_node2 !== undefined && item.v_node2 !== 0 ? item.v_node2 + ' V' : '-'}</td>
-        <td>${item.i_node2 !== undefined && item.i_node2 !== 0 ? item.i_node2 + ' mA' : '-'}</td>
+        <td>${item.rssi_node1 !== undefined ? item.rssi_node1 : '-'}</td>
+        <td>${item.rssi_node2 !== undefined ? item.rssi_node2 : '-'}</td>
+        <td>${item.v_node1 !== undefined ? item.v_node1 + ' V' : '-'}</td>
+        <td>${item.i_node1 !== undefined ? item.i_node1 + ' mA' : '-'}</td>
+        <td>${item.v_node2 !== undefined ? item.v_node2 + ' V' : '-'}</td>
+        <td>${item.i_node2 !== undefined ? item.i_node2 + ' mA' : '-'}</td>
         <td>${item.time_node1 || '-'}</td>
         <td>${item.time_node2 || '-'}</td>
       `;
@@ -46,38 +35,35 @@ async function loadData() {
       const level = (fixedDepth - latest.distance).toFixed(1);
 
       document.getElementById('waterLevelNode1').innerText =
-        (latest.distance && latest.distance !== 0) ? `ระดับน้ำ: ${level} cm` : 'ระดับน้ำ: -';
-
+        latest.distance > 0 ? `ระดับน้ำ: ${level} cm` : 'ระดับน้ำ: -';
+        
       document.getElementById('rssiNode1').innerText =
-        'RSSI: ' + displayValue(latest.rssi_node1);
+        latest.rssi_node1 !== undefined ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
 
       document.getElementById('voltageNode1').innerText =
-        'แรงดัน: ' + displayValue(latest.v_node1, 'V');
+        latest.v_node1 !== undefined ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
 
       document.getElementById('currentNode1').innerText =
-        'กระแส: ' + displayValue(latest.i_node1, 'mA');
+        latest.i_node1 !== undefined ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
 
       document.getElementById('timeNode1').innerText =
         latest.time_node1 || 'เวลาวัด: -';
 
       document.getElementById('rssiNode2').innerText =
-        'RSSI: ' + displayValue(latest.rssi_node2);
+        latest.rssi_node2 !== undefined ? `RSSI: ${latest.rssi_node2}` : 'RSSI: -';
 
       document.getElementById('voltageNode2').innerText =
-        'แรงดัน: ' + displayValue(latest.v_node2, 'V');
+        latest.v_node2 !== undefined ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
 
       document.getElementById('currentNode2').innerText =
-        'กระแส: ' + displayValue(latest.i_node2, 'mA');
+        latest.i_node2 !== undefined ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
 
       document.getElementById('timeNode2').innerText =
         latest.time_node2 || 'เวลาวัด: -';
     }
 
-    updateCharts(data);
-
   } catch (error) {
-    // ถ้าจะซ่อน error log ให้คอมเมนต์บรรทัดนี้
-    // console.error('Load data error:', error);
+    console.error('Load data error:', error);
 
     ['waterLevelNode1', 'rssiNode1', 'voltageNode1', 'currentNode1', 'timeNode1',
      'rssiNode2', 'voltageNode2', 'currentNode2', 'timeNode2'].forEach(id => {
@@ -86,146 +72,163 @@ async function loadData() {
     });
 
     const waterLevelEl = document.getElementById('waterLevelNode1');
-    if (waterLevelEl) waterLevelEl.innerText = '-';
+    if (waterLevelEl) waterLevelEl.innerText = 'โหลดข้อมูลล้มเหลว';
   }
 }
 
-// สร้างและอัพเดตกราฟ
-function updateCharts(data) {
-  // เตรียมข้อมูลกราฟย้อนหลัง 30 วัน (สมมติข้อมูลล่าสุด 100 รายการแทน)
-  const labels30d = data.slice().reverse().map(item => item.time_node1 || '');
-  const waterLevels30d = data.slice().reverse().map(item =>
-    (item.distance && item.distance !== 0) ? (fixedDepth - item.distance).toFixed(1) : null
-  );
+// โหลดข้อมูลย้อนหลัง (สมมติ API รองรับ ?range=30d หรือ 1h)
+async function fetchHistoricalData(range = '30d') {
+  const url = `https://backend-water-rf88.onrender.com/distance?range=${range}&_=${Date.now()}`;
+  const res = await fetch(url, { cache: 'no-store' });
+  const data = await res.json();
+  return data;
+}
 
-  // กราฟย้อนหลัง 1 ชั่วโมง (สมมติข้อมูล 12 รายการหลังสุด)
-  const recent1h = data.slice(0, 12).reverse();
-  const labels1h = recent1h.map(item => item.time_node1 || '');
-  const waterLevels1h = recent1h.map(item =>
-    (item.distance && item.distance !== 0) ? (fixedDepth - item.distance).toFixed(1) : null
-  );
+// แปลงข้อมูลสำหรับกราฟ
+function parseChartData(data) {
+  const labels = [];
+  const waterLevels = [];
+  const voltagesNode1 = [];
+  const voltagesNode2 = [];
 
-  // กราฟแบตเตอรี่ (เอาแรงดัน node1 สมมติแทน)
-  const batteryLevels = data.slice().reverse().map(item =>
-    (item.v_node1 && item.v_node1 !== 0) ? item.v_node1 : null
-  );
+  data.forEach(item => {
+    const timeLabel = item.time_node1 || item.time_node2 || '';
+    labels.push(timeLabel);
 
-  // สร้างกราฟถ้ายังไม่มี หรืออัพเดตถ้ามีแล้ว
-  if (!waterLevelChart) {
-    waterLevelChart = new Chart(document.getElementById('waterLevelChart'), {
+    const level = item.distance > 0 ? (120 - item.distance).toFixed(2) : null;
+    waterLevels.push(level);
+
+    voltagesNode1.push(item.v_node1 || null);
+    voltagesNode2.push(item.v_node2 || null);
+  });
+
+  return { labels, waterLevels, voltagesNode1, voltagesNode2 };
+}
+
+async function createCharts() {
+  try {
+    const data30d = await fetchHistoricalData('30d');
+    const data1h = await fetchHistoricalData('1h');
+
+    const parsed30d = parseChartData(data30d);
+    const parsed1h = parseChartData(data1h);
+
+    // กราฟระดับน้ำ 30 วัน
+    const ctx30d = document.getElementById('waterLevelChart30d').getContext('2d');
+    new Chart(ctx30d, {
       type: 'line',
       data: {
-        labels: labels30d,
+        labels: parsed30d.labels,
         datasets: [{
           label: 'ระดับน้ำ (cm)',
-          data: waterLevels30d,
-          borderColor: '#00bfff',
-          backgroundColor: 'rgba(0,191,255,0.2)',
+          data: parsed30d.waterLevels,
+          borderColor: '#00c0ff',
+          backgroundColor: 'rgba(0,192,255,0.2)',
           fill: true,
           tension: 0.3,
-          spanGaps: true
-        }]
+          pointRadius: 0,
+        }],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: true,
         scales: {
-          x: {
-            ticks: { display: false },
-            grid: { drawTicks: false }
+          x: { 
+            ticks: { color: 'white', maxRotation: 45, minRotation: 30 },
+            title: { display: true, text: 'เวลา', color: 'white' }
           },
           y: {
-            beginAtZero: true
+            beginAtZero: true,
+            title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
+            ticks: { color: 'white' }
           }
         },
         plugins: {
-          legend: { labels: { color: 'white' } }
-        }
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: true,
       }
     });
-  } else {
-    waterLevelChart.data.labels = labels30d;
-    waterLevelChart.data.datasets[0].data = waterLevels30d;
-    waterLevelChart.update();
-  }
 
-  if (!waterLevelChart1h) {
-    waterLevelChart1h = new Chart(document.getElementById('waterLevelChart1h'), {
+    // กราฟระดับน้ำ 1 ชั่วโมง
+    const ctx1h = document.getElementById('waterLevelChart1h').getContext('2d');
+    new Chart(ctx1h, {
       type: 'line',
       data: {
-        labels: labels1h,
+        labels: parsed1h.labels,
         datasets: [{
-          label: 'ระดับน้ำ 1 ชั่วโมง (cm)',
-          data: waterLevels1h,
-          borderColor: '#00ff7f',
-          backgroundColor: 'rgba(0,255,127,0.2)',
+          label: 'ระดับน้ำ (cm)',
+          data: parsed1h.waterLevels,
+          borderColor: '#0f0',
+          backgroundColor: 'rgba(0,255,0,0.2)',
           fill: true,
           tension: 0.3,
-          spanGaps: true
-        }]
+          pointRadius: 0,
+        }],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: true,
         scales: {
-          x: {
-            ticks: { display: false },
-            grid: { drawTicks: false }
-          },
-          y: {
-            beginAtZero: true
-          }
+          x: { ticks: { color: 'white' }, title: { display: true, text: 'เวลา', color: 'white' } },
+          y: { beginAtZero: true, ticks: { color: 'white' } }
         },
         plugins: {
-          legend: { labels: { color: 'white' } }
-        }
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
       }
     });
-  } else {
-    waterLevelChart1h.data.labels = labels1h;
-    waterLevelChart1h.data.datasets[0].data = waterLevels1h;
-    waterLevelChart1h.update();
-  }
 
-  if (!batteryChart) {
-    batteryChart = new Chart(document.getElementById('batteryChart'), {
+    // กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2 (30 วัน)
+    const ctxBattery = document.getElementById('batteryChart').getContext('2d');
+    new Chart(ctxBattery, {
       type: 'line',
       data: {
-        labels: labels30d,
-        datasets: [{
-          label: 'แรงดันแบตเตอรี่ Node1 (V)',
-          data: batteryLevels,
-          borderColor: '#ffa500',
-          backgroundColor: 'rgba(255,165,0,0.2)',
-          fill: true,
-          tension: 0.3,
-          spanGaps: true
-        }]
+        labels: parsed30d.labels,
+        datasets: [
+          {
+            label: 'แรงดัน Node 1 (V)',
+            data: parsed30d.voltagesNode1,
+            borderColor: '#ff7f00',
+            backgroundColor: 'rgba(255,127,0,0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+          },
+          {
+            label: 'แรงดัน Node 2 (V)',
+            data: parsed30d.voltagesNode2,
+            borderColor: '#007fff',
+            backgroundColor: 'rgba(0,127,255,0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+          }
+        ],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: true,
         scales: {
-          x: {
-            ticks: { display: false },
-            grid: { drawTicks: false }
-          },
-          y: {
-            beginAtZero: true
-          }
+          x: { ticks: { color: 'white' }, title: { display: true, text: 'เวลา', color: 'white' } },
+          y: { beginAtZero: false, ticks: { color: 'white' }, title: { display: true, text: 'แรงดัน (V)', color: 'white' } }
         },
         plugins: {
-          legend: { labels: { color: 'white' } }
-        }
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
       }
     });
-  } else {
-    batteryChart.data.labels = labels30d;
-    batteryChart.data.datasets[0].data = batteryLevels;
-    batteryChart.update();
+
+  } catch(err) {
+    console.error('Error creating charts:', err);
   }
 }
 
-// เริ่มโหลดข้อมูลและอัพเดตทุก 5 วินาที
+// โหลดข้อมูลทุก 5 วินาที
 loadData();
 setInterval(loadData, 5000);
+
+// สร้างกราฟตอนโหลดหน้าเว็บ
+createCharts();
