@@ -437,25 +437,35 @@ async function createCurrentChart(range = '30d') {
         ],
       },
       options: {
-  scales: {
-    x: {
-      type: 'time',
-      time: {
-        unit: 'hour',
-        stepSize: 6, // แสดงทุก 6 ชั่วโมง
-        displayFormats: {
-          hour: 'HH:mm' // รูปแบบเวลา
-        }
-      },
-      ticks: {
-        maxRotation: 0,
-        autoSkip: true
+        spanGaps: true,
+        scales: {
+          x: {
+            ticks: {
+              display: true,
+              color: 'white',
+              maxRotation: 45,
+              minRotation: 45,
+              maxTicksLimit: 3
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255,255,255,0.1)'
+            }
+          },
+          y: {
+            beginAtZero: false,
+            ticks: { color: 'white' },
+            title: { display: true, text: 'กระแส (mA)', color: 'white' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
       }
-    }
-  }
-}
-
-
     });
   } catch (err) {
     console.error('Error creating current chart:', err);
