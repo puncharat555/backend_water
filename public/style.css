@@ -225,6 +225,7 @@ tbody tr:hover {
   pointer-events: none !important;
 }
 
+
 .error-toggle {
   cursor: pointer;
   color: #ff4d4d;
@@ -290,13 +291,9 @@ tbody tr:hover {
   }
 
   .chart-box canvas {
-  width: 100% !important;    /* ให้เต็มความกว้างของ container */
-  height: auto !important;   /* ความสูงปรับตามอัตราส่วน */
-  max-height: 350px;         /* จำกัดสูงสุด เพื่อไม่ให้สูงเกิน */
-  display: block;            /* ป้องกัน margin/padding */
-  margin: 0 auto;            /* จัดกึ่งกลาง */
-}
-
+    width: 100% !important;  
+    height: auto !important; 
+  }
 
   #map {
     width: 100%;
