@@ -66,24 +66,49 @@
 
   </div>
   <div class="chart-box map-box">
-    <h3>ตำแหน่งอุปกรณ์</h3>
-    <iframe
-      src="https://www.openstreetmap.org/export/embed.html?bbox=99.88309288024901%2C19.02912179695632%2C99.88599729537963%2C19.03181455375484&layer=mapnik&marker=19.030471%2C99.884592"
-      frameborder="0"
-      scrolling="no"
-      marginheight="0"
-      marginwidth="0"
-      width="100%"
-      height="300"
-      style="border:1px solid rgba(255,255,255,0.3); border-radius: 10px;"
-    ></iframe>
-    <br/>
-    <small style="text-align:center; display:block;">
-      <a href="https://www.openstreetmap.org/?mlat=19.030471&mlon=99.884592#map=19/19.030471/99.884592" target="_blank" rel="noopener noreferrer" style="color:#00c0ff; text-decoration:none;">
-        ดูแผนที่ขนาดใหญ่
-      </a>
-    </small>
-  </div>
+  <h3>ตำแหน่งอุปกรณ์</h3>
+  <div id="map" style="height: 300px; border: 1px solid rgba(255,255,255,0.3); border-radius: 10px;"></div>
+</div>
+
+<!-- ใส่ลิงก์ CSS และ JS ของ Leaflet ที่ท้าย body -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+  integrity="sha256-sA+oBvM7Jb8yv8mYvQip1PfwPpJd0Xv+f6tIBG3Y40c="
+  crossorigin=""
+/>
+<script
+  src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+  integrity="sha256-QVStxC6Xh3ixvNtV4z+0+otXKzE1a7mbU4o5pT4ZpZw="
+  crossorigin=""
+></script>
+
+<script>
+  // สร้างแผนที่
+  const map = L.map('map').setView([19.027566, 99.896737], 15);
+
+  // โหลดแผนที่จาก OpenStreetMap
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(map);
+
+  // กำหนดตำแหน่งปักหมุด 3 จุด
+  const locations = [
+    { lat: 19.027566, lng: 99.896737, title: "จุดวัดระดับน้ำ" },
+    { lat: 19.028286, lng: 99.892995, title: "จุดส่งต่อข้อมูล" },
+    { lat: 19.026849, lng: 99.900480, title: "จุดเก็บรับข้อมูล" },
+  ];
+
+  // วนลูปปักหมุดพร้อมแสดง popup ชื่อแต่ละจุด
+  locations.forEach(loc => {
+    L.marker([loc.lat, loc.lng])
+      .addTo(map)
+      .bindPopup(loc.title);
+  });
+</script>
+
 
   <div class="table-wrapper">
     <h3>
