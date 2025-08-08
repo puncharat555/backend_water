@@ -225,7 +225,7 @@ tbody tr:hover {
   pointer-events: none !important;
 }
 
-
+/* ซ่อน scrollbar ใน error box แบบสวย */
 .error-toggle {
   cursor: pointer;
   color: #ff4d4d;
