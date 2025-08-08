@@ -8,7 +8,6 @@ let waterLevelChartInstance = null;
 function setupHiDPICanvas(canvas) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
-  // ตั้งขนาด canvas ตามขนาด CSS * dpr
   canvas.width = canvas.clientWidth * dpr;
   canvas.height = canvas.clientHeight * dpr;
   ctx.scale(dpr, dpr);
@@ -213,7 +212,11 @@ async function createOneHourChart() {
     setupHiDPICanvas(canvas1h);
     const ctx1h = canvas1h.getContext('2d');
 
-    new Chart(ctx1h, {
+    if (window.oneHourChartInstance) {
+      window.oneHourChartInstance.destroy();
+    }
+
+    window.oneHourChartInstance = new Chart(ctx1h, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -259,7 +262,11 @@ async function createBatteryChart() {
     setupHiDPICanvas(canvasBattery);
     const ctxBattery = canvasBattery.getContext('2d');
 
-    new Chart(ctxBattery, {
+    if (window.batteryChartInstance) {
+      window.batteryChartInstance.destroy();
+    }
+
+    window.batteryChartInstance = new Chart(ctxBattery, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -321,7 +328,11 @@ async function createCurrentChart() {
     setupHiDPICanvas(canvasCurrent);
     const ctxCurrent = canvasCurrent.getContext('2d');
 
-    new Chart(ctxCurrent, {
+    if (window.currentChartInstance) {
+      window.currentChartInstance.destroy();
+    }
+
+    window.currentChartInstance = new Chart(ctxCurrent, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -437,7 +448,19 @@ function updateErrorList(data) {
   }
 }
 
+function refreshCharts() {
+  // รีเฟรชกราฟทั้งหมด
+  const activeRangeBtn = document.querySelector('#timeRangeButtons .range-btn.active');
+  const range = activeRangeBtn ? activeRangeBtn.getAttribute('data-range') : '30d';
+
+  createWaterLevelChart(range);
+  createOneHourChart();
+  createBatteryChart();
+  createCurrentChart();
+}
+
 function createCharts() {
+  // เริ่มต้นสร้างกราฟตามช่วงเวลาปัจจุบัน (30 วัน)
   createWaterLevelChart('30d');
   createOneHourChart();
   createBatteryChart();
@@ -448,12 +471,13 @@ document.addEventListener('DOMContentLoaded', () => {
   loadData();
   createCharts();
 
+  // รีเฟรชข้อมูลและกราฟทุก 5 วินาที
   setInterval(() => {
     loadData();
-    createCharts();
-  }, 60000);
+    refreshCharts();
+  }, 5000);
 
-  // ปุ่มเปลี่ยนช่วงเวลา กราฟระดับน้ำย้อนหลัง
+  // ปุ่มเลือกช่วงเวลาระดับน้ำย้อนหลัง
   document.querySelectorAll('#timeRangeButtons .range-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       document.querySelectorAll('#timeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
@@ -464,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ปุ่มแสดง/ซ่อนกล่องแสดงข้อผิดพลาด
+  // ปุ่มแสดง/ซ่อน error box
   const errorToggleBtn = document.getElementById('errorToggle');
   if (errorToggleBtn) {
     errorToggleBtn.addEventListener('click', toggleErrorBox);
