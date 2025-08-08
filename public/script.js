@@ -437,42 +437,35 @@ async function createCurrentChart(range = '30d') {
         ],
       },
       options: {
-  spanGaps: true,
-  scales: {
-    x: {
-      type: 'time',
-      time: {
-        unit: 'hour',
-        stepSize: 3,
-        displayFormats: {
-          hour: 'HH:mm' // รูปแบบเวลา เช่น 00:00, 03:00
-        }
-      },
-      ticks: {
-        color: 'white',
-        maxRotation: 0,
-        autoSkip: true
-      },
-      grid: {
-        drawTicks: false,
-        color: 'rgba(255,255,255,0.1)'
+        spanGaps: true,
+        scales: {
+          x: {
+            ticks: {
+              display: true,
+              color: 'white',
+              maxRotation: 45,
+              minRotation: 45,
+              maxTicksLimit: 3
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255,255,255,0.1)'
+            }
+          },
+          y: {
+            beginAtZero: false,
+            ticks: { color: 'white' },
+            title: { display: true, text: 'กระแส (mA)', color: 'white' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
       }
-    },
-    y: {
-      beginAtZero: false,
-      ticks: { color: 'white' },
-      title: { display: true, text: 'กระแส (mA)', color: 'white' },
-      grid: { color: 'rgba(255,255,255,0.1)' }
-    }
-  },
-  plugins: {
-    legend: { labels: { color: 'white' } },
-    tooltip: { mode: 'index', intersect: false }
-  },
-  responsive: true,
-  maintainAspectRatio: false
-}
-
     });
   } catch (err) {
     console.error('Error creating current chart:', err);
