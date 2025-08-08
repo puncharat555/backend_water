@@ -38,7 +38,7 @@ body {
 
 /* กล่อง container ของ node */
 .container {
-  max-width: 1260px;
+  max-width: 1300px;
   display: flex;
   justify-content: center;
   gap: 10px;            
@@ -159,7 +159,7 @@ tbody tr:hover {
 .chart-box.map-box {
   margin: 20px auto 40px;
   text-align: center;
-  max-width: 1260px;  /* กำหนดความกว้างสูงสุดของกล่อง */
+  max-width: 1300px;  /* กำหนดความกว้างสูงสุดของกล่อง */
   width: 100%;        /* ให้เต็มความกว้างในขอบเขต max-width */
 }
 
