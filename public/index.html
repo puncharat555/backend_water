@@ -67,16 +67,11 @@
   </div>
   <div class="chart-box map-box">
     <h3>ตำแหน่งอุปกรณ์</h3>
-    <iframe
-      src="https://www.openstreetmap.org/export/embed.html?bbox=99.88309288024901%2C19.02912179695632%2C99.88599729537963%2C19.03181455375484&layer=mapnik&marker=19.030471%2C99.884592"
-      frameborder="0"
-      scrolling="no"
-      marginheight="0"
-      marginwidth="0"
-      width="100%"
-      height="300"
-      style="border:1px solid rgba(255,255,255,0.3); border-radius: 10px;"
-    ></iframe>
+    <div class="chart-box map-box">
+  <h3>ตำแหน่งอุปกรณ์</h3>
+  <div id="map" style="width: 100%; height: 300px; border: 1px solid rgba(255,255,255,0.3); border-radius: 10px;"></div>
+</div>
+
     <br/>
     <small style="text-align:center; display:block;">
       <a href="https://www.openstreetmap.org/?mlat=19.030471&mlon=99.884592#map=19/19.030471/99.884592" target="_blank" rel="noopener noreferrer" style="color:#00c0ff; text-decoration:none;">
@@ -117,6 +112,7 @@
     <div id="moreButtonContainer" style="text-align: center; margin-top: 10px;"></div>
   </div>
 
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAMHQvsbLirGRVptFl9DnDi1P9Q6JwGe4o"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="script.js"></script>
 </body>
