@@ -149,7 +149,6 @@ tbody tr:hover {
   box-sizing: border-box; /* สำคัญ ป้องกัน padding ทำให้ล้น */
 }
 
-
 .chart-box h3 {
   margin-bottom: 15px;
   text-align: center;
@@ -159,7 +158,7 @@ tbody tr:hover {
 .chart-box.map-box {
   margin: 20px auto 40px;
   text-align: center;
-  max-width: 1260px;  /* กำหนดความกว้างสูงสุดของกล่อง */
+  max-width: 1300px;  /* กำหนดความกว้างสูงสุดของกล่อง */
   width: 100%;        /* ให้เต็มความกว้างในขอบเขต max-width */
 }
 
@@ -173,7 +172,6 @@ tbody tr:hover {
   border: none;
   display: block;       /* ป้องกันปัญหาการจัดวาง */
 }
-
 
 /* Tooltip แบบถาวรบนแผนที่ */
 .my-tooltip {
@@ -286,7 +284,7 @@ tbody tr:hover {
   }
 
   .charts-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* ลดเหลือ 1 คอลัมน์ */
   }
 
   .chart-box {
@@ -295,16 +293,15 @@ tbody tr:hover {
     width: 100%;       
   }
 
+  .chart-box canvas {
+    width: 100% !important;  
+    height: auto !important; 
+  }
+
   #map {
     width: 100%;
     height: 300px;
   }
-}
-
-/* ปรับขนาด canvas กราฟ */
-.chart-box canvas {
-  width: 600px !important;  
-  height: 300px !important; 
 }
 
 /* ปุ่มโหลดข้อมูลเพิ่ม */
