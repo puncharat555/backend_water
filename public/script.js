@@ -183,24 +183,50 @@ async function createWaterLevelChart(range = '30d') {
       },
       options: {
         spanGaps: true,
+        layout: {
+          padding: {
+            top: 10,
+            right: 20,
+            bottom: 30,
+            left: 10
+          }
+        },
         scales: {
           x: {
             ticks: {
               display: true,
               color: 'white',
-              maxRotation: 45,
-              minRotation: 45,
-              maxTicksLimit: 10
+              maxRotation: 0,
+              minRotation: 0,
+              maxTicksLimit: 6,
+              padding: 10,
+              callback: function(value) {
+                const label = this.getLabelForValue(value);
+                if (!label) return '';
+                const hour = parseInt(label.split(':')[0], 10);
+                if (isNaN(hour)) return '';
+                return (hour % 4 === 0) ? label : '';
+              }
             },
             grid: {
               drawTicks: false,
-              color: 'rgba(255,255,255,0.1)'
-            }
+              color: 'rgba(255,255,255,0.1)',
+              drawBorder: false
+            },
+            offset: true
           },
           y: {
             beginAtZero: true,
+            ticks: { 
+              color: 'white',
+              padding: 10,
+              callback: value => value.toFixed(1)
+            },
             title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
-            ticks: { color: 'white' }
+            grid: { 
+              color: 'rgba(255,255,255,0.1)',
+              drawBorder: false
+            }
           }
         },
         plugins: {
@@ -220,6 +246,7 @@ async function createOneHourChart() {
   try {
     const data = await fetchHistoricalData('1h');
     const parsed = parseChartData(data);
+
     parsed.labels.reverse();
     parsed.waterLevels.reverse();
 
@@ -248,21 +275,43 @@ async function createOneHourChart() {
       },
       options: {
         spanGaps: true,
+        layout: {
+          padding: {
+            top: 10,
+            right: 20,
+            bottom: 30,
+            left: 10
+          }
+        },
         scales: {
           x: {
             ticks: {
               display: true,
               color: 'white',
-              maxRotation: 45,
-              minRotation: 45,
-              maxTicksLimit: 10
+              maxRotation: 0,
+              minRotation: 0,
+              maxTicksLimit: 6,
+              padding: 10,
+              callback: function(value) {
+                const label = this.getLabelForValue(value);
+                if (!label) return '';
+                const hour = parseInt(label.split(':')[0], 10);
+                if (isNaN(hour)) return '';
+                return (hour % 4 === 0) ? label : '';
+              }
             },
             grid: {
               drawTicks: false,
-              color: 'rgba(255,255,255,0.1)'
-            }
+              color: 'rgba(255,255,255,0.1)',
+              drawBorder: false
+            },
+            offset: true
           },
-          y: { beginAtZero: true, ticks: { color: 'white' } }
+          y: { 
+            beginAtZero: true, 
+            ticks: { color: 'white', padding: 10 },
+            grid: { color: 'rgba(255,255,255,0.1)', drawBorder: false }
+          }
         },
         plugins: {
           legend: { labels: { color: 'white' } },
@@ -281,6 +330,7 @@ async function createBatteryChart() {
   try {
     const data = await fetchHistoricalData('30d');
     const parsed = parseChartData(data);
+
     parsed.labels.reverse();
     parsed.voltagesNode1.reverse();
     parsed.voltagesNode2.reverse();
@@ -321,76 +371,60 @@ async function createBatteryChart() {
         ],
       },
       options: {
-  spanGaps: true,
-  layout: {
-    padding: {
-      top: 10,
-      right: 20,
-      bottom: 30,  // เพิ่มช่องว่างด้านล่างไม่ให้ label ชิดกราฟ
-      left: 10
-    }
-  },
-  scales: {
-    x: {
-      ticks: {
-  display: true,
-  color: 'white',
-  maxRotation: 0,
-  minRotation: 0,
-  maxTicksLimit: 6,
-  padding: 10,
-  callback: function(value) {
-    const label = this.getLabelForValue(value);
-    console.log('Label:', label); // ลองดู label ใน console ก่อน
-    // สำหรับ debug ให้แสดงทุก label ก่อน
-    return label || '';
-  }
-}
-
-      },
-      grid: {
-        drawTicks: false,
-        color: 'rgba(255,255,255,0.1)',
-        drawBorder: false  // ซ่อนเส้นกรอบด้านล่าง
-      },
-      offset: true // เลื่อน tick ให้อยู่กึ่งกลางช่วงกราฟ (ถ้าช่วงข้อมูลเยอะ)
-    },
-    y: {
-      beginAtZero: false,
-      ticks: { 
-        color: 'white',
-        padding: 10,  // เพิ่มช่องว่างระหว่างตัวเลขกับแกน Y
-        callback: function(value) {
-          return value.toFixed(1); // แสดงเลขทศนิยม 1 ตำแหน่ง
-        }
-      },
-      title: { display: true, text: 'แรงดัน (V)', color: 'white' },
-      grid: { 
-        color: 'rgba(255,255,255,0.1)',
-        drawBorder: false
+        spanGaps: true,
+        layout: {
+          padding: {
+            top: 10,
+            right: 20,
+            bottom: 30,
+            left: 10
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              display: true,
+              color: 'white',
+              maxRotation: 0,
+              minRotation: 0,
+              maxTicksLimit: 6,
+              padding: 10,
+              callback: function(value) {
+                const label = this.getLabelForValue(value);
+                if (!label) return '';
+                const hour = parseInt(label.split(':')[0], 10);
+                if (isNaN(hour)) return '';
+                return (hour % 4 === 0) ? label : '';
+              }
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255,255,255,0.1)',
+              drawBorder: false
+            },
+            offset: true
+          },
+          y: {
+            beginAtZero: false,
+            ticks: { 
+              color: 'white',
+              padding: 10,
+              callback: value => value.toFixed(1)
+            },
+            title: { display: true, text: 'แรงดัน (V)', color: 'white' },
+            grid: { 
+              color: 'rgba(255,255,255,0.1)',
+              drawBorder: false
+            }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
       }
-    }
-  },
-  plugins: {
-    legend: { labels: { color: 'white' } },
-    tooltip: { mode: 'index', intersect: false }
-  },
-  responsive: true,
-  maintainAspectRatio: false,
-  elements: {
-    point: {
-      radius: function(ctx) {
-        // เน้นจุดข้อมูลล่าสุดด้วยขนาดจุดใหญ่ขึ้น
-        return ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 3;
-      },
-      backgroundColor: function(ctx) {
-        return ctx.dataIndex === ctx.dataset.data.length - 1 ? 'rgba(255, 215, 0, 1)' : 'rgba(0, 127, 255, 0.8)';
-      },
-      hoverRadius: 8,
-    }
-  }
-}
-
     });
   } catch (err) {
     console.error('Error creating battery chart:', err);
@@ -463,8 +497,9 @@ async function createCurrentChart(range = '30d') {
             backgroundColor: 'rgba(255,69,0,0.2)',
             fill: true,
             tension: 0.3,
-            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
-            pointBackgroundColor: '#ff4500',
+            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 3,
+            pointBackgroundColor: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 'rgba(255,215,0,1)' : 'rgba(255,69,0,0.8)',
+            hoverRadius: 8,
           },
           {
             label: 'กระแส Node 2 (mA)',
@@ -473,32 +508,84 @@ async function createCurrentChart(range = '30d') {
             backgroundColor: 'rgba(30,144,255,0.2)',
             fill: true,
             tension: 0.3,
-            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
-            pointBackgroundColor: '#1e90ff',
+            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 3,
+            pointBackgroundColor: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 'rgba(255,215,0,1)' : 'rgba(30,144,255,0.8)',
+            hoverRadius: 8,
+          },
+          {
+            label: 'ค่าเฉลี่ยเคลื่อนที่ Node 1',
+            data: maCurrentsNode1,
+            borderColor: '#ff944d',
+            borderDash: [5, 5],
+            fill: false,
+            tension: 0.3,
+            pointRadius: 0,
+          },
+          {
+            label: 'ค่าเฉลี่ยเคลื่อนที่ Node 2',
+            data: maCurrentsNode2,
+            borderColor: '#6495ed',
+            borderDash: [5, 5],
+            fill: false,
+            tension: 0.3,
+            pointRadius: 0,
+          },
+          {
+            label: `ค่ากำหนด (Threshold = ${currentThreshold})`,
+            data: thresholdArray,
+            borderColor: '#ff0000',
+            borderDash: [8, 4],
+            fill: false,
+            pointRadius: 0,
           },
         ],
       },
       options: {
         spanGaps: true,
+        layout: {
+          padding: {
+            top: 10,
+            right: 20,
+            bottom: 30,
+            left: 10
+          }
+        },
         scales: {
           x: {
             ticks: {
               display: true,
               color: 'white',
-              maxRotation: 45,
-              minRotation: 45,
-              maxTicksLimit: 10,
+              maxRotation: 0,
+              minRotation: 0,
+              maxTicksLimit: 6,
+              padding: 10,
+              callback: function(value) {
+                const label = this.getLabelForValue(value);
+                if (!label) return '';
+                const hour = parseInt(label.split(':')[0], 10);
+                if (isNaN(hour)) return '';
+                return (hour % 4 === 0) ? label : '';
+              }
             },
             grid: {
               drawTicks: false,
-              color: 'rgba(255,255,255,0.1)'
-            }
+              color: 'rgba(255,255,255,0.1)',
+              drawBorder: false
+            },
+            offset: true
           },
           y: {
             beginAtZero: false,
-            ticks: { color: 'white' },
+            ticks: { 
+              color: 'white',
+              padding: 10,
+              callback: value => value.toFixed(1)
+            },
             title: { display: true, text: 'กระแส (mA)', color: 'white' },
-            grid: { color: 'rgba(255,255,255,0.1)' }
+            grid: { 
+              color: 'rgba(255,255,255,0.1)',
+              drawBorder: false
+            }
           }
         },
         plugins: {
@@ -507,6 +594,17 @@ async function createCurrentChart(range = '30d') {
         },
         responsive: true,
         maintainAspectRatio: false,
+        elements: {
+          point: {
+            radius: function(ctx) {
+              return ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 3;
+            },
+            backgroundColor: function(ctx) {
+              return ctx.dataIndex === ctx.dataset.data.length - 1 ? 'rgba(255,215,0,1)' : undefined;
+            },
+            hoverRadius: 8,
+          }
+        }
       }
     });
   } catch (err) {
@@ -514,27 +612,30 @@ async function createCurrentChart(range = '30d') {
   }
 }
 
-function toggleErrorBox() {
-  const box = document.getElementById('errorBox');
-  if (!box) return;
-  box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
-}
-
 function updateErrorList(data) {
-  const box = document.getElementById('errorList');
-  if (!box) return;
-  box.innerHTML = '';
-  data.forEach(item => {
-    if (item.distance < 10) {
-      const div = document.createElement('div');
-      div.innerText = `Warning! ระดับน้ำต่ำเกินไป: ${item.distance.toFixed(1)} cm เวลา: ${item.time_node1}`;
-      box.appendChild(div);
-    }
-  });
+  const errorContainer = document.getElementById('errorList');
+  if (!errorContainer) return;
+
+  const errorItems = data.filter(item =>
+    !item.distance || item.distance <= 0 || isNaN(item.distance)
+  );
+
+  if (errorItems.length === 0) {
+    errorContainer.innerHTML = '<p>ไม่มีข้อมูลผิดพลาด</p>';
+  } else {
+    const ul = document.createElement('ul');
+    ul.style.color = 'red';
+    errorItems.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = `เวลาที่ผิดพลาด: ${item.time_node1 || item.time_node2 || 'ไม่ระบุเวลา'}`;
+      ul.appendChild(li);
+    });
+    errorContainer.innerHTML = '';
+    errorContainer.appendChild(ul);
+  }
 }
 
-// เรียกโหลดและแสดงผลเริ่มต้น
-async function initDashboard() {
+async function initAll() {
   await loadData();
   await createWaterLevelChart('30d');
   await createOneHourChart();
@@ -542,19 +643,12 @@ async function initDashboard() {
   await createCurrentChart('30d');
 }
 
-// ตัวอย่างการใช้ปุ่มเปลี่ยนช่วงเวลา
-document.getElementById('btnLast7Days')?.addEventListener('click', async () => {
-  await createWaterLevelChart('7d');
-  await createCurrentChart('7d');
-});
+// เรียกใช้งานตอนโหลดหน้า
+window.onload = () => {
+  initAll();
 
-document.getElementById('btnLast30Days')?.addEventListener('click', async () => {
-  await createWaterLevelChart('30d');
-  await createCurrentChart('30d');
-});
-
-document.getElementById('btnLast1Hour')?.addEventListener('click', async () => {
-  await createOneHourChart();
-});
-
-window.onload = initDashboard;
+  // โหลดข้อมูลซ้ำทุก 1 นาที (60,000 ms)
+  setInterval(() => {
+    loadData();
+  }, 60000);
+};
