@@ -37,9 +37,15 @@
 
   <div class="charts-container">
     <div class="chart-box">
-      <h3>กราฟระดับน้ำย้อนหลัง 30 วัน</h3>
-      <canvas id="waterLevelChart30d" height="300"></canvas>
-    </div>
+  <h3>กราฟระดับน้ำย้อนหลัง</h3>
+  <div id="timeRangeButtons" style="text-align:center; margin-bottom:15px;">
+    <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
+    <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
+    <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
+  </div>
+  <canvas id="waterLevelChart30d" height="300"></canvas>
+</div>
+
     <div class="chart-box">
       <h3>กราฟระดับน้ำย้อนหลัง 1 ชั่วโมง</h3>
       <canvas id="waterLevelChart1h" height="300"></canvas>
