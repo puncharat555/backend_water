@@ -80,81 +80,88 @@
 ></script>
 
 <script>
-  const map = L.map('map').setView([19.030471, 99.884592], 16);
+ const map = L.map('map').setView([19.030471, 99.884592], 16);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution:
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+}).addTo(map);
 
-  const locations = [
-    [19.030471, 99.884592],
-    [19.028255, 99.892867],
-    [19.026849, 99.900480],
+const locations = [
+  [19.030471, 99.884592],  // จุดวัดระดับน้ำ
+  [19.028255, 99.892867],  // จุดส่งต่อข้อมูล
+  [19.026849, 99.900480],  // จุดรับข้อมูล
+];
+
+// สร้าง Marker 3 จุดหลัก
+locations.forEach((loc, i) => {
+  L.marker(loc).addTo(map).bindPopup([
+    "จุดวัดระดับน้ำ",
+    "จุดส่งต่อข้อมูล",
+    "จุดรับข้อมูล"
+  ][i]);
+});
+
+// เส้นสีเทาเชื่อมจุด 3 จุด
+const grayLine = L.polyline(locations, { color: 'gray', weight: 5 }).addTo(map);
+map.fitBounds(grayLine.getBounds());
+
+// สร้าง array จุดย่อยบนเส้นเพื่อให้จุดวิ่งตามได้
+const pointsCount = 100; // จำนวนจุดย่อยบนเส้น
+let linePoints = [];
+
+// ฟังก์ชันสำหรับหา point ตาม t (0-1) ระหว่างสองพิกัด
+function interpolatePoint(p1, p2, t) {
+  return [
+    p1[0] + (p2[0] - p1[0]) * t,
+    p1[1] + (p2[1] - p1[1]) * t,
   ];
+}
 
-  // วาดเส้นสีเทา
-  const polyline = L.polyline(locations, {
-    color: 'gray',
-    weight: 5,
-    opacity: 0.3,
-  }).addTo(map);
+// สร้าง array จุดย่อย linePoints
+for (let i = 0; i < locations.length -1; i++) {
+  for (let j = 0; j < pointsCount; j++) {
+    const t = j / pointsCount;
+    linePoints.push(interpolatePoint(locations[i], locations[i+1], t));
+  }
+}
 
-  map.fitBounds(polyline.getBounds());
+let animatedMarkers = [];
+const maxAnimatedMarkers = 20; // จำนวนจุดกระแสที่แสดงพร้อมกัน
+let animationIndex = 0;
 
-  // ฟังก์ชันคำนวณตำแหน่งบนเส้นโดยใช้ค่า t (0-1)
-  function interpolateLatLng(line, t) {
-    const latlngs = line.getLatLngs();
-    let totalLength = 0;
-    let segmentLengths = [];
+// สร้าง circle markers แบบโปร่งใสเล็ก ๆ ลบเพิ่มเมื่อเคลื่อนที่
+function animateFlow() {
+  // ลบ markers เก่า
+  animatedMarkers.forEach(m => map.removeLayer(m));
+  animatedMarkers = [];
 
-    // คำนวณความยาวแต่ละ segment และรวมทั้งหมด
-    for (let i = 0; i < latlngs.length - 1; i++) {
-      const segmentLength = latlngs[i].distanceTo(latlngs[i + 1]);
-      segmentLengths.push(segmentLength);
-      totalLength += segmentLength;
-    }
+  // สร้าง markers จุดใหม่ รอบ animationIndex ไล่ไป maxAnimatedMarkers จุด
+  for (let i = 0; i < maxAnimatedMarkers; i++) {
+    let idx = (animationIndex + i) % linePoints.length;
+    let latlng = linePoints[idx];
 
-    let distanceAlong = t * totalLength;
+    // ความโปร่งแสง (opacity) ไล่ตามตำแหน่ง (ให้จุดหลังจาง)
+    let opacity = 1 - (i / maxAnimatedMarkers);
 
-    // หา segment ที่ t อยู่ในนั้น
-    for (let i = 0; i < segmentLengths.length; i++) {
-      if (distanceAlong <= segmentLengths[i]) {
-        const segmentT = distanceAlong / segmentLengths[i];
-        const lat = latlngs[i].lat + (latlngs[i + 1].lat - latlngs[i].lat) * segmentT;
-        const lng = latlngs[i].lng + (latlngs[i + 1].lng - latlngs[i].lng) * segmentT;
-        return L.latLng(lat, lng);
-      } else {
-        distanceAlong -= segmentLengths[i];
-      }
-    }
+    let circle = L.circleMarker(latlng, {
+      radius: 5,
+      color: 'deepskyblue',
+      fillColor: 'deepskyblue',
+      fillOpacity: opacity,
+      opacity: opacity,
+      weight: 1,
+    }).addTo(map);
 
-    return latlngs[latlngs.length - 1];
+    animatedMarkers.push(circle);
   }
 
-  // สร้างจุดวงกลมสีน้ำเงินเล็ก ๆ
-  const movingDot = L.circleMarker(locations[0], {
-    radius: 6,
-    color: 'deepskyblue',
-    fillColor: 'deepskyblue',
-    fillOpacity: 1,
-  }).addTo(map);
+  animationIndex = (animationIndex + 1) % linePoints.length;
+}
 
-  let t = 0;
-  const speed = 0.002; // ความเร็วจุดไหล (ปรับได้)
+setInterval(animateFlow, 100); // อัพเดตทุก 100 ms
 
-  function animate() {
-    t += speed;
-    if (t > 1) t = 0; // วนลูปกลับไปจุดเริ่มต้น
-
-    const pos = interpolateLatLng(polyline, t);
-    movingDot.setLatLng(pos);
-
-    requestAnimationFrame(animate);
-  }
-
-  animate();
 </script>
 
 
