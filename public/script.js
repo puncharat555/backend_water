@@ -333,19 +333,20 @@ async function createBatteryChart() {
   scales: {
     x: {
       ticks: {
-        display: true,
-        color: 'white',
-        maxRotation: 0,
-        minRotation: 0,
-        maxTicksLimit: 6,
-        padding: 10,  // เพิ่มระยะห่างระหว่าง ticks กับแกน
-        callback: function(value) {
-          const label = this.getLabelForValue(value);
-          if (!label) return '';
-          const hour = parseInt(label.split(':')[0], 10);
-          if (hour % 4 === 0) return label;
-          return '';
-        }
+  display: true,
+  color: 'white',
+  maxRotation: 0,
+  minRotation: 0,
+  maxTicksLimit: 6,
+  padding: 10,
+  callback: function(value) {
+    const label = this.getLabelForValue(value);
+    console.log('Label:', label); // ลองดู label ใน console ก่อน
+    // สำหรับ debug ให้แสดงทุก label ก่อน
+    return label || '';
+  }
+}
+
       },
       grid: {
         drawTicks: false,
