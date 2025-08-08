@@ -149,6 +149,7 @@ tbody tr:hover {
   box-sizing: border-box; /* สำคัญ ป้องกัน padding ทำให้ล้น */
 }
 
+
 .chart-box h3 {
   margin-bottom: 15px;
   text-align: center;
@@ -158,21 +159,23 @@ tbody tr:hover {
 .chart-box.map-box {
   margin: 20px auto 40px;
   text-align: center;
-  max-width: 1300px;  
-  width: 100%;       
+  max-width: 1260px;  /* กำหนดความกว้างสูงสุดของกล่อง */
+  width: 100%;        /* ให้เต็มความกว้างในขอบเขต max-width */
 }
 
 #map {
-  height: 1200px;       
-  width: 100%;          
-  max-width: 1200px;   
-  margin: 0 auto;      
+  height: 1200px;       /* ความสูงที่ต้องการ */
+  width: 100%;          /* ให้เต็มความกว้างของ container */
+  max-width: 1200px;    /* กำหนดความกว้างสูงสุด */
+  margin: 0 auto;       /* จัดกึ่งกลาง */
   border-radius: 15px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
   border: none;
-  display: block;       
+  display: block;       /* ป้องกันปัญหาการจัดวาง */
 }
 
+
+/* Tooltip แบบถาวรบนแผนที่ */
 .my-tooltip {
   background-color: rgba(0, 0, 0, 0.6);
   color: #e0f7ff;
@@ -184,6 +187,7 @@ tbody tr:hover {
   pointer-events: none;
 }
 
+/* ปุ่มเลือกช่วงเวลา */
 #timeRangeButtons, #currentTimeRangeButtons {
   text-align: center;
   margin-bottom: 15px;
@@ -214,6 +218,7 @@ tbody tr:hover {
   font-weight: 700;
 }
 
+/* Tooltip ของ Leaflet แบบถาวร (ปรับเอง) */
 .leaflet-tooltip.my-tooltip {
   background-color: rgba(0, 0, 0, 0.6) !important;
   color: #e0f7ff !important;
@@ -281,7 +286,7 @@ tbody tr:hover {
   }
 
   .charts-container {
-    grid-template-columns: 1fr; /* ลดเหลือ 1 คอลัมน์ */
+    grid-template-columns: 1fr;
   }
 
   .chart-box {
@@ -290,15 +295,16 @@ tbody tr:hover {
     width: 100%;       
   }
 
-  .chart-box canvas {
-    width: 100% !important;  
-    height: auto !important; 
-  }
-
   #map {
     width: 100%;
     height: 300px;
   }
+}
+
+/* ปรับขนาด canvas กราฟ */
+.chart-box canvas {
+  width: 600px !important;  
+  height: 300px !important; 
 }
 
 /* ปุ่มโหลดข้อมูลเพิ่ม */
