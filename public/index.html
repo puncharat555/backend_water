@@ -104,14 +104,10 @@ locations.forEach((loc, i) => {
 });
 
 // เส้นสีเทาเชื่อมจุด 3 จุด
-const grayLine = L.polyline(locations, { color: 'gray', weight: 5 }).addTo(map);
+const grayLine = L.polyline(locations, { color: 'gray', weight: 5, opacity: 0.3 }).addTo(map);
 map.fitBounds(grayLine.getBounds());
 
-// สร้าง array จุดย่อยบนเส้นเพื่อให้จุดวิ่งตามได้
-const pointsCount = 100; // จำนวนจุดย่อยบนเส้น
-let linePoints = [];
-
-// ฟังก์ชันสำหรับหา point ตาม t (0-1) ระหว่างสองพิกัด
+// ฟังก์ชัน interpolate จุดระหว่างสองพิกัด
 function interpolatePoint(p1, p2, t) {
   return [
     p1[0] + (p2[0] - p1[0]) * t,
@@ -119,48 +115,23 @@ function interpolatePoint(p1, p2, t) {
   ];
 }
 
-// สร้าง array จุดย่อย linePoints
-for (let i = 0; i < locations.length -1; i++) {
-  for (let j = 0; j < pointsCount; j++) {
-    const t = j / pointsCount;
-    linePoints.push(interpolatePoint(locations[i], locations[i+1], t));
-  }
-}
+// สร้างจุดเล็ก ๆ แบบเว้นระยะ (เว้นห่าง 10% = 0.1)
+const step = 0.1; // 0.1 = 10% ของ segment ความยาว (ปรับได้ตามต้องการ)
 
-let animatedMarkers = [];
-const maxAnimatedMarkers = 20; // จำนวนจุดกระแสที่แสดงพร้อมกัน
-let animationIndex = 0;
+for (let i = 0; i < locations.length - 1; i++) {
+  for (let t = 0; t <= 1; t += step) {
+    const point = interpolatePoint(locations[i], locations[i + 1], t);
 
-// สร้าง circle markers แบบโปร่งใสเล็ก ๆ ลบเพิ่มเมื่อเคลื่อนที่
-function animateFlow() {
-  // ลบ markers เก่า
-  animatedMarkers.forEach(m => map.removeLayer(m));
-  animatedMarkers = [];
-
-  // สร้าง markers จุดใหม่ รอบ animationIndex ไล่ไป maxAnimatedMarkers จุด
-  for (let i = 0; i < maxAnimatedMarkers; i++) {
-    let idx = (animationIndex + i) % linePoints.length;
-    let latlng = linePoints[idx];
-
-    // ความโปร่งแสง (opacity) ไล่ตามตำแหน่ง (ให้จุดหลังจาง)
-    let opacity = 1 - (i / maxAnimatedMarkers);
-
-    let circle = L.circleMarker(latlng, {
-      radius: 5,
+    L.circleMarker(point, {
+      radius: 3,
       color: 'deepskyblue',
       fillColor: 'deepskyblue',
-      fillOpacity: opacity,
-      opacity: opacity,
-      weight: 1,
+      fillOpacity: 0.8,
+      weight: 0,
     }).addTo(map);
-
-    animatedMarkers.push(circle);
   }
-
-  animationIndex = (animationIndex + 1) % linePoints.length;
 }
 
-setInterval(animateFlow, 100); // อัพเดตทุก 100 ms
 
 </script>
 
