@@ -157,17 +157,21 @@ tbody tr:hover {
 .chart-box.map-box {
   margin: 20px auto 40px;
   text-align: center;
+  max-width: 1300px;  /* กำหนดความกว้างสูงสุดของกล่อง */
+  width: 100%;        /* ให้เต็มความกว้างในขอบเขต max-width */
 }
 
 #map {
-  height: 400px;
-  width: 90%;
-  max-width: 700px;
-  margin: 0 auto;
+  height: 1200px;       /* ความสูงที่ต้องการ */
+  width: 100%;          /* ให้เต็มความกว้างของ container */
+  max-width: 1200px;    /* กำหนดความกว้างสูงสุด */
+  margin: 0 auto;       /* จัดกึ่งกลาง */
   border-radius: 15px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
   border: none;
+  display: block;       /* ป้องกันปัญหาการจัดวาง */
 }
+
 
 /* Tooltip แบบถาวรบนแผนที่ */
 .my-tooltip {
