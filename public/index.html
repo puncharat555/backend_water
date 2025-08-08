@@ -5,6 +5,8 @@
   <title>Water Level Monitoring</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2913/2913465.png">
+  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2913/2913465.png">
 </head>
 <body>
   <h1 class="title">Water Level Monitoring</h1>
@@ -69,42 +71,35 @@
   <h3>ตำแหน่งอุปกรณ์</h3>
   <div id="map" style="height: 300px; border:1px solid rgba(255,255,255,0.3); border-radius: 10px;"></div>
 </div>
-
-<!-- ใส่ลิงก์ CSS และ JS ของ Leaflet -->
 <link
   rel="stylesheet"
   href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-  
 />
 <script
   src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
- 
-
 ></script>
 
 <script>
-  // สร้างแผนที่ กำหนดพิกัดกลางแผนที่และระดับซูม
   const map = L.map('map').setView([19.030471, 99.884592], 16);
 
-  // โหลดแผนที่ OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(map);
 
-  // กำหนดตำแหน่งหมุด 3 จุด
   const locations = [
-    { lat: 19.030471, lng: 99.884592, title: 'จุดที่ 1: อุปกรณ์ A' },
-    { lat: 19.031200, lng: 99.882000, title: 'จุดที่ 2: อุปกรณ์ B' },
-    { lat: 19.029000, lng: 99.886500, title: 'จุดที่ 3: อุปกรณ์ C' },
+    { lat: 19.030471, lng: 99.884592, title: 'จุดวัดระกับน้ำ' },
+    { lat: 19.031200, lng: 99.882000, title: 'จุดส่งต่อข้อมูล' },
+    { lat: 19.029000, lng: 99.886500, title: 'จุดรับข้อมูล' },
   ];
 
-  // วนลูปปักหมุดและผูก popup
   locations.forEach(loc => {
     L.marker([loc.lat, loc.lng])
       .addTo(map)
       .bindPopup(loc.title);
+      const polyline = L.polyline(locations, {color: 'blue'}).addTo(map);
+      map.fitBounds(polyline.getBounds());
   });
 </script>
 
