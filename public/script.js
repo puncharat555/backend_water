@@ -152,7 +152,7 @@ function parseChartData(data) {
 }
 
 // สร้างกราฟระดับน้ำย้อนหลัง ตามช่วงเวลา (1d, 7d, 30d)
-let waterLevelChartInstance = null;
+let createWaterLevelChart = null;
 async function createWaterLevelChart(range = '30d') {
   try {
     const data = await fetchHistoricalData(range);

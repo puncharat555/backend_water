@@ -236,12 +236,12 @@ tbody tr:hover {
 }
 
 .chart-box canvas {
-  width: 100% !important;
-  max-width: 600px;
-  height: 300px !important;
+  width: 600px !important;   /* กำหนดความกว้างตายตัว */
+  height: 300px !important;  /* กำหนดความสูงตายตัว */
   display: block;
   margin: 0 auto;
 }
+
 #moreButtonContainer {
   text-align: center;
   margin-top: 10px;
