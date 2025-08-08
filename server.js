@@ -114,7 +114,7 @@ app.get('/distance', async (req, res) => {
     const distances = await collection
       .find({ timestamp: { $gte: fromDate } })
       .sort({ timestamp: -1 })
-      .limit(1000)
+      //.limit(1000)
       .toArray();
 
     // ป้องกัน cache ฝั่ง client และ proxy
