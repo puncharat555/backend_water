@@ -437,10 +437,10 @@ async function createCurrentChart(range = '30d') {
         ],
       },
       options: {
-        spanGaps: true,
-        scales: {
-          x: {
-            ticks: {
+  spanGaps: true,
+  scales: {
+    x: {
+      ticks: {
         display: true,
         color: 'white',
         maxRotation: 45,
@@ -451,26 +451,27 @@ async function createCurrentChart(range = '30d') {
           const hour = parseInt(label.split(':')[0], 10);
           return hour % 4 === 0 ? label : '';
         }
-            },
-            grid: {
-              drawTicks: false,
-              color: 'rgba(255,255,255,0.1)'
-            }
-          },
-          y: {
-            beginAtZero: false,
-            ticks: { color: 'white' },
-            title: { display: true, text: 'กระแส (mA)', color: 'white' },
-            grid: { color: 'rgba(255,255,255,0.1)' }
-          }
-        },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
+      },
+      grid: {
+        drawTicks: false,
+        color: 'rgba(255,255,255,0.1)'
       }
+    },
+    y: {
+      beginAtZero: false,
+      ticks: { color: 'white' },
+      title: { display: true, text: 'กระแส (mA)', color: 'white' },
+      grid: { color: 'rgba(255,255,255,0.1)' }
+    }
+  },
+  plugins: {
+    legend: { labels: { color: 'white' } },
+    tooltip: { mode: 'index', intersect: false }
+  },
+  responsive: true,
+  maintainAspectRatio: false,
+}
+
     });
   } catch (err) {
     console.error('Error creating current chart:', err);
