@@ -95,22 +95,15 @@
   ];
 
   locations.forEach((loc, i) => {
-    L.marker(loc).addTo(map).bindPopup([
-      "จุดวัดระดับน้ำ",
-      "จุดส่งต่อข้อมูล",
-      "จุดรับข้อมูล"
-    ][i]);
-  });
-  locations.forEach(loc => {
-  const marker = L.circleMarker([loc.lat, loc.lng], {
-    radius: 6,
-    color: 'deepskyblue',
-    fillColor: 'deepskyblue',
-    fillOpacity: 1,
-  }).addTo(map);
-  
-  marker.bindTooltip(loc.title, { permanent: true, direction: 'right', offset: [10, 0], className: 'my-tooltip' }).openTooltip();
+  L.marker(loc)
+    .addTo(map)
+    .bindTooltip(
+      ["จุดวัดระดับน้ำ", "จุดส่งต่อข้อมูล", "จุดรับข้อมูล"][i], 
+      { permanent: true, direction: 'right', offset: [10, 0] }
+    )
+    .openTooltip();
 });
+
 
   const grayLine = L.polyline(locations, { color: 'gray', weight: 5 }).addTo(map);
   map.fitBounds(grayLine.getBounds());
