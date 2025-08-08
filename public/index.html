@@ -5,7 +5,7 @@
   <title>Water Level Monitoring</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="https://cdn.creazilla.com/emojis/58647/droplet-emoji-clipart-lg.png">
+  <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20190511/ourmid/pngtree-vector-drop-icon-png-image_1029752.jpg">
 
 </head>
 <body>
@@ -80,88 +80,68 @@
 ></script>
 
 <script>
- const map = L.map('map').setView([19.030471, 99.884592], 16);
+  const map = L.map('map').setView([19.030471, 99.884592], 16);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
-  attribution:
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-}).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(map);
 
-const locations = [
-  [19.030471, 99.884592],  // จุดวัดระดับน้ำ
-  [19.028255, 99.892867],  // จุดส่งต่อข้อมูล
-  [19.026849, 99.900480],  // จุดรับข้อมูล
-];
-
-// สร้าง Marker 3 จุดหลัก
-locations.forEach((loc, i) => {
-  L.marker(loc).addTo(map).bindPopup([
-    "จุดวัดระดับน้ำ",
-    "จุดส่งต่อข้อมูล",
-    "จุดรับข้อมูล"
-  ][i]);
-});
-
-// เส้นสีเทาเชื่อมจุด 3 จุด
-const grayLine = L.polyline(locations, { color: 'gray', weight: 5 }).addTo(map);
-map.fitBounds(grayLine.getBounds());
-
-// สร้าง array จุดย่อยบนเส้นเพื่อให้จุดวิ่งตามได้
-const pointsCount = 100; // จำนวนจุดย่อยบนเส้น
-let linePoints = [];
-
-// ฟังก์ชันสำหรับหา point ตาม t (0-1) ระหว่างสองพิกัด
-function interpolatePoint(p1, p2, t) {
-  return [
-    p1[0] + (p2[0] - p1[0]) * t,
-    p1[1] + (p2[1] - p1[1]) * t,
+  const locations = [
+    [19.030471, 99.884592],  // จุดวัดระดับน้ำ
+    [19.028255, 99.892867],  // จุดส่งต่อข้อมูล
+    [19.026849, 99.900480],  // จุดรับข้อมูล
   ];
-}
 
-// สร้าง array จุดย่อย linePoints
-for (let i = 0; i < locations.length -1; i++) {
-  for (let j = 0; j < pointsCount; j++) {
-    const t = j / pointsCount;
-    linePoints.push(interpolatePoint(locations[i], locations[i+1], t));
-  }
-}
+  // สร้าง Marker 3 จุด
+  locations.forEach((loc, i) => {
+    L.marker(loc).addTo(map).bindPopup([
+      "จุดวัดระดับน้ำ",
+      "จุดส่งต่อข้อมูล",
+      "จุดรับข้อมูล"
+    ][i]);
+  });
 
-let animatedMarkers = [];
-const maxAnimatedMarkers = 20; // จำนวนจุดกระแสที่แสดงพร้อมกัน
-let animationIndex = 0;
+  // วาดเส้นสีเทาเชื่อม 3 จุด
+  const grayLine = L.polyline(locations, { color: 'gray', weight: 5 }).addTo(map);
+  map.fitBounds(grayLine.getBounds());
 
-// สร้าง circle markers แบบโปร่งใสเล็ก ๆ ลบเพิ่มเมื่อเคลื่อนที่
-function animateFlow() {
-  // ลบ markers เก่า
-  animatedMarkers.forEach(m => map.removeLayer(m));
-  animatedMarkers = [];
+  // สร้างเส้นสีฟ้าสำหรับ animation (น้ำไหล)
+  let blueLine;
+  let progress = 0;
 
-  // สร้าง markers จุดใหม่ รอบ animationIndex ไล่ไป maxAnimatedMarkers จุด
-  for (let i = 0; i < maxAnimatedMarkers; i++) {
-    let idx = (animationIndex + i) % linePoints.length;
-    let latlng = linePoints[idx];
+  // ฟังก์ชันคำนวณจุดบนเส้นสำหรับตำแหน่ง progress (0-1)
+  function interpolatePoints(points, t) {
+    const total = points.length - 1;
+    const index = Math.floor(t * total);
+    const rest = t * total - index;
 
-    // ความโปร่งแสง (opacity) ไล่ตามตำแหน่ง (ให้จุดหลังจาง)
-    let opacity = 1 - (i / maxAnimatedMarkers);
-
-    let circle = L.circleMarker(latlng, {
-      radius: 5,
-      color: 'deepskyblue',
-      fillColor: 'deepskyblue',
-      fillOpacity: opacity,
-      opacity: opacity,
-      weight: 1,
-    }).addTo(map);
-
-    animatedMarkers.push(circle);
+    if (index >= total) {
+      return points[total];
+    }
+    const lat = points[index][0] + (points[index + 1][0] - points[index][0]) * rest;
+    const lng = points[index][1] + (points[index + 1][1] - points[index][1]) * rest;
+    return [lat, lng];
   }
 
-  animationIndex = (animationIndex + 1) % linePoints.length;
-}
+  function updateBlueLine() {
+    if (blueLine) {
+      map.removeLayer(blueLine);
+    }
+    let pointsToDraw = [];
 
-setInterval(animateFlow, 100); // อัพเดตทุก 100 ms
+    for (let t = 0; t <= progress; t += 0.01) {
+      pointsToDraw.push(interpolatePoints(locations, t));
+    }
 
+    blueLine = L.polyline(pointsToDraw, { color: 'deepskyblue', weight: 4 }).addTo(map);
+
+    progress += 0.005;
+    if (progress > 1) progress = 0;
+  }
+
+  setInterval(updateBlueLine, 30);
 </script>
 
 
