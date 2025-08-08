@@ -441,11 +441,16 @@ async function createCurrentChart(range = '30d') {
         scales: {
           x: {
             ticks: {
-              display: true,
-              color: 'white',
-              maxRotation: 45,
-              minRotation: 45,
-              maxTicksLimit: 3
+        display: true,
+        color: 'white',
+        maxRotation: 45,
+        minRotation: 45,
+        callback: function(value, index, ticks) {
+          const label = this.getLabelForValue(value);
+          // ถ้าข้อมูลเป็นเวลารูปแบบ HH:mm ให้เลือกเฉพาะชั่วโมงหารด้วย 4 ลงตัว
+          const hour = parseInt(label.split(':')[0], 10);
+          return hour % 4 === 0 ? label : '';
+        }
             },
             grid: {
               drawTicks: false,
