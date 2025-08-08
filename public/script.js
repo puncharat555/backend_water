@@ -181,11 +181,31 @@ async function createWaterLevelChart(range = '30d') {
       options: {
         spanGaps: true,
         scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } },
+          x: {
+            ticks: {
+              color: 'white',
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 6,
+              font: { size: 12 },
+              callback: function(value) {
+                const label = this.getLabelForValue(value);
+                if (label.length >= 16) {
+                  return label.substr(11, 5); // แสดงแค่ "HH:mm"
+                }
+                return label;
+              }
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          },
           y: {
             beginAtZero: true,
             title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
-            ticks: { color: 'white' }
+            ticks: { color: 'white', font: { size: 12 } },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
           }
         },
         plugins: {
@@ -212,11 +232,7 @@ async function createOneHourChart() {
     setupHiDPICanvas(canvas1h);
     const ctx1h = canvas1h.getContext('2d');
 
-    if (window.oneHourChartInstance) {
-      window.oneHourChartInstance.destroy();
-    }
-
-    window.oneHourChartInstance = new Chart(ctx1h, {
+    new Chart(ctx1h, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -234,8 +250,31 @@ async function createOneHourChart() {
       options: {
         spanGaps: true,
         scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } },
-          y: { beginAtZero: true, ticks: { color: 'white' } }
+          x: {
+            ticks: {
+              color: 'white',
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 6,
+              font: { size: 12 },
+              callback: function(value) {
+                const label = this.getLabelForValue(value);
+                if (label.length >= 16) {
+                  return label.substr(11, 5);
+                }
+                return label;
+              }
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { color: 'white', font: { size: 12 } },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
         },
         plugins: {
           legend: { labels: { color: 'white' } },
@@ -262,11 +301,7 @@ async function createBatteryChart() {
     setupHiDPICanvas(canvasBattery);
     const ctxBattery = canvasBattery.getContext('2d');
 
-    if (window.batteryChartInstance) {
-      window.batteryChartInstance.destroy();
-    }
-
-    window.batteryChartInstance = new Chart(ctxBattery, {
+    new Chart(ctxBattery, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -296,11 +331,24 @@ async function createBatteryChart() {
       options: {
         spanGaps: true,
         scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } },
+          x: {
+            ticks: {
+              color: 'white',
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 6,
+              font: { size: 12 },
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          },
           y: {
             beginAtZero: false,
-            ticks: { color: 'white' },
-            title: { display: true, text: 'แรงดัน (V)', color: 'white' }
+            ticks: { color: 'white', font: { size: 12 } },
+            title: { display: true, text: 'แรงดัน (V)', color: 'white' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
           }
         },
         plugins: {
@@ -328,11 +376,7 @@ async function createCurrentChart() {
     setupHiDPICanvas(canvasCurrent);
     const ctxCurrent = canvasCurrent.getContext('2d');
 
-    if (window.currentChartInstance) {
-      window.currentChartInstance.destroy();
-    }
-
-    window.currentChartInstance = new Chart(ctxCurrent, {
+    new Chart(ctxCurrent, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -362,11 +406,24 @@ async function createCurrentChart() {
       options: {
         spanGaps: true,
         scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } },
+          x: {
+            ticks: {
+              color: 'white',
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 6,
+              font: { size: 12 },
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255, 255, 255, 0.1)'
+            }
+          },
           y: {
             beginAtZero: false,
-            ticks: { color: 'white' },
-            title: { display: true, text: 'กระแส (mA)', color: 'white' }
+            ticks: { color: 'white', font: { size: 12 } },
+            title: { display: true, text: 'กระแส (mA)', color: 'white' },
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
           }
         },
         plugins: {
@@ -409,88 +466,23 @@ function updateErrorList(data) {
   if (errorItems.length === 0) {
     errorList.innerHTML = '<li>ไม่มีข้อมูลผิดปกติ</li>';
   } else {
-    errorList.innerHTML = '';
-    errorItems.forEach(item => {
-      const errors = [];
-
-      if (!item.distance || item.distance <= 0 || item.distance > fixedDepth) {
-        errors.push(`ระดับน้ำดิบผิดปกติ: ${item.distance}`);
-      }
-      if (!item.rssi_node1 || item.rssi_node1 === 0) {
-        errors.push(`RSSI Node1 ผิดปกติ: ${item.rssi_node1}`);
-      }
-      if (!item.rssi_node2 || item.rssi_node2 === 0) {
-        errors.push(`RSSI Node2 ผิดปกติ: ${item.rssi_node2}`);
-      }
-      if (!item.v_node1 || item.v_node1 <= 0) {
-        errors.push(`แรงดัน Node1 ผิดปกติ: ${item.v_node1}`);
-      }
-      if (!item.v_node2 || item.v_node2 <= 0) {
-        errors.push(`แรงดัน Node2 ผิดปกติ: ${item.v_node2}`);
-      }
-      if (!item.i_node1 || item.i_node1 <= 0) {
-        errors.push(`กระแส Node1 ผิดปกติ: ${item.i_node1}`);
-      }
-      if (!item.i_node2 || item.i_node2 <= 0) {
-        errors.push(`กระแส Node2 ผิดปกติ: ${item.i_node2}`);
-      }
-      if (!item.time_node1) {
-        errors.push(`เวลาวัด Node1 ผิดปกติ`);
-      }
-      if (!item.time_node2) {
-        errors.push(`เวลาวัด Node2 ผิดปกติ`);
-      }
-
-      const li = document.createElement('li');
-      li.innerText = `เวลา: ${item.time_node1 || item.time_node2 || '-'} — ${errors.join(', ')}`;
-      errorList.appendChild(li);
-    });
+    errorList.innerHTML = errorItems.map(item => `<li>เวลาวัด: ${item.time_node1 || '-'} / ระดับน้ำ: ${item.distance || '-'} cm</li>`).join('');
   }
 }
 
-function refreshCharts() {
-  // รีเฟรชกราฟทั้งหมด
-  const activeRangeBtn = document.querySelector('#timeRangeButtons .range-btn.active');
-  const range = activeRangeBtn ? activeRangeBtn.getAttribute('data-range') : '30d';
-
-  createWaterLevelChart(range);
-  createOneHourChart();
-  createBatteryChart();
-  createCurrentChart();
+async function updateAllCharts() {
+  await createWaterLevelChart('30d');
+  await createOneHourChart();
+  await createBatteryChart();
+  await createCurrentChart();
 }
 
-function createCharts() {
-  // เริ่มต้นสร้างกราฟตามช่วงเวลาปัจจุบัน (30 วัน)
-  createWaterLevelChart('30d');
-  createOneHourChart();
-  createBatteryChart();
-  createCurrentChart();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
+window.onload = () => {
   loadData();
-  createCharts();
+  updateAllCharts();
 
-  // รีเฟรชข้อมูลและกราฟทุก 5 วินาที
   setInterval(() => {
     loadData();
-    refreshCharts();
+    updateAllCharts();
   }, 5000);
-
-  // ปุ่มเลือกช่วงเวลาระดับน้ำย้อนหลัง
-  document.querySelectorAll('#timeRangeButtons .range-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      document.querySelectorAll('#timeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-
-      const range = e.target.getAttribute('data-range');
-      createWaterLevelChart(range);
-    });
-  });
-
-  // ปุ่มแสดง/ซ่อน error box
-  const errorToggleBtn = document.getElementById('errorToggle');
-  if (errorToggleBtn) {
-    errorToggleBtn.addEventListener('click', toggleErrorBox);
-  }
-});
+};
