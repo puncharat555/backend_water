@@ -215,35 +215,6 @@ async function createWaterLevelChart(range = '30d') {
     console.error('Error creating water level chart:', err);
   }
 }
-function initMap() {
-  const center = { lat: 19.027566, lng: 99.896737 }; // กึ่งกลางระหว่างสามจุด
-
-  const map = new google.maps.Map(document.getElementById("map"), {
-    zoom: 15,
-    center: center,
-  });
-
-  const locations = [
-    { position: { lat: 19.027566, lng: 99.896737 }, title: "จุดวัดระดับน้ำ" },
-    { position: { lat: 19.028286, lng: 99.892995 }, title: "จุดส่งต่อข้อมูล" },
-    { position: { lat: 19.026849, lng: 99.900480 }, title: "จุดเก็บรับข้อมูล" },
-  ];
-
-  locations.forEach(loc => {
-    new google.maps.Marker({
-      position: loc.position,
-      map: map,
-      title: loc.title,
-    });
-  });
-}
-
-window.onload = () => {
-  if (typeof google !== 'undefined') {
-    initMap();
-  }
-};
-
 
 async function createOneHourChart() {
   try {
@@ -565,7 +536,6 @@ window.onload = async () => {
   await initDashboard();
   setupRangeButtons();
 };
-
 setInterval(() => {
   loadData();
 }, 60000); 
