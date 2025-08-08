@@ -536,3 +536,7 @@ window.onload = async () => {
   await initDashboard();
   setupRangeButtons();
 };
+
+setInterval(() => {
+  loadData();
+}, 60000); 
