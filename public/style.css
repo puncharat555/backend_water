@@ -281,3 +281,11 @@ tbody tr:hover {
   border-color: white;
   font-weight: 700;
 }
+.my-tooltip {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  font-weight: bold;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+}

@@ -94,7 +94,6 @@
     [19.026849, 99.900480],  // จุดรับข้อมูล
   ];
 
-  // สร้าง Marker 3 จุด
   locations.forEach((loc, i) => {
     L.marker(loc).addTo(map).bindPopup([
       "จุดวัดระดับน้ำ",
@@ -102,16 +101,23 @@
       "จุดรับข้อมูล"
     ][i]);
   });
+  locations.forEach(loc => {
+  const marker = L.circleMarker([loc.lat, loc.lng], {
+    radius: 6,
+    color: 'deepskyblue',
+    fillColor: 'deepskyblue',
+    fillOpacity: 1,
+  }).addTo(map);
+  
+  marker.bindTooltip(loc.title, { permanent: true, direction: 'right', offset: [10, 0], className: 'my-tooltip' }).openTooltip();
+});
 
-  // วาดเส้นสีเทาเชื่อม 3 จุด
   const grayLine = L.polyline(locations, { color: 'gray', weight: 5 }).addTo(map);
   map.fitBounds(grayLine.getBounds());
 
-  // สร้างเส้นสีฟ้าสำหรับ animation (น้ำไหล)
   let blueLine;
   let progress = 0;
 
-  // ฟังก์ชันคำนวณจุดบนเส้นสำหรับตำแหน่ง progress (0-1)
   function interpolatePoints(points, t) {
     const total = points.length - 1;
     const index = Math.floor(t * total);
@@ -143,12 +149,9 @@
 
   setInterval(updateBlueLine, 30);
 </script>
-
-
-
   <div class="table-wrapper">
     <h3>
-      📋 ประวัติข้อมูล
+      ประวัติข้อมูล
       <span class="error-toggle" onclick="toggleErrorBox()" title="คลิกเพื่อแสดงข้อมูลผิดปกติ">❗</span>
     </h3>
     
