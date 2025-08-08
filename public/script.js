@@ -321,34 +321,50 @@ async function createBatteryChart() {
         ],
       },
       options: {
-        spanGaps: true,
-        scales: {
-          x: {
-            ticks: {
-              display: true,
-              color: 'white',
-              maxRotation: 45,
-              minRotation: 45,
-              maxTicksLimit: 10
-            },
-            grid: {
-              drawTicks: false,
-              color: 'rgba(255,255,255,0.1)'
+      spanGaps: true,
+      scales: {
+        x: {
+          ticks: {
+            display: true,
+            color: 'white',
+            maxRotation: 45,
+            minRotation: 45,
+            maxTicksLimit: 10,
+            callback: function(value, index, ticks) {
+              // value คือ index ของ tick นั้นๆ
+              // this.getLabelForValue(value) คืน label ที่เป็น string เช่น "HH:mm:ss"
+              const label = this.getLabelForValue(value);
+              if (typeof label !== 'string') return label;
+
+              // สมมติ label รูปแบบ HH:mm หรือ HH:mm:ss
+              // เราจะดึงชั่วโมงมาเช็ค
+              const hour = parseInt(label.split(':')[0], 10);
+              if (isNaN(hour)) return label;
+
+              // แสดง label เฉพาะชั่วโมงที่หารด้วย 4 ลงตัว
+              if (hour % 4 === 0) return label;
+              return ''; // ไม่แสดง label ที่ไม่ใช่ทุก 4 ชม.
             }
           },
-          y: {
-            beginAtZero: false,
-            ticks: { color: 'white' },
-            title: { display: true, text: 'แรงดัน (V)', color: 'white' }
+          grid: {
+            drawTicks: false,
+            color: 'rgba(255,255,255,0.1)'
           }
         },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-      }
+        y: {
+          beginAtZero: false,
+          ticks: { color: 'white' },
+          title: { display: true, text: 'แรงดัน (V)', color: 'white' }
+        }
+      },
+      plugins: {
+        legend: { labels: { color: 'white' } },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      responsive: true,
+      maintainAspectRatio: false,
+    }
+      
     });
   } catch (err) {
     console.error('Error creating battery chart:', err);
