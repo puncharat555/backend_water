@@ -5,8 +5,8 @@
   <title>Water Level Monitoring</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2913/2913465.png">
-  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2913/2913465.png">
+  <link rel="icon" type="image/png" href="https://cdn.pixabay.com/photo/2014/03/24/17/20/droplet-295457_1280.png">
+
 </head>
 <body>
   <h1 class="title">Water Level Monitoring</h1>
@@ -89,19 +89,61 @@
   }).addTo(map);
 
   const locations = [
-    { lat: 19.030471, lng: 99.884592, title: 'จุดวัดระกับน้ำ' },
-    { lat: 19.028255, lng: 99.892867, title: 'จุดส่งต่อข้อมูล' },
-    { lat: 19.026849, lng: 99.900480, title: 'จุดรับข้อมูล' },
+    [19.030471, 99.884592],  // จุดวัดระดับน้ำ
+    [19.028255, 99.892867],  // จุดส่งต่อข้อมูล
+    [19.026849, 99.900480],  // จุดรับข้อมูล
   ];
 
-  locations.forEach(loc => {
-    L.marker([loc.lat, loc.lng])
-      .addTo(map)
-      .bindPopup(loc.title);
-      const polyline = L.polyline(locations, {color: 'Gray'}).addTo(map);
-      map.fitBounds(polyline.getBounds());
+  // สร้าง Marker 3 จุด
+  locations.forEach((loc, i) => {
+    L.marker(loc).addTo(map).bindPopup([
+      "จุดวัดระดับน้ำ",
+      "จุดส่งต่อข้อมูล",
+      "จุดรับข้อมูล"
+    ][i]);
   });
+
+  // วาดเส้นสีเทาเชื่อม 3 จุด
+  const grayLine = L.polyline(locations, { color: 'gray', weight: 5 }).addTo(map);
+  map.fitBounds(grayLine.getBounds());
+
+  // สร้างเส้นสีฟ้าสำหรับ animation (น้ำไหล)
+  let blueLine;
+  let progress = 0;
+
+  // ฟังก์ชันคำนวณจุดบนเส้นสำหรับตำแหน่ง progress (0-1)
+  function interpolatePoints(points, t) {
+    const total = points.length - 1;
+    const index = Math.floor(t * total);
+    const rest = t * total - index;
+
+    if (index >= total) {
+      return points[total];
+    }
+    const lat = points[index][0] + (points[index + 1][0] - points[index][0]) * rest;
+    const lng = points[index][1] + (points[index + 1][1] - points[index][1]) * rest;
+    return [lat, lng];
+  }
+
+  function updateBlueLine() {
+    if (blueLine) {
+      map.removeLayer(blueLine);
+    }
+    let pointsToDraw = [];
+
+    for (let t = 0; t <= progress; t += 0.01) {
+      pointsToDraw.push(interpolatePoints(locations, t));
+    }
+
+    blueLine = L.polyline(pointsToDraw, { color: 'deepskyblue', weight: 4 }).addTo(map);
+
+    progress += 0.005;
+    if (progress > 1) progress = 0;
+  }
+
+  setInterval(updateBlueLine, 30);
 </script>
+
 
 
   <div class="table-wrapper">
