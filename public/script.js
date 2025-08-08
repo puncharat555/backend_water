@@ -324,8 +324,8 @@ async function createBatteryChart() {
   spanGaps: true,
   layout: {
     padding: {
-      top: 10,
-      right: 20,
+      top: 30,
+      right: 40,
       bottom: 40,  // เพิ่มพื้นที่ล่างเพื่อไม่ให้ tick label ชิดเกินไป
       left: 10
     }
