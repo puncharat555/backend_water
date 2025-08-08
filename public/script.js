@@ -437,40 +437,43 @@ async function createCurrentChart(range = '30d') {
         ],
       },
       options: {
-  spanGaps: true,
-  scales: {
-    x: {
-      ticks: {
-        display: true,
-        color: 'white',
-        maxRotation: 45,
-        minRotation: 45,
-        callback: function(value) {
-          const label = this.getLabelForValue(value);
-          const hour = parseInt(label.split(':')[0], 10);
-          return hour % 4 === 0 ? label : '';
-        }
-      },
-      grid: {
-        drawTicks: false,
-        color: 'rgba(255,255,255,0.1)'
+        spanGaps: true,
+        scales: {
+          x: {
+            ticks: {
+              display: true,
+              color: 'white',
+              maxRotation: 45,
+              minRotation: 45,
+              callback: function(value) {
+                const label = this.getLabelForValue(value);
+                if (typeof label !== 'string') return '';
+                const parts = label.split(':');
+                if (parts.length < 2) return label;
+                const hour = parseInt(parts[0], 10);
+                if (isNaN(hour)) return label;
+                return hour % 4 === 0 ? label : '';
+              }
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255,255,255,0.1)'
+            }
+          },
+          y: {
+            beginAtZero: false,
+            ticks: { color: 'white' },
+            title: { display: true, text: 'กระแส (mA)', color: 'white' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
       }
-    },
-    y: {
-      beginAtZero: false,
-      ticks: { color: 'white' },
-      title: { display: true, text: 'กระแส (mA)', color: 'white' },
-      grid: { color: 'rgba(255,255,255,0.1)' }
-    }
-  },
-  plugins: {
-    legend: { labels: { color: 'white' } },
-    tooltip: { mode: 'index', intersect: false }
-  },
-  responsive: true,
-  maintainAspectRatio: false,
-}
-
     });
   } catch (err) {
     console.error('Error creating current chart:', err);
@@ -480,44 +483,44 @@ async function createCurrentChart(range = '30d') {
 function toggleErrorBox() {
   const box = document.getElementById('errorBox');
   if (!box) return;
-  box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+  box.style.display = box.style.display === 'none' || !box.style.display ? 'block' : 'none';
 }
 
 function updateErrorList(data) {
-  const box = document.getElementById('errorList');
-  if (!box) return;
-  box.innerHTML = '';
-  data.forEach(item => {
-    if (item.distance < 10) {
-      const div = document.createElement('div');
-      div.innerText = `Warning! ระดับน้ำต่ำเกินไป: ${item.distance.toFixed(1)} cm เวลา: ${item.time_node1}`;
-      box.appendChild(div);
-    }
+  const errorBox = document.getElementById('errorBox');
+  if (!errorBox) return;
+
+  const errors = data.filter(d => d.distance === 0);
+  if (errors.length === 0) {
+    errorBox.style.display = 'none';
+    errorBox.innerHTML = '';
+    return;
+  }
+
+  let html = '<b>ข้อมูลผิดพลาด:</b><br>';
+  errors.forEach(err => {
+    html += `เวลา Node1: ${err.time_node1 || '-'}<br>`;
+    html += `เวลา Node2: ${err.time_node2 || '-'}<br>`;
+    html += `ระยะวัดไม่ได้ (0): ${err.distance}<br><br>`;
   });
+
+  errorBox.style.display = 'block';
+  errorBox.innerHTML = html;
 }
 
-// เรียกโหลดและแสดงผลเริ่มต้น
-async function initDashboard() {
+// โหลดข้อมูลเริ่มต้นและสร้างกราฟ
+(async () => {
   await loadData();
   await createWaterLevelChart('30d');
   await createOneHourChart();
   await createBatteryChart();
   await createCurrentChart('30d');
-}
 
-// ตัวอย่างการใช้ปุ่มเปลี่ยนช่วงเวลา
-document.getElementById('btnLast7Days')?.addEventListener('click', async () => {
-  await createWaterLevelChart('7d');
-  await createCurrentChart('7d');
-});
-
-document.getElementById('btnLast30Days')?.addEventListener('click', async () => {
-  await createWaterLevelChart('30d');
-  await createCurrentChart('30d');
-});
-
-document.getElementById('btnLast1Hour')?.addEventListener('click', async () => {
-  await createOneHourChart();
-});
-
-window.onload = initDashboard;
+  setInterval(loadData, 10000);
+  setInterval(async () => {
+    await createWaterLevelChart('30d');
+    await createOneHourChart();
+    await createBatteryChart();
+    await createCurrentChart('30d');
+  }, 300000);
+})();
