@@ -133,7 +133,7 @@ tbody tr:hover {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2 คอลัมน์ */
   grid-template-rows: repeat(2, auto);  /* 2 แถว */
-  gap: 20px;                            /* ช่องว่างระหว่างกล่อง */
+  gap: 20px;
   max-width: 1300px;
   margin: 0 auto 40px;
 }
@@ -286,8 +286,8 @@ tbody tr:hover {
   }
 
   .charts-container {
-    flex-direction: column;
-    max-width: 90%;
+    grid-template-columns: 1fr; /* 1 คอลัมน์ */
+    grid-template-rows: auto;
   }
   
   .chart-box {
