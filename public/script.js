@@ -321,42 +321,45 @@ async function createBatteryChart() {
         ],
       },
       options: {
-        spanGaps: true,
-        layout: {
-          padding: {
-            top: 10,
-            right: 20,
-            bottom: 30,  // เพิ่มช่องว่างด้านล่างไม่ให้ label ชิดกราฟ
-            left: 10
-          }
-        },
-        scales: {
-          x: {
-            ticks: {
-              display: true,
-              color: 'white',
-              maxRotation: 0,
-              minRotation: 0,
-              maxTicksLimit: 4
-            },
-            grid: {
-              drawTicks: false,
-              color: 'rgba(255,255,255,0.1)'
-            }
-          },
-          y: {
-            beginAtZero: false,
-            ticks: { color: 'white' },
-            title: { display: true, text: 'แรงดัน (V)', color: 'white' }
-          }
-        },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-      }
+  spanGaps: true,
+  layout: {
+    padding: {
+      top: 10,
+      right: 20,
+      bottom: 40,  // เพิ่มพื้นที่ล่างเพื่อไม่ให้ tick label ชิดเกินไป
+      left: 10
+    }
+  },
+  scales: {
+    x: {
+      ticks: {
+        display: true,
+        color: 'white',
+        maxRotation: 0,
+        minRotation: 0,
+        maxTicksLimit: 4,
+        padding: 10  // เพิ่มช่องว่างระหว่าง tick กับแกน
+      },
+      grid: {
+        drawTicks: false,
+        color: 'rgba(255,255,255,0.1)'
+      },
+      offset: true
+    },
+    y: {
+      beginAtZero: false,
+      ticks: { color: 'white' },
+      title: { display: true, text: 'แรงดัน (V)', color: 'white' }
+    }
+  },
+  plugins: {
+    legend: { labels: { color: 'white' } },
+    tooltip: { mode: 'index', intersect: false }
+  },
+  responsive: true,
+  maintainAspectRatio: false,
+}
+
     });
   } catch (err) {
     console.error('Error creating battery chart:', err);
