@@ -443,27 +443,26 @@ async function createCurrentChart(range = '30d') {
       type: 'time',
       time: {
         unit: 'hour',
-        stepSize: 3, // แสดงทุก 3 ชั่วโมง
+        stepSize: 3,
         displayFormats: {
-          hour: 'HH:mm'
+          hour: 'HH:mm' // รูปแบบเวลา เช่น 00:00, 03:00
         }
       },
       ticks: {
-        display: true,
         color: 'white',
         maxRotation: 0,
-        minRotation: 0
+        autoSkip: true
       },
       grid: {
         drawTicks: false,
-        color: 'rgba(255,255,255,0.05)' // ทำให้จางลง ดูสะอาด
+        color: 'rgba(255,255,255,0.1)'
       }
     },
     y: {
       beginAtZero: false,
       ticks: { color: 'white' },
       title: { display: true, text: 'กระแส (mA)', color: 'white' },
-      grid: { color: 'rgba(255,255,255,0.05)' }
+      grid: { color: 'rgba(255,255,255,0.1)' }
     }
   },
   plugins: {
