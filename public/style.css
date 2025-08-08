@@ -1,9 +1,6 @@
-/* ฟ้อนต์หลัก */
 * {
   font-family: 'Sarabun', sans-serif;
 }
-
-/* พื้นหลังและสีตัวอักษรหลัก */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(to bottom, #2c3e50, #4ca1af);
@@ -12,7 +9,6 @@ body {
   padding: 20px;
 }
 
-/* ชื่อเรื่องใหญ่ */
 .title {
   font-size: 2.4rem;
   font-weight: 700;
@@ -21,7 +17,6 @@ body {
   text-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
 
-/* แสดงระดับน้ำ */
 .water-level-display {
   display: flex;
   justify-content: center;
@@ -36,7 +31,6 @@ body {
   text-align: center;
 }
 
-/* กล่อง container ของ node */
 .container {
   max-width: 1300px;
   display: flex;
@@ -49,10 +43,8 @@ body {
   padding: 20px;
   box-shadow: 0 5px 18px rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
-  /* ถ้าไม่อยากให้เปลี่ยนตามเมาส์ ลบ transition หรือ effect ที่อาจมี */
 }
 
-/* กล่องของแต่ละ node */
 .node-box {
   flex: 1 1 50%;
   background: rgba(255, 255, 255, 0.08);
@@ -82,7 +74,6 @@ body {
   letter-spacing: 0.03em;
 }
 
-/* ตารางข้อมูล */
 .table-wrapper {
   max-width: 1260px;
   margin: 0 auto 50px;
@@ -132,22 +123,22 @@ tbody tr:hover {
 /* กราฟ */
 .charts-container {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 คอลัมน์ */
-  grid-template-rows: repeat(2, auto);  /* 2 แถว */
+  grid-template-columns: repeat(2, 1fr); 
+  grid-template-rows: repeat(2, auto); 
   gap: 20px;
   max-width: 1300px;
   margin: 0 auto 40px;
 }
 
 .chart-box {
-  width: 100%;       /* เต็มพื้นที่คอลัมน์ */
+  width: 100%;      
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
   border-radius: 15px;
   padding: 20px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   color: white;
-  box-sizing: border-box; /* ป้องกัน padding ทำให้ล้น */
+  box-sizing: border-box; 
 }
 
 .chart-box h3 {
@@ -159,22 +150,21 @@ tbody tr:hover {
 .chart-box.map-box {
   margin: 20px auto 40px;
   text-align: center;
-  max-width: 1300px;  /* กำหนดความกว้างสูงสุดของกล่อง */
-  width: 100%;        /* ให้เต็มความกว้างในขอบเขต max-width */
+  max-width: 1300px;  
+  width: 100%;       
 }
 
 #map {
-  height: 1200px;       /* ความสูงที่ต้องการ */
-  width: 100%;          /* ให้เต็มความกว้างของ container */
-  max-width: 1200px;    /* กำหนดความกว้างสูงสุด */
-  margin: 0 auto;       /* จัดกึ่งกลาง */
+  height: 1200px;     
+  width: 100%;          
+  max-width: 1200px;    
+  margin: 0 auto;      
   border-radius: 15px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
   border: none;
-  display: block;       /* ป้องกันปัญหาการจัดวาง */
+  display: block;      
 }
 
-/* Tooltip แบบถาวรบนแผนที่ */
 .my-tooltip {
   background-color: rgba(0, 0, 0, 0.6);
   color: #e0f7ff;
@@ -186,7 +176,6 @@ tbody tr:hover {
   pointer-events: none;
 }
 
-/* ปุ่มเลือกช่วงเวลา */
 #timeRangeButtons, #currentTimeRangeButtons {
   text-align: center;
   margin-bottom: 15px;
@@ -217,7 +206,6 @@ tbody tr:hover {
   font-weight: 700;
 }
 
-/* Tooltip ของ Leaflet แบบถาวร (ปรับเอง) */
 .leaflet-tooltip.my-tooltip {
   background-color: rgba(0, 0, 0, 0.6) !important;
   color: #e0f7ff !important;
@@ -229,7 +217,6 @@ tbody tr:hover {
   pointer-events: none !important;
 }
 
-/* ซ่อน scrollbar ใน error box แบบสวย */
 .error-toggle {
   cursor: pointer;
   color: #ff4d4d;

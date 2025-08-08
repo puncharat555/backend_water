@@ -491,7 +491,6 @@ function updateErrorList(data) {
   });
 }
 
-// เรียกโหลดและแสดงผลเริ่มต้น
 async function initDashboard() {
   await loadData();
   await createWaterLevelChart('30d');
@@ -500,9 +499,7 @@ async function initDashboard() {
   await createCurrentChart('30d');
 }
 
-// ตั้ง event ปุ่มช่วงเวลาแบบ dynamic ตาม class และ data-range attribute
 function setupRangeButtons() {
-  // ปุ่มกราฟระดับน้ำย้อนหลัง (30d,7d,1h)
   const waterLevelButtons = document.querySelectorAll('#timeRangeButtons .range-btn');
   waterLevelButtons.forEach(button => {
     button.addEventListener('click', async () => {
@@ -519,7 +516,6 @@ function setupRangeButtons() {
     });
   });
 
-  // ปุ่มกราฟกระแส (current) ช่วงเวลา (ถ้ามี)
   const currentButtons = document.querySelectorAll('#currentTimeRangeButtons .range-btn');
   currentButtons.forEach(button => {
     button.addEventListener('click', async () => {
@@ -538,5 +534,4 @@ window.onload = async () => {
 };
 setInterval(() => {
   loadData();
-}, 60000); // ทุก 60 วินาที
-
+}, 60000); 

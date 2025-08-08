@@ -13,17 +13,14 @@ const client = new MongoClient(uri, {
   tlsAllowInvalidCertificates: true,
 });
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '/public')));
 
-// Routes
 app.get(['/', '/index'], (req, res) => {
   res.sendFile(path.join(__dirname, '/public', 'index.html'));
 });
 
-// POST /distance รับข้อมูลหลายตัวและตรวจสอบชนิดข้อมูล
 app.post('/distance', async (req, res) => {
   const {
     distance,
@@ -85,13 +82,12 @@ app.post('/distance', async (req, res) => {
   }
 });
 
-// GET /distance ดึงข้อมูลตามช่วงเวลาที่ระบุใน query param ?range=
 app.get('/distance', async (req, res) => {
   try {
     const db = client.db('esp32_data');
     const collection = db.collection('distances');
 
-    const range = req.query.range || '1d'; // ค่าเริ่มต้น 1 วัน
+    const range = req.query.range || '1d'; 
 
     let fromDate = new Date();
     switch (range) {
@@ -108,7 +104,7 @@ app.get('/distance', async (req, res) => {
         fromDate.setDate(fromDate.getDate() - 30);
         break;
       default:
-        fromDate.setDate(fromDate.getDate() - 1); // กรณีไม่มี range หรือไม่ตรงกับเงื่อนไข กำหนดเป็น 1 วัน
+        fromDate.setDate(fromDate.getDate() - 1); 
     }
 
     const distances = await collection
@@ -116,8 +112,6 @@ app.get('/distance', async (req, res) => {
       .sort({ timestamp: -1 })
       //.limit(1000)
       .toArray();
-
-    // ป้องกัน cache ฝั่ง client และ proxy
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
