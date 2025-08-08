@@ -6,6 +6,8 @@ const pageSize = 10;
 let waterLevelChartInstance = null;
 let currentChartInstance = null;
 
+let currentRange = '30d';  // เพิ่มตัวแปรเก็บช่วงเวลาปัจจุบัน
+
 function setupHiDPICanvas(canvas) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
@@ -462,8 +464,8 @@ document.querySelectorAll('#currentTimeRangeButtons .range-btn').forEach(btn => 
   btn.addEventListener('click', e => {
     document.querySelectorAll('#currentTimeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
     e.target.classList.add('active');
-    const range = e.target.getAttribute('data-range');
-    createCurrentChart(range);
+    currentRange = e.target.getAttribute('data-range');  // อัพเดต currentRange
+    createCurrentChart(currentRange);
   });
 });
 
@@ -472,22 +474,22 @@ document.querySelectorAll('#waterLevelTimeRangeButtons .range-btn').forEach(btn 
   btn.addEventListener('click', e => {
     document.querySelectorAll('#waterLevelTimeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
     e.target.classList.add('active');
-    const range = e.target.getAttribute('data-range');
-    createWaterLevelChart(range);
+    currentRange = e.target.getAttribute('data-range');  // อัพเดต currentRange
+    createWaterLevelChart(currentRange);
   });
 });
 
 async function refreshAll() {
   await loadData();
-  await createWaterLevelChart();
+  await createWaterLevelChart(currentRange);
   await createCurrentChart(currentRange);
   await createBatteryChart();
 }
 
 // เริ่มแรก
 loadData();
-createWaterLevelChart('30d');
-createCurrentChart('30d');
+createWaterLevelChart(currentRange);
+createCurrentChart(currentRange);
 createBatteryChart();
 
 // รีเฟรชอัตโนมัติทุก 60 วินาที
