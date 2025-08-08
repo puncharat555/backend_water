@@ -1,8 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit&display=swap');
+
 * {
-  font-family: 'Sarabun', sans-serif;
+  font-family: 'Kanit', sans-serif;
 }
+
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(to bottom, #2c3e50, #4ca1af);
   color: #fff;
   margin: 0;
@@ -45,123 +47,21 @@ body {
 }
 
 .node-box {
-  flex: 1 1 50%;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 15px;
-  padding: 18px 22px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-  color: #eee;
-  transition: background 0.3s ease;
-  box-sizing: border-box;  
+  flex: 1;
 }
 
-.node-box:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.node-box h2 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-weight: 700;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.7);
-}
-
-.node-box p {
-  margin: 8px 0;
-  font-size: 1rem;
-  color: #ddd;
-}
-
-/* ตารางข้อมูล */
-.table-wrapper {
-  max-width: 1100px;
-  margin: 0 auto 50px;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 20px;
-  border-radius: 15px;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-  overflow-x: auto;
-  color: white;
-}
-
-.table-wrapper h3 {
-  font-size: 1.4rem;
-  margin-bottom: 20px;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  color: #f0f0f0;
-  font-size: 0.95rem;
-  min-width: 700px;
-}
-
-thead th {
-  background: rgba(255, 255, 255, 0.25);
-  padding: 12px 15px;
-  text-align: left;
-  font-weight: 600;
-  border-bottom: 2px solid rgba(255,255,255,0.4);
-}
-
-tbody td {
-  padding: 10px 15px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-tbody tr:hover {
-  background: rgba(255, 255, 255, 0.15);
-  cursor: default;
-  transition: background 0.3s ease;
-}
-
-/* กราฟ */
 .charts-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: 40px;
 }
 
 .chart-box {
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  width: 100%;
-  max-width: 600px;
-  color: white;
-}
-
-.chart-box h3 {
-  margin-bottom: 15px;
-  text-align: center;
-}
-
-.chart-box.map-box {
-  margin: 20px auto;
-  text-align: center;
-}
-
-.chart-box.map-box iframe {
-  width: 100% !important;
-  height: 300px !important;
-  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(4px);
   border-radius: 10px;
-}
-
-.chart-box.map-box small a {
-  color: #00c0ff;
-  text-decoration: none;
-  display: inline-block;
-  margin-top: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .error-toggle {
@@ -172,18 +72,13 @@ tbody tr:hover {
 }
 
 .error-box {
-  color: #313030;
-  background-color: rgba(255, 0, 0, 0.15); 
-  border: 1px solid rgba(255, 0, 0, 0.5); 
+  color: #000000;
+  background-color: rgba(255, 50, 50, 0.3);
+  border: 1px solid #ff0000;
   padding: 10px;
   margin: 10px 0;
   border-radius: 6px;
-  max-height: 200px;
-  overflow-y: auto;
-
-  backdrop-filter: blur(6px);  
-  -webkit-backdrop-filter: blur(6px); 
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.3); 
+  backdrop-filter: blur(4px);
 }
 
 .error-box.hidden {
@@ -195,64 +90,24 @@ tbody tr:hover {
   color: #cc0000;
 }
 
-#map {
-  height: 400px;
-  width: 600px;
-  margin: 0 auto;
-  border: 1px solid #ccc;
+.table-wrapper {
+  margin-top: 30px;
 }
 
-/* Responsive */
-@media (max-width: 650px) {
-  .container {
-    flex-direction: column;
-    max-width: 90%;
-  }
-
-  .node-box {
-    flex: 1 1 100%;
-    margin-bottom: 20px;
-  }
-
-  .main-water-level {
-    font-size: 2.5rem;
-    padding: 20px 30px;
-    min-width: auto;
-  }
-
-  table {
-    font-size: 0.9rem;
-    min-width: 100%;
-  }
-
-  .charts-container {
-    flex-direction: column;
-    max-width: 90%;
-  }
-  
-  .chart-box {
-    max-width: 100%;
-  }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
-.chart-box canvas {
-  width: 100% !important;
-  max-width: 600px;
-  height: 300px !important;
-  display: block;
-  margin: 0 auto;
-}
-#moreButtonContainer {
+th, td {
+  padding: 8px;
   text-align: center;
-  margin-top: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
-#moreButtonContainer button {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 1rem;
-  text-decoration: underline;
-  padding: 0;
+th {
+  background-color: rgba(255,255,255,0.1);
 }
