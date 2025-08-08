@@ -131,25 +131,24 @@ tbody tr:hover {
 /* กราฟ */
 .charts-container {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2 คอลัมน์ เท่ากัน */
-  grid-template-rows: repeat(2, auto);  /* 2 แถว ความสูงอัตโนมัติ */
-  gap: 20px;                            /* ระยะห่างระหว่างกล่อง */
-  justify-content: center;
-  max-width: 1300px;                    /* หรือความกว้างตามที่ต้องการ */
+  grid-template-columns: repeat(2, 1fr); /* 2 คอลัมน์ */
+  grid-template-rows: repeat(2, auto);  /* 2 แถว */
+  gap: 20px;                            /* ช่องว่างระหว่างกล่อง */
+  max-width: 1300px;
   margin: 0 auto 40px;
 }
 
-
 .chart-box {
-  width: 100%;       /* เต็มความกว้างของช่อง grid */
-  max-width: none;   /* ไม่จำกัดความกว้าง */
+  width: 100%;       /* เต็มพื้นที่คอลัมน์ */
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
   border-radius: 15px;
   padding: 20px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   color: white;
+  box-sizing: border-box; /* สำคัญ ป้องกัน padding ทำให้ล้น */
 }
+
 
 .chart-box h3 {
   margin-bottom: 15px;
