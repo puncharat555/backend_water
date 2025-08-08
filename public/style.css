@@ -1,6 +1,9 @@
+/* ฟ้อนต์หลัก */
 * {
   font-family: 'Sarabun', sans-serif;
 }
+
+/* พื้นหลังและสีตัวอักษรหลัก */
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(to bottom, #2c3e50, #4ca1af);
@@ -9,6 +12,7 @@ body {
   padding: 20px;
 }
 
+/* ชื่อเรื่องใหญ่ */
 .title {
   font-size: 2.4rem;
   font-weight: 700;
@@ -17,6 +21,7 @@ body {
   text-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
 
+/* แสดงระดับน้ำ */
 .water-level-display {
   display: flex;
   justify-content: center;
@@ -31,6 +36,7 @@ body {
   text-align: center;
 }
 
+/* กล่อง container ของ node */
 .container {
   max-width: 1100px;
   display: flex;
@@ -42,8 +48,10 @@ body {
   border-radius: 20px;
   padding: 20px;
   box-shadow: 0 5px 18px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
 }
 
+/* กล่องของแต่ละ node */
 .node-box {
   flex: 1 1 50%;
   background: rgba(255, 255, 255, 0.08);
@@ -52,7 +60,6 @@ body {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
   color: #eee;
   transition: background 0.3s ease;
-  box-sizing: border-box;  
 }
 
 .node-box:hover {
@@ -68,9 +75,10 @@ body {
 }
 
 .node-box p {
-  margin: 8px 0;
-  font-size: 1rem;
+  margin: 6px 0;
+  font-size: 1.1rem;
   color: #ddd;
+  letter-spacing: 0.03em;
 }
 
 /* ตารางข้อมูล */
@@ -145,28 +153,81 @@ tbody tr:hover {
   text-align: center;
 }
 
+/* กล่องแผนที่ */
 .chart-box.map-box {
-  margin: 20px auto;
+  margin: 20px auto 40px;
   text-align: center;
 }
 
-.chart-box.map-box iframe {
-  width: 100% !important;
-  height: 300px !important;
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 10px;
+#map {
+  height: 400px;
+  width: 90%;
+  max-width: 700px;
+  margin: 0 auto;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  border: none;
 }
 
-.chart-box.map-box small a {
+/* Tooltip แบบถาวรบนแผนที่ */
+.my-tooltip {
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #e0f7ff;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+/* ปุ่มเลือกช่วงเวลา */
+#timeRangeButtons, #currentTimeRangeButtons {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.range-btn {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  padding: 8px 20px;
+  margin: 0 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+}
+
+.range-btn:hover {
+  background: rgba(0, 192, 255, 0.3);
+  border-color: #00c0ff;
   color: #00c0ff;
-  text-decoration: none;
-  display: inline-block;
-  margin-top: 8px;
+  font-weight: 700;
 }
 
+.range-btn.active {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: white;
+  font-weight: 700;
+}
+
+/* Tooltip ของ Leaflet แบบถาวร (ปรับเอง) */
+.leaflet-tooltip.my-tooltip {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  color: #e0f7ff !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  font-size: 1rem !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+  pointer-events: none !important;
+}
+
+/* ซ่อน scrollbar ใน error box แบบสวย */
 .error-toggle {
   cursor: pointer;
-  color: red;
+  color: #ff4d4d;
   margin-left: 10px;
   font-size: 18px;
 }
@@ -193,13 +254,6 @@ tbody tr:hover {
 .error-box h4 {
   margin-top: 0;
   color: #cc0000;
-}
-
-#map {
-  height: 400px;
-  width: 600px;
-  margin: 0 auto;
-  border: 1px solid #ccc;
 }
 
 /* Responsive */
@@ -233,13 +287,20 @@ tbody tr:hover {
   .chart-box {
     max-width: 100%;
   }
+
+  #map {
+    width: 100%;
+    height: 300px;
+  }
 }
 
+/* ปรับขนาด canvas กราฟ */
 .chart-box canvas {
   width: 600px !important;  
   height: 300px !important; 
 }
 
+/* ปุ่มโหลดข้อมูลเพิ่ม */
 #moreButtonContainer {
   text-align: center;
   margin-top: 10px;
@@ -253,39 +314,4 @@ tbody tr:hover {
   font-size: 1rem;
   text-decoration: underline;
   padding: 0;
-}
-#timeRangeButtons {
-  text-align: center;
-  margin-bottom: 15px;
-}
-
-.range-btn {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
-  border-radius: 6px;
-  padding: 8px 20px;
-  margin: 0 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-.range-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.7);
-}
-
-.range-btn.active {
-  background: rgba(255, 255, 255, 0.5);
-  border-color: white;
-  font-weight: 700;
-}
-.my-tooltip {
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  font-weight: bold;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.9rem;
 }
