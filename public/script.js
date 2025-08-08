@@ -190,7 +190,7 @@ async function createWaterLevelChart(range = '30d') {
               color: 'white',
               maxRotation: 0,
               minRotation: 0,
-              maxTicksLimit: 4
+              maxTicksLimit: 3
             },
             grid: {
               drawTicks: false,
@@ -255,7 +255,7 @@ async function createOneHourChart() {
               color: 'white',
               maxRotation: 0,
               minRotation: 0,
-              maxTicksLimit: 4
+              maxTicksLimit: 3
             },
             grid: {
               drawTicks: false,
@@ -329,7 +329,7 @@ async function createBatteryChart() {
               color: 'white',
               maxRotation: 0,
               minRotation: 0,
-              maxTicksLimit: 4
+              maxTicksLimit: 3
             },
             grid: {
               drawTicks: false,
@@ -445,7 +445,7 @@ async function createCurrentChart(range = '30d') {
               color: 'white',
               maxRotation: 0,
               minRotation: 0,
-              maxTicksLimit: 4,
+              maxTicksLimit: 3
             },
             grid: {
               drawTicks: false,
