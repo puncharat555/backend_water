@@ -167,50 +167,49 @@ async function createWaterLevelChart(range = '30d') {
     }
 
     waterLevelChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: parsed.labels,
-        datasets: [{
-          label: `ระดับน้ำย้อนหลัง ${range}`,
-          data: parsed.waterLevels,
-          borderColor: '#00c0ff',
-          backgroundColor: 'rgba(0,192,255,0.2)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
-          pointBackgroundColor: '#00c0ff',
-        }],
+  type: 'line',
+  data: {
+    labels: parsed.labels,
+    datasets: [{
+      label: `ระดับน้ำย้อนหลัง ${range}`,
+      data: parsed.waterLevels,
+      borderColor: '#00c0ff',
+      backgroundColor: 'rgba(0,192,255,0.2)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+      pointBackgroundColor: '#00c0ff',
+    }],
+  },
+  options: {
+    spanGaps: true,
+    scales: { /* ... */ },
+    plugins: {
+  legend: { labels: { color: 'white' } },
+  tooltip: { mode: 'index', intersect: false },
+  zoom: {
+    pan: {
+      enabled: true,
+      mode: 'x',
+      modifierKey: 'ctrl', // กด Ctrl + ลากเพื่อเลื่อนกราฟ (ถ้าต้องการ)
+    },
+    zoom: {
+      wheel: {
+        enabled: true,
       },
-      options: {
-        spanGaps: true,
-        scales: {
-          x: {
-            ticks: {
-              display: true,
-              color: 'white',
-              maxRotation: 0,
-              minRotation: 0,
-              maxTicksLimit: 4
-            },
-            grid: {
-              drawTicks: false,
-              color: 'rgba(255,255,255,0.1)'
-            }
-          },
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
-            ticks: { color: 'white' }
-          }
-        },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
-      }
-    });
+      pinch: {
+        enabled: true,
+      },
+      mode: 'x',
+    }
+  }
+}
+,
+    responsive: true,
+    maintainAspectRatio: false,
+  }
+});
+
   } catch (err) {
     console.error('Error creating water level chart:', err);
   }

@@ -122,10 +122,10 @@ tbody tr:hover {
 
 /* กราฟ */
 .charts-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  display: flex;
   gap: 20px;
-  justify-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
   margin-bottom: 40px;
 }
 
@@ -137,19 +137,8 @@ tbody tr:hover {
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   width: 100%;
   max-width: 600px;
-  height: 320px;  /* กำหนดความสูงคงที่ */
   color: white;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
 }
-
-.chart-box canvas {
-  flex-grow: 1;
-  width: 100% !important;
-  height: 100% !important;
-}
-
 
 .chart-box h3 {
   margin-bottom: 15px;
