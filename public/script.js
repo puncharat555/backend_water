@@ -324,10 +324,10 @@ async function createBatteryChart() {
   spanGaps: true,
   layout: {
     padding: {
-      top: 30,
-      right: 40,
-      bottom: 40,  // เพิ่มพื้นที่ล่างเพื่อไม่ให้ tick label ชิดเกินไป
-      left: 10
+      top: 20,       // เว้นบรรทัดบนเล็กน้อย
+      right: 30,     // ขวาเล็กน้อยพอเหมาะ
+      bottom: 50,    // ล่างเพิ่มมากขึ้นสำหรับ tick label
+      left: 15       // ซ้ายเล็กน้อย
     }
   },
   scales: {
@@ -337,24 +337,57 @@ async function createBatteryChart() {
         color: 'white',
         maxRotation: 0,
         minRotation: 0,
-        maxTicksLimit: 4,
-        padding: 10  // เพิ่มช่องว่างระหว่าง tick กับแกน
+        maxTicksLimit: 6,    // กำหนดจำนวน tick ให้พอดี ไม่เบียดกัน
+        padding: 12,        // ช่องว่างระหว่าง tick กับแกน
+        callback: function(value) {
+          const label = this.getLabelForValue(value);
+          if (!label) return '';
+          const hour = parseInt(label.split(':')[0], 10);
+          if (isNaN(hour)) return '';
+          // แสดงทุก 4 ชั่วโมง
+          return (hour % 4 === 0) ? label : '';
+        }
       },
       grid: {
         drawTicks: false,
-        color: 'rgba(255,255,255,0.1)'
+        color: 'rgba(255,255,255,0.15)', // กริดสีขาวอ่อน
+        drawBorder: false,
       },
-      offset: true
+      offset: true,
+      border: {
+        display: false
+      }
     },
     y: {
       beginAtZero: false,
-      ticks: { color: 'white' },
-      title: { display: true, text: 'แรงดัน (V)', color: 'white' }
+      ticks: {
+        color: 'white',
+        padding: 10,
+        callback: val => val.toFixed(1)
+      },
+      title: {
+        display: true,
+        text: 'แรงดัน (V)',
+        color: 'white',
+        font: { size: 14, weight: 'bold' }
+      },
+      grid: {
+        color: 'rgba(255,255,255,0.15)',
+        drawBorder: false
+      }
     }
   },
   plugins: {
-    legend: { labels: { color: 'white' } },
-    tooltip: { mode: 'index', intersect: false }
+    legend: {
+      labels: { color: 'white', font: { size: 13 } }
+    },
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      titleFont: { size: 14 },
+      bodyFont: { size: 13 }
+    }
   },
   responsive: true,
   maintainAspectRatio: false,
