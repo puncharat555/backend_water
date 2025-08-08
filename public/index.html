@@ -90,15 +90,15 @@
 
   const locations = [
     { lat: 19.030471, lng: 99.884592, title: 'จุดวัดระกับน้ำ' },
-    { lat: 19.031200, lng: 99.882000, title: 'จุดส่งต่อข้อมูล' },
-    { lat: 19.029000, lng: 99.886500, title: 'จุดรับข้อมูล' },
+    { lat: 19.028255, lng: 99.892867, title: 'จุดส่งต่อข้อมูล' },
+    { lat: 19.026849, lng: 99.900480, title: 'จุดรับข้อมูล' },
   ];
 
   locations.forEach(loc => {
     L.marker([loc.lat, loc.lng])
       .addTo(map)
       .bindPopup(loc.title);
-      const polyline = L.polyline(locations, {color: 'blue'}).addTo(map);
+      const polyline = L.polyline(locations, {color: 'Gray'}).addTo(map);
       map.fitBounds(polyline.getBounds());
   });
 </script>
