@@ -390,7 +390,7 @@ async function createCurrentChart(range = '30d') {
             pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
             pointBackgroundColor: '#ff4500',
           },
-          // ถ้าต้องการลบ MA กับ Threshold ออก ให้คอมเมนต์หรือลบ datasets นี้ออกได้
+          // datasets สำหรับ MA และ Threshold สามารถเปิด/ปิดได้ตามต้องการ
           // {
           //   label: 'MA กระแส Node 1',
           //   data: maCurrentsNode1,
@@ -454,40 +454,70 @@ async function createCurrentChart(range = '30d') {
         maintainAspectRatio: false,
       }
     });
-  } catch (err) {
-    console.error('Error creating current chart:', err);
+
+  } catch (error) {
+    console.error('Error creating current chart:', error);
   }
 }
 
-function toggleErrorBox() {
-  const box = document.getElementById('errorBox');
-  if (!box) return;
-  box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+function updateErrorList(data) {
+  const errorList = document.getElementById('errorList');
+  if (!errorList) return;
+
+  const errorItems = data.filter(d => d.distance === 0 || d.distance > fixedDepth);
+  errorList.innerHTML = '';
+  if (errorItems.length === 0) {
+    errorList.innerText = 'ไม่มีข้อมูลผิดปกติ';
+  } else {
+    errorList.innerHTML = errorItems.map(d => `เวลา: ${d.time_node1 || d.time_node2 || '-'} | ระยะวัด: ${d.distance}`).join('<br/>');
+  }
 }
 
-function updateErrorList(data) {
-  const box = document.getElementById('errorList');
-  if (!box) return;
-  box.innerHTML = '';
-  data.forEach(item => {
-    if (item.rssi_node1 === 0 || item.rssi_node2 === 0) {
-      const div = document.createElement('div');
-      div.style.color = 'red';
-      div.textContent = `ผิดพลาด: RSSI = 0 เวลา: ${item.time_node1 || item.time_node2 || ''}`;
-      box.appendChild(div);
-    }
+// ===================
+// จับ event ปุ่มเลือกช่วงเวลา
+document.addEventListener('DOMContentLoaded', () => {
+  // โหลดข้อมูลและกราฟครั้งแรก
+  refreshAll();
+
+  // ตั้ง interval รีเฟรชอัตโนมัติทุก 60 วินาที
+  setInterval(refreshAll, 60000);
+
+  // ปุ่มกราฟระดับน้ำย้อนหลัง 30d
+  const waterLevelButtons = document.querySelectorAll('#timeRangeButtons .range-btn');
+  waterLevelButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      waterLevelButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const range = btn.getAttribute('data-range');
+      await createWaterLevelChart(range);
+    });
   });
-}
+
+  // ปุ่มกราฟกระแส
+  const currentButtons = document.querySelectorAll('#currentTimeRangeButtons .range-btn');
+  currentButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      currentButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const range = btn.getAttribute('data-range');
+      await createCurrentChart(range);
+    });
+  });
+});
 
 async function refreshAll() {
   await loadData();
-  await createWaterLevelChart('30d');
+
+  // หา range ที่ active ปัจจุบันของกราฟระดับน้ำย้อนหลัง
+  const activeWaterLevelBtn = document.querySelector('#timeRangeButtons .range-btn.active');
+  const waterLevelRange = activeWaterLevelBtn ? activeWaterLevelBtn.getAttribute('data-range') : '30d';
+
+  // หา range ที่ active ปัจจุบันของกราฟกระแส
+  const activeCurrentBtn = document.querySelector('#currentTimeRangeButtons .range-btn.active');
+  const currentRange = activeCurrentBtn ? activeCurrentBtn.getAttribute('data-range') : '30d';
+
+  await createWaterLevelChart(waterLevelRange);
   await createOneHourChart();
   await createBatteryChart();
-  await createCurrentChart('30d');
+  await createCurrentChart(currentRange);
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  refreshAll();
-  setInterval(refreshAll, 60000);
-});
