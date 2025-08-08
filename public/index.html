@@ -1,35 +1,148 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8" />
-<title>Test Leaflet Map</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
-<style>
-  #map { height: 300px; }
-</style>
+  <meta charset="UTF-8" />
+  <title>Water Level Monitoring</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
 </head>
 <body>
+  <h1 class="title">Water Level Monitoring</h1>
 
-<div id="map"></div>
+  <div class="water-level-display">
+    <div class="water-depth">
+      <p id="waterLevelNode1" class="main-water-level">ระดับน้ำ: -</p>
+    </div>
+  </div>
 
-<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <div class="container">
+    <!-- Node 1 -->
+    <div class="node-box">
+      <h2>Node 1</h2>
+      <p id="rssiNode1">RSSI: -</p>
+      <p id="voltageNode1">แรงดัน: -</p>
+      <p id="currentNode1">กระแส: -</p>
+      <p id="timeNode1">เวลาวัด: -</p>
+    </div>
+
+    <!-- Node 2 -->
+    <div class="node-box">
+      <h2>Node 2</h2>
+      <p id="rssiNode2">RSSI: -</p>
+      <p id="voltageNode2">แรงดัน: -</p>
+      <p id="currentNode2">กระแส: -</p>
+      <p id="timeNode2">เวลาวัด: -</p>
+    </div>
+  </div>
+
+  <div class="charts-container">
+    <div class="chart-box">
+  <h3>กราฟระดับน้ำย้อนหลัง</h3>
+  <div id="timeRangeButtons" style="text-align:center; margin-bottom:15px;">
+    <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
+    <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
+    <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
+  </div>
+  <canvas id="waterLevelChart30d" height="300"></canvas>
+</div>
+
+    <div class="chart-box">
+      <h3>กราฟระดับน้ำย้อนหลัง 1 ชั่วโมง</h3>
+      <canvas id="waterLevelChart1h" height="300"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2</h3>
+      <canvas id="batteryChart" height="300"></canvas>
+    </div>
+    <div class="chart-box">
+  <h3>กราฟกระแส (Current mA)</h3>
+  <div id="currentTimeRangeButtons" style="text-align:center; margin-bottom:10px;">
+    <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
+    <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
+    <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
+  </div>
+  <canvas id="currentChart" width="400" height="200"></canvas>
+</div>
+
+  </div>
+  <div class="chart-box map-box">
+  <h3>ตำแหน่งอุปกรณ์</h3>
+  <div id="map" style="height: 300px; border:1px solid rgba(255,255,255,0.3); border-radius: 10px;"></div>
+</div>
+
+<!-- ใส่ลิงก์ CSS และ JS ของ Leaflet -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+  integrity="sha256-sA+oBvM7Jb8yv8mYvQip1PfwPpJd0Xv+f6tIBG3Y40c="
+  crossorigin=""
+/>
+<script
+  src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+  integrity="sha256-QVStxC6Xh3ixvNtV4z+0+otXKzE1a7mbU4o5pT4ZpZw="
+  crossorigin=""
+></script>
+
 <script>
-  const map = L.map('map').setView([19.027566, 99.896737], 15);
+  // สร้างแผนที่ กำหนดพิกัดกลางแผนที่และระดับซูม
+  const map = L.map('map').setView([19.030471, 99.884592], 16);
+
+  // โหลดแผนที่ OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    attribution: '&copy; OpenStreetMap contributors',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(map);
 
+  // กำหนดตำแหน่งหมุด 3 จุด
   const locations = [
-    { lat: 19.027566, lng: 99.896737, title: "จุดวัดระดับน้ำ" },
-    { lat: 19.028286, lng: 99.892995, title: "จุดส่งต่อข้อมูล" },
-    { lat: 19.026849, lng: 99.900480, title: "จุดเก็บรับข้อมูล" },
+    { lat: 19.030471, lng: 99.884592, title: 'จุดที่ 1: อุปกรณ์ A' },
+    { lat: 19.031200, lng: 99.882000, title: 'จุดที่ 2: อุปกรณ์ B' },
+    { lat: 19.029000, lng: 99.886500, title: 'จุดที่ 3: อุปกรณ์ C' },
   ];
 
+  // วนลูปปักหมุดและผูก popup
   locations.forEach(loc => {
-    L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(loc.title);
+    L.marker([loc.lat, loc.lng])
+      .addTo(map)
+      .bindPopup(loc.title);
   });
 </script>
 
+
+  <div class="table-wrapper">
+    <h3>
+      📋 ประวัติข้อมูล
+      <span class="error-toggle" onclick="toggleErrorBox()" title="คลิกเพื่อแสดงข้อมูลผิดปกติ">❗</span>
+    </h3>
+    
+    <div id="errorBox" class="error-box hidden">
+      <h4>รายการข้อมูลผิดปกติ</h4>
+      <ul id="errorList">
+      </ul>
+    </div>
+
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>ระดับน้ำดิบ (cm)</th>
+          <th>ระดับน้ำ (cm)</th>
+          <th>RSSI Node1</th>
+          <th>RSSI Node2</th>
+          <th>V Node1</th>
+          <th>I Node1</th>
+          <th>V Node2</th>
+          <th>I Node2</th>
+          <th>เวลาวัด Node1</th>
+          <th>เวลาวัด Node2</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      </table>
+    <div id="moreButtonContainer" style="text-align: center; margin-top: 10px;"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
