@@ -439,23 +439,22 @@ async function createCurrentChart(range = '30d') {
       options: {
   scales: {
     x: {
+      type: 'time',
+      time: {
+        unit: 'hour',
+        stepSize: 6, // แสดงทุก 6 ชั่วโมง
+        displayFormats: {
+          hour: 'HH:mm' // รูปแบบเวลา
+        }
+      },
       ticks: {
-        callback: function(value, index, ticks) {
-          const date = new Date(this.getLabelForValue(value));
-          // แสดงเป็น วัน-เดือน เวลา
-          return date.toLocaleString('th-TH', {
-            day: '2-digit',
-            month: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-          });
-        },
-        maxRotation: 45, // หมุนแค่ 45 องศา
-        minRotation: 0
+        maxRotation: 0,
+        autoSkip: true
       }
     }
   }
 }
+
 
     });
   } catch (err) {
