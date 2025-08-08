@@ -485,6 +485,26 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshAll();
   setInterval(refreshAll, 60000); // refresh ทุก 60 วินาที
 
+  // ปุ่มช่วงเวลากราฟระดับน้ำ (id ตรงกับ HTML: #timeRangeButtons)
+  document.querySelectorAll('#timeRangeButtons .range-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      document.querySelectorAll('#timeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      const range = e.target.getAttribute('data-range');
+      createWaterLevelChart(range);
+    });
+  });
+
+  // ปุ่มช่วงเวลากราฟกระแส (id ตรงกับ HTML: #currentTimeRangeButtons)
+  document.querySelectorAll('#currentTimeRangeButtons .range-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      document.querySelectorAll('#currentTimeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      const range = e.target.getAttribute('data-range');
+      createCurrentChart(range);
+    });
+  });
+
   const errorToggleBtn = document.getElementById('errorToggleBtn');
   if (errorToggleBtn) {
     errorToggleBtn.addEventListener('click', toggleErrorBox);
