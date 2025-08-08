@@ -181,31 +181,11 @@ async function createWaterLevelChart(range = '30d') {
       options: {
         spanGaps: true,
         scales: {
-          x: {
-            ticks: {
-              color: 'white',
-              maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 6,
-              font: { size: 12 },
-              callback: function(value) {
-                const label = this.getLabelForValue(value);
-                if (label.length >= 16) {
-                  return label.substr(11, 5); // แสดงแค่ "HH:mm"
-                }
-                return label;
-              }
-            },
-            grid: {
-              drawTicks: false,
-              color: 'rgba(255, 255, 255, 0.1)'
-            }
-          },
+          x: { ticks: { display: false }, grid: { drawTicks: false } },
           y: {
             beginAtZero: true,
             title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
-            ticks: { color: 'white', font: { size: 12 } },
-            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+            ticks: { color: 'white' }
           }
         },
         plugins: {
@@ -250,31 +230,8 @@ async function createOneHourChart() {
       options: {
         spanGaps: true,
         scales: {
-          x: {
-            ticks: {
-              color: 'white',
-              maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 6,
-              font: { size: 12 },
-              callback: function(value) {
-                const label = this.getLabelForValue(value);
-                if (label.length >= 16) {
-                  return label.substr(11, 5);
-                }
-                return label;
-              }
-            },
-            grid: {
-              drawTicks: false,
-              color: 'rgba(255, 255, 255, 0.1)'
-            }
-          },
-          y: {
-            beginAtZero: true,
-            ticks: { color: 'white', font: { size: 12 } },
-            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-          }
+          x: { ticks: { display: false }, grid: { drawTicks: false } },
+          y: { beginAtZero: true, ticks: { color: 'white' } }
         },
         plugins: {
           legend: { labels: { color: 'white' } },
@@ -331,24 +288,11 @@ async function createBatteryChart() {
       options: {
         spanGaps: true,
         scales: {
-          x: {
-            ticks: {
-              color: 'white',
-              maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 6,
-              font: { size: 12 },
-            },
-            grid: {
-              drawTicks: false,
-              color: 'rgba(255, 255, 255, 0.1)'
-            }
-          },
+          x: { ticks: { display: false }, grid: { drawTicks: false } },
           y: {
             beginAtZero: false,
-            ticks: { color: 'white', font: { size: 12 } },
-            title: { display: true, text: 'แรงดัน (V)', color: 'white' },
-            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+            ticks: { color: 'white' },
+            title: { display: true, text: 'แรงดัน (V)', color: 'white' }
           }
         },
         plugins: {
@@ -406,24 +350,11 @@ async function createCurrentChart() {
       options: {
         spanGaps: true,
         scales: {
-          x: {
-            ticks: {
-              color: 'white',
-              maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 6,
-              font: { size: 12 },
-            },
-            grid: {
-              drawTicks: false,
-              color: 'rgba(255, 255, 255, 0.1)'
-            }
-          },
+          x: { ticks: { display: false }, grid: { drawTicks: false } },
           y: {
             beginAtZero: false,
-            ticks: { color: 'white', font: { size: 12 } },
-            title: { display: true, text: 'กระแส (mA)', color: 'white' },
-            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+            ticks: { color: 'white' },
+            title: { display: true, text: 'กระแส (mA)', color: 'white' }
           }
         },
         plugins: {
@@ -466,23 +397,58 @@ function updateErrorList(data) {
   if (errorItems.length === 0) {
     errorList.innerHTML = '<li>ไม่มีข้อมูลผิดปกติ</li>';
   } else {
-    errorList.innerHTML = errorItems.map(item => `<li>เวลาวัด: ${item.time_node1 || '-'} / ระดับน้ำ: ${item.distance || '-'} cm</li>`).join('');
+    errorList.innerHTML = '';
+    errorItems.forEach(item => {
+      const errors = [];
+
+      if (!item.distance || item.distance <= 0 || item.distance > fixedDepth) {
+        errors.push(`ระดับน้ำดิบผิดปกติ: ${item.distance}`);
+      }
+      if (!item.rssi_node1 || item.rssi_node1 === 0) {
+        errors.push(`RSSI Node1 ผิดปกติ: ${item.rssi_node1}`);
+      }
+      if (!item.rssi_node2 || item.rssi_node2 === 0) {
+        errors.push(`RSSI Node2 ผิดปกติ: ${item.rssi_node2}`);
+      }
+      if (!item.v_node1 || item.v_node1 <= 0) {
+        errors.push(`แรงดัน Node1 ผิดปกติ: ${item.v_node1}`);
+      }
+      if (!item.v_node2 || item.v_node2 <= 0) {
+        errors.push(`แรงดัน Node2 ผิดปกติ: ${item.v_node2}`);
+      }
+      if (!item.i_node1 || item.i_node1 <= 0) {
+        errors.push(`กระแส Node1 ผิดปกติ: ${item.i_node1}`);
+      }
+      if (!item.i_node2 || item.i_node2 <= 0) {
+        errors.push(`กระแส Node2 ผิดปกติ: ${item.i_node2}`);
+      }
+      if (!item.time_node1) {
+        errors.push(`เวลาวัด Node1 ผิดปกติ`);
+      }
+      if (!item.time_node2) {
+        errors.push(`เวลาวัด Node2 ผิดปกติ`);
+      }
+
+      const li = document.createElement('li');
+      li.innerText = `เวลา: ${item.time_node1 || item.time_node2 || '-'} — ${errors.join(', ')}`;
+      errorList.appendChild(li);
+    });
   }
 }
 
-async function updateAllCharts() {
-  await createWaterLevelChart('30d');
-  await createOneHourChart();
-  await createBatteryChart();
-  await createCurrentChart();
+function createCharts() {
+  createWaterLevelChart('30d');
+  createOneHourChart();
+  createBatteryChart();
+  createCurrentChart();
 }
 
-window.onload = () => {
-  loadData();
-  updateAllCharts();
+// เรียกใช้ฟังก์ชันเริ่มต้น
+loadData();
+createCharts();
 
-  setInterval(() => {
-    loadData();
-    updateAllCharts();
-  }, 5000);
-};
+// รีเฟรชข้อมูลและกราฟทุก 1 นาที (60000 ms)
+setInterval(() => {
+  loadData();
+  createCharts();
+}, 60000);
