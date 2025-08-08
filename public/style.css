@@ -1,237 +1,258 @@
-/* Font */
 * {
-  box-sizing: border-box;
   font-family: 'Sarabun', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
-
-/* Page background */
 body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(to bottom, #2c3e50, #4ca1af);
+  color: #fff;
   margin: 0;
   padding: 20px;
-  background: linear-gradient(180deg, #f2f6fb 0%, #eef6fa 40%, #e6f0f7 100%);
-  color: #232323;
 }
 
-/* Container & title */
 .title {
-  font-size: 1.8rem;
+  font-size: 2.4rem;
   font-weight: 700;
-  text-align: left;
-  margin: 8px 0 18px 8px;
-  color: #1f2937;
+  text-align: center;
+  margin-bottom: 30px;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
 
-/* Top metric cards row (like dashboard small cards) */
-.top-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-/* Generic card style */
-.card {
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
-  padding: 12px 14px;
-  box-shadow: 0 6px 18px rgba(18, 38, 63, 0.06);
-  border: 1px solid rgba(34, 60, 80, 0.04);
-}
-
-/* header inside card */
-.card h3 {
-  margin: 0;
-  font-size: 0.95rem;
-  color: #334155;
-  font-weight: 700;
-}
-
-/* big metric number */
-.metric {
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin-top: 8px;
-  color: #0f172a;
-}
-
-/* small description under metric */
-.metric-sub {
-  font-size: 0.85rem;
-  color: #475569;
-  margin-top: 6px;
-}
-
-/* layout for main content: left widgets + right table */
-.main-grid {
-  display: grid;
-  grid-template-columns: 1fr 420px;
-  gap: 18px;
-  max-width: 1200px;
-  margin: 0 auto 28px;
-}
-
-/* Left column (charts stacked) */
-.left-column {
-  display: grid;
-  gap: 14px;
-}
-
-/* charts container (card with canvas) */
-.chart-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,250,250,0.95));
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 10px 30px rgba(17, 24, 39, 0.06);
-  border: 1px solid rgba(20, 40, 60, 0.04);
-}
-
-/* chart title */
-.chart-card h3 {
-  margin: 0 0 8px 0;
-  font-size: 0.98rem;
-  color: #0b1723;
-  text-align: left;
-}
-
-/* small inline value (e.g. current reading) */
-.inline-value {
-  display: inline-block;
-  float: right;
-  font-weight: 700;
-  color: #0b1723;
-  font-size: 0.95rem;
-}
-
-/* canvas sizing */
-.chart-card canvas {
-  width: 100% !important;
-  height: 180px !important;
-  display: block;
-  margin-top: 6px;
-}
-
-/* Right column: table and small map */
-.right-column {
+.water-level-display {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  justify-content: center;
+  margin-bottom: 40px;
 }
 
-/* table wrapper simplified look */
-.table-wrapper {
-  background: rgba(255,255,255,0.95);
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(20,40,60,0.04);
-  overflow: hidden;
+.main-water-level {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffffff;
+  min-width: 240px;
+  text-align: center;
 }
 
-/* table header */
-.table-wrapper h3 {
-  margin: 0 0 8px 0;
+.container {
+  max-width: 1100px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;            
+  margin: 0 auto 50px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(5px);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.3);
+}
+
+.node-box {
+  flex: 1 1 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 15px;
+  padding: 18px 22px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  color: #eee;
+  transition: background 0.3s ease;
+  box-sizing: border-box;  
+}
+
+.node-box:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.node-box h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+}
+
+.node-box p {
+  margin: 8px 0;
   font-size: 1rem;
-  color: #0b1723;
+  color: #ddd;
 }
 
-/* responsive table inside card */
+/* ตารางข้อมูล */
+.table-wrapper {
+  max-width: 1100px;
+  margin: 0 auto 50px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 15px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  overflow-x: auto;
+  color: white;
+}
+
+.table-wrapper h3 {
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
-  color: #0b1723;
+  color: #f0f0f0;
+  font-size: 0.95rem;
+  min-width: 700px;
 }
 
 thead th {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 12px 15px;
   text-align: left;
-  font-weight: 700;
-  padding: 10px 8px;
-  background: rgba(15, 23, 42, 0.03);
-  color: #0b1723;
-  font-size: 0.82rem;
+  font-weight: 600;
+  border-bottom: 2px solid rgba(255,255,255,0.4);
 }
 
 tbody td {
-  padding: 8px;
-  border-top: 1px solid rgba(15,23,42,0.04);
-  color: #0b1723;
+  padding: 10px 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* more button */
-#moreButtonContainer {
-  padding: 10px;
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.15);
+  cursor: default;
+  transition: background 0.3s ease;
+}
+
+/* กราฟ */
+.charts-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.chart-box {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 600px;
+  color: white;
+}
+
+.chart-box h3 {
+  margin-bottom: 15px;
   text-align: center;
-  background: transparent;
+}
+
+.chart-box.map-box {
+  margin: 20px auto;
+  text-align: center;
+}
+
+.chart-box.map-box iframe {
+  width: 100% !important;
+  height: 300px !important;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 10px;
+}
+
+.chart-box.map-box small a {
+  color: #00c0ff;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 8px;
+}
+
+.error-toggle {
+  cursor: pointer;
+  color: red;
+  margin-left: 10px;
+  font-size: 18px;
+}
+
+.error-box {
+  color: #313030;
+  background-color: rgba(255, 0, 0, 0.15); 
+  border: 1px solid rgba(255, 0, 0, 0.5); 
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+
+  backdrop-filter: blur(6px);  
+  -webkit-backdrop-filter: blur(6px); 
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.3); 
+}
+
+.error-box.hidden {
+  display: none;
+}
+
+.error-box h4 {
+  margin-top: 0;
+  color: #cc0000;
+}
+
+#map {
+  height: 400px;
+  width: 600px;
+  margin: 0 auto;
+  border: 1px solid #ccc;
+}
+
+/* Responsive */
+@media (max-width: 650px) {
+  .container {
+    flex-direction: column;
+    max-width: 90%;
+  }
+
+  .node-box {
+    flex: 1 1 100%;
+    margin-bottom: 20px;
+  }
+
+  .main-water-level {
+    font-size: 2.5rem;
+    padding: 20px 30px;
+    min-width: auto;
+  }
+
+  table {
+    font-size: 0.9rem;
+    min-width: 100%;
+  }
+
+  .charts-container {
+    flex-direction: column;
+    max-width: 90%;
+  }
+  
+  .chart-box {
+    max-width: 100%;
+  }
+}
+
+.chart-box canvas {
+  width: 100% !important;
+  max-width: 600px;
+  height: 300px !important;
+  display: block;
+  margin: 0 auto;
+}
+#moreButtonContainer {
+  text-align: center;
+  margin-top: 10px;
 }
 
 #moreButtonContainer button {
-  background: #0b84ff;
-  color: white;
+  background: none;
   border: none;
-  padding: 8px 12px;
-  border-radius: 8px;
+  color: white;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(11, 132, 255, 0.18);
-  font-weight: 600;
-}
-
-/* map card */
-.map-box {
-  border-radius: 12px;
-  overflow: hidden;
+  font-size: 1rem;
+  text-decoration: underline;
   padding: 0;
-}
-
-.map-box iframe {
-  display: block;
-  width: 100%;
-  height: 220px;
-  border: 0;
-}
-
-/* error box (red blurred) */
-.error-box {
-  color: #2b0505;
-  background-color: rgba(255, 75, 75, 0.08);
-  border: 1px solid rgba(255, 75, 75, 0.28);
-  padding: 10px;
-  border-radius: 8px;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 8px 24px rgba(255, 75, 75, 0.06);
-}
-
-/* small badges for legend/labels */
-.badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #fff;
-}
-
-/* colors */
-.badge-blue { background: #0b84ff; }
-.badge-orange { background: #ff7f00; }
-.badge-green { background: #10b981; }
-
-/* small screens: stack everything */
-@media (max-width: 980px) {
-  .main-grid {
-    grid-template-columns: 1fr;
-  }
-  .top-cards {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  }
-  .chart-card canvas { height: 160px !important; }
-  .map-box iframe { height: 180px; }
-}
-
-/* very small phones */
-@media (max-width: 420px) {
-  .title { font-size: 1.2rem; }
-  .metric { font-size: 1.25rem; }
-  .chart-card canvas { height: 140px !important; }
 }
