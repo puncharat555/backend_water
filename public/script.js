@@ -500,19 +500,39 @@ async function initDashboard() {
   await createCurrentChart('30d');
 }
 
-// ตัวอย่างการใช้ปุ่มเปลี่ยนช่วงเวลา
-document.getElementById('btnLast7Days')?.addEventListener('click', async () => {
-  await createWaterLevelChart('7d');
-  await createCurrentChart('7d');
-});
+// ตั้ง event ปุ่มช่วงเวลาแบบ dynamic ตาม class และ data-range attribute
+function setupRangeButtons() {
+  // ปุ่มกราฟระดับน้ำย้อนหลัง (30d,7d,1h)
+  const waterLevelButtons = document.querySelectorAll('#timeRangeButtons .range-btn');
+  waterLevelButtons.forEach(button => {
+    button.addEventListener('click', async () => {
+      waterLevelButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
 
-document.getElementById('btnLast30Days')?.addEventListener('click', async () => {
-  await createWaterLevelChart('30d');
-  await createCurrentChart('30d');
-});
+      const range = button.getAttribute('data-range');
+      if (range === '1h') {
+        await createOneHourChart();
+      } else {
+        await createWaterLevelChart(range);
+      }
+      await createCurrentChart(range);
+    });
+  });
 
-document.getElementById('btnLast1Hour')?.addEventListener('click', async () => {
-  await createOneHourChart();
-});
+  // ปุ่มกราฟกระแส (current) ช่วงเวลา (ถ้ามี)
+  const currentButtons = document.querySelectorAll('#currentTimeRangeButtons .range-btn');
+  currentButtons.forEach(button => {
+    button.addEventListener('click', async () => {
+      currentButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
 
-window.onload = initDashboard;
+      const range = button.getAttribute('data-range');
+      await createCurrentChart(range);
+    });
+  });
+}
+
+window.onload = async () => {
+  await initDashboard();
+  setupRangeButtons();
+};
