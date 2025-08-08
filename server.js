@@ -68,7 +68,7 @@ app.post('/distance', async (req, res) => {
     });
 
     res.json({
-      message: '✅ Distance, RSSI, voltage, current and timestamps saved',
+      message: 'Distance, RSSI, voltage, current and timestamps saved',
       distance,
       rssi_node1,
       rssi_node2,
@@ -80,17 +80,42 @@ app.post('/distance', async (req, res) => {
       time_node2,
     });
   } catch (err) {
-    console.error('❌ Error saving data:', err);
+    console.error('Error saving data:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// GET /distance ดึงข้อมูล 100 รายการล่าสุด
+// GET /distance ดึงข้อมูลตามช่วงเวลาที่ระบุใน query param ?range=
 app.get('/distance', async (req, res) => {
   try {
     const db = client.db('esp32_data');
     const collection = db.collection('distances');
-    const distances = await collection.find().sort({ timestamp: -1 }).limit(100).toArray();
+
+    const range = req.query.range || '1d'; // ค่าเริ่มต้น 1 วัน
+
+    let fromDate = new Date();
+    switch (range) {
+      case '1h':
+        fromDate.setHours(fromDate.getHours() - 1);
+        break;
+      case '1d':
+        fromDate.setDate(fromDate.getDate() - 1);
+        break;
+      case '7d':
+        fromDate.setDate(fromDate.getDate() - 7);
+        break;
+      case '30d':
+        fromDate.setDate(fromDate.getDate() - 30);
+        break;
+      default:
+        fromDate.setDate(fromDate.getDate() - 1); // กรณีไม่มี range หรือไม่ตรงกับเงื่อนไข กำหนดเป็น 1 วัน
+    }
+
+    const distances = await collection
+      .find({ timestamp: { $gte: fromDate } })
+      .sort({ timestamp: -1 })
+      .limit(1000)
+      .toArray();
 
     // ป้องกัน cache ฝั่ง client และ proxy
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -99,21 +124,21 @@ app.get('/distance', async (req, res) => {
 
     res.json(distances);
   } catch (err) {
+    console.error('Error fetching data:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-
 async function startServer() {
   try {
     await client.connect();
-    console.log('✅ Connected to MongoDB');
+    console.log('Connected to MongoDB');
 
     app.listen(port, '0.0.0.0', () => {
-      console.log(`🚀 ESP32 Distance API is running on port ${port}`);
+      console.log(`ESP32 Distance API is running on port ${port}`);
     });
   } catch (err) {
-    console.error('❌ Failed to connect to MongoDB:', err);
+    console.error('Failed to connect to MongoDB:', err);
   }
 }
 
