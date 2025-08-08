@@ -309,17 +309,6 @@ async function createBatteryChart() {
   }
 }
 
-function movingAverage(data, windowSize) {
-  const result = [];
-  for (let i = 0; i < data.length; i++) {
-    const start = Math.max(0, i - windowSize + 1);
-    const windowData = data.slice(start, i + 1).filter(v => !isNaN(v));
-    const avg = windowData.reduce((a, b) => a + b, 0) / (windowData.length || 1);
-    result.push(avg);
-  }
-  return result;
-}
-
 async function createCurrentChart(range = '30d') {
   try {
     const data = await fetchHistoricalData(range);
@@ -351,12 +340,6 @@ async function createCurrentChart(range = '30d') {
 
     parsed = filterValidPoints(parsed.labels, parsed.currentsNode1, parsed.currentsNode2);
 
-    const maCurrentsNode1 = movingAverage(parsed.currentsNode1, 5);
-    const maCurrentsNode2 = movingAverage(parsed.currentsNode2, 5);
-
-    const currentThreshold = 500;
-    const thresholdArray = new Array(parsed.currentsNode1.length).fill(currentThreshold);
-
     const canvasCurrent = document.getElementById('currentChart');
     setupHiDPICanvas(canvasCurrent);
     const ctxCurrent = canvasCurrent.getContext('2d');
@@ -381,16 +364,6 @@ async function createCurrentChart(range = '30d') {
             pointBackgroundColor: '#ff4500',
           },
           {
-            label: 'MA กระแส Node 1',
-            data: maCurrentsNode1,
-            borderColor: '#ff8c00',
-            backgroundColor: 'rgba(255,140,0,0.1)',
-            fill: false,
-            borderDash: [5,5],
-            tension: 0.3,
-            pointRadius: 0,
-          },
-          {
             label: 'กระแส Node 2 (mA)',
             data: parsed.currentsNode2,
             borderColor: '#1e90ff',
@@ -399,26 +372,7 @@ async function createCurrentChart(range = '30d') {
             tension: 0.3,
             pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
             pointBackgroundColor: '#1e90ff',
-          },
-          {
-            label: 'MA กระแส Node 2',
-            data: maCurrentsNode2,
-            borderColor: '#00bfff',
-            backgroundColor: 'rgba(0,191,255,0.1)',
-            fill: false,
-            borderDash: [5,5],
-            tension: 0.3,
-            pointRadius: 0,
-          },
-          {
-            label: 'เส้นไฟ (Threshold) 500 mA',
-            data: thresholdArray,
-            borderColor: '#ff0000',
-            borderWidth: 2,
-            fill: false,
-            pointRadius: 0,
-            borderDash: [10, 5],
-          },
+          }
         ],
       },
       options: {
@@ -484,26 +438,6 @@ async function refreshAll() {
 document.addEventListener('DOMContentLoaded', () => {
   refreshAll();
   setInterval(refreshAll, 60000); // refresh ทุก 60 วินาที
-
-  // ปุ่มช่วงเวลากราฟระดับน้ำ (id ตรงกับ HTML: #timeRangeButtons)
-  document.querySelectorAll('#timeRangeButtons .range-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      document.querySelectorAll('#timeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      const range = e.target.getAttribute('data-range');
-      createWaterLevelChart(range);
-    });
-  });
-
-  // ปุ่มช่วงเวลากราฟกระแส (id ตรงกับ HTML: #currentTimeRangeButtons)
-  document.querySelectorAll('#currentTimeRangeButtons .range-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      document.querySelectorAll('#currentTimeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      const range = e.target.getAttribute('data-range');
-      createCurrentChart(range);
-    });
-  });
 
   const errorToggleBtn = document.getElementById('errorToggleBtn');
   if (errorToggleBtn) {
