@@ -322,6 +322,14 @@ async function createBatteryChart() {
       },
       options: {
         spanGaps: true,
+        layout: {
+          padding: {
+            top: 10,
+            right: 20,
+            bottom: 30,  // เพิ่มช่องว่างด้านล่างไม่ให้ label ชิดกราฟ
+            left: 10
+          }
+        },
         scales: {
           x: {
             ticks: {
