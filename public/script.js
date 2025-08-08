@@ -32,7 +32,7 @@ async function loadData() {
     const latest = allData[0];
     if (latest) {
       const level = (fixedDepth - latest.distance).toFixed(1);
-      document.getElementById('waterLevelNode1').innerText = `ระดับน้ำ: ${level} cm`;
+      document.getElementById('waterLevelNode1').innerText = `ระดับน้ำปัจจุบันl} cm`;
       document.getElementById('rssiNode1').innerText = (latest.rssi_node1 && latest.rssi_node1 !== 0) ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
       document.getElementById('voltageNode1').innerText = (latest.v_node1 && latest.v_node1 > 0) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
       document.getElementById('currentNode1').innerText = (latest.i_node1 && latest.i_node1 > 0) ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
