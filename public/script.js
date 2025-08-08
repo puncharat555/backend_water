@@ -321,34 +321,75 @@ async function createBatteryChart() {
         ],
       },
       options: {
-        spanGaps: true,
-        scales: {
-          x: {
-            ticks: {
-              display: true,
-              color: 'white',
-              maxRotation: 0,
-              minRotation: 0,
-              maxTicksLimit: 4
-            },
-            grid: {
-              drawTicks: false,
-              color: 'rgba(255,255,255,0.1)'
-            }
-          },
-          y: {
-            beginAtZero: false,
-            ticks: { color: 'white' },
-            title: { display: true, text: 'แรงดัน (V)', color: 'white' }
-          }
-        },
-        plugins: {
-          legend: { labels: { color: 'white' } },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        responsive: true,
-        maintainAspectRatio: false,
+  spanGaps: true,
+  layout: {
+    padding: {
+      top: 10,
+      right: 20,
+      bottom: 30,  // เพิ่มช่องว่างด้านล่างไม่ให้ label ชิดกราฟ
+      left: 10
+    }
+  },
+  scales: {
+    x: {
+      ticks: {
+        display: true,
+        color: 'white',
+        maxRotation: 0,
+        minRotation: 0,
+        maxTicksLimit: 6,
+        padding: 10,  // เพิ่มระยะห่างระหว่าง ticks กับแกน
+        callback: function(value) {
+          const label = this.getLabelForValue(value);
+          if (!label) return '';
+          const hour = parseInt(label.split(':')[0], 10);
+          if (hour % 4 === 0) return label;
+          return '';
+        }
+      },
+      grid: {
+        drawTicks: false,
+        color: 'rgba(255,255,255,0.1)',
+        drawBorder: false  // ซ่อนเส้นกรอบด้านล่าง
+      },
+      offset: true // เลื่อน tick ให้อยู่กึ่งกลางช่วงกราฟ (ถ้าช่วงข้อมูลเยอะ)
+    },
+    y: {
+      beginAtZero: false,
+      ticks: { 
+        color: 'white',
+        padding: 10,  // เพิ่มช่องว่างระหว่างตัวเลขกับแกน Y
+        callback: function(value) {
+          return value.toFixed(1); // แสดงเลขทศนิยม 1 ตำแหน่ง
+        }
+      },
+      title: { display: true, text: 'แรงดัน (V)', color: 'white' },
+      grid: { 
+        color: 'rgba(255,255,255,0.1)',
+        drawBorder: false
       }
+    }
+  },
+  plugins: {
+    legend: { labels: { color: 'white' } },
+    tooltip: { mode: 'index', intersect: false }
+  },
+  responsive: true,
+  maintainAspectRatio: false,
+  elements: {
+    point: {
+      radius: function(ctx) {
+        // เน้นจุดข้อมูลล่าสุดด้วยขนาดจุดใหญ่ขึ้น
+        return ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 3;
+      },
+      backgroundColor: function(ctx) {
+        return ctx.dataIndex === ctx.dataset.data.length - 1 ? 'rgba(255, 215, 0, 1)' : 'rgba(0, 127, 255, 0.8)';
+      },
+      hoverRadius: 8,
+    }
+  }
+}
+
     });
   } catch (err) {
     console.error('Error creating battery chart:', err);
