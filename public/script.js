@@ -3,8 +3,6 @@ let allData = [];
 let currentIndex = 0;
 const pageSize = 10;
 
-let waterLevelChartInstance = null;
-
 // โหลดข้อมูลปัจจุบันแสดงใน node และตาราง
 async function loadData() {
   try {
@@ -151,28 +149,35 @@ function parseChartData(data) {
   return { labels, waterLevels, voltagesNode1, voltagesNode2, currentsNode1, currentsNode2 };
 }
 
-// สร้างกราฟระดับน้ำย้อนหลัง ตามช่วงเวลา (1d, 7d, 30d)
-let createWaterLevelChart = null;
-async function createWaterLevelChart(range = '30d') {
+// สร้างกราฟทั้งหมด พร้อมสลับจุดข้อมูลให้กลับด้าน
+async function createCharts() {
   try {
-    const data = await fetchHistoricalData(range);
-    const parsed = parseChartData(data);
-    parsed.labels.reverse();
-    parsed.waterLevels.reverse();
+    const data30d = await fetchHistoricalData('30d');
+    const data1h = await fetchHistoricalData('1h');
 
-    const ctx = document.getElementById('waterLevelChart').getContext('2d');
+    const parsed30d = parseChartData(data30d);
+    const parsed1h = parseChartData(data1h);
 
-    if (waterLevelChartInstance) {
-      waterLevelChartInstance.destroy();
-    }
+    // สลับลำดับข้อมูลกลับด้าน (เพื่อสลับจุดกราฟ)
+    parsed30d.labels.reverse();
+    parsed30d.waterLevels.reverse();
+    parsed30d.voltagesNode1.reverse();
+    parsed30d.voltagesNode2.reverse();
+    parsed30d.currentsNode1.reverse();
+    parsed30d.currentsNode2.reverse();
 
-    waterLevelChartInstance = new Chart(ctx, {
+    parsed1h.labels.reverse();
+    parsed1h.waterLevels.reverse();
+
+    // กราฟ 30 วัน
+    const ctx30d = document.getElementById('waterLevelChart30d').getContext('2d');
+    new Chart(ctx30d, {
       type: 'line',
       data: {
-        labels: parsed.labels,
+        labels: parsed30d.labels,
         datasets: [{
-          label: `ระดับน้ำย้อนหลัง ${range}`,
-          data: parsed.waterLevels,
+          label: 'ระดับน้ำ (cm)',
+          data: parsed30d.waterLevels,
           borderColor: '#00c0ff',
           backgroundColor: 'rgba(0,192,255,0.2)',
           fill: true,
@@ -199,27 +204,16 @@ async function createWaterLevelChart(range = '30d') {
         maintainAspectRatio: true,
       }
     });
-  } catch (err) {
-    console.error('Error creating water level chart:', err);
-  }
-}
 
-// กราฟ 1 ชั่วโมง (เดิม)
-async function createOneHourChart() {
-  try {
-    const data = await fetchHistoricalData('1h');
-    const parsed = parseChartData(data);
-    parsed.labels.reverse();
-    parsed.waterLevels.reverse();
-
+    // กราฟ 1 ชั่วโมง
     const ctx1h = document.getElementById('waterLevelChart1h').getContext('2d');
     new Chart(ctx1h, {
       type: 'line',
       data: {
-        labels: parsed.labels,
+        labels: parsed1h.labels,
         datasets: [{
-          label: 'ระดับน้ำ (cm) 1 ชั่วโมง',
-          data: parsed.waterLevels,
+          label: 'ระดับน้ำ (cm)',
+          data: parsed1h.waterLevels,
           borderColor: '#0f0',
           backgroundColor: 'rgba(29, 233, 29, 0.2)',
           fill: true,
@@ -242,29 +236,17 @@ async function createOneHourChart() {
         maintainAspectRatio: false,
       }
     });
-  } catch (err) {
-    console.error('Error creating 1h chart:', err);
-  }
-}
 
-// กราฟแบตเตอรี่
-async function createBatteryChart() {
-  try {
-    const data = await fetchHistoricalData('30d');
-    const parsed = parseChartData(data);
-    parsed.labels.reverse();
-    parsed.voltagesNode1.reverse();
-    parsed.voltagesNode2.reverse();
-
+    // กราฟแบตเตอรี่
     const ctxBattery = document.getElementById('batteryChart').getContext('2d');
     new Chart(ctxBattery, {
       type: 'line',
       data: {
-        labels: parsed.labels,
+        labels: parsed30d.labels,
         datasets: [
           {
             label: 'แรงดัน Node 1 (V)',
-            data: parsed.voltagesNode1,
+            data: parsed30d.voltagesNode1,
             borderColor: '#ff7f00',
             backgroundColor: 'rgba(255,127,0,0.2)',
             fill: true,
@@ -274,7 +256,7 @@ async function createBatteryChart() {
           },
           {
             label: 'แรงดัน Node 2 (V)',
-            data: parsed.voltagesNode2,
+            data: parsed30d.voltagesNode2,
             borderColor: '#007fff',
             backgroundColor: 'rgba(0,127,255,0.2)',
             fill: true,
@@ -302,29 +284,17 @@ async function createBatteryChart() {
         maintainAspectRatio: false,
       }
     });
-  } catch (err) {
-    console.error('Error creating battery chart:', err);
-  }
-}
 
-// กราฟกระแส (Current mA)
-async function createCurrentChart() {
-  try {
-    const data = await fetchHistoricalData('30d');
-    const parsed = parseChartData(data);
-    parsed.labels.reverse();
-    parsed.currentsNode1.reverse();
-    parsed.currentsNode2.reverse();
-
+    // กราฟกระแส (Current mA)
     const ctxCurrent = document.getElementById('currentChart').getContext('2d');
     new Chart(ctxCurrent, {
       type: 'line',
       data: {
-        labels: parsed.labels,
+        labels: parsed30d.labels,
         datasets: [
           {
             label: 'กระแส Node 1 (mA)',
-            data: parsed.currentsNode1,
+            data: parsed30d.currentsNode1,
             borderColor: '#ff4500',
             backgroundColor: 'rgba(255,69,0,0.2)',
             fill: true,
@@ -334,7 +304,7 @@ async function createCurrentChart() {
           },
           {
             label: 'กระแส Node 2 (mA)',
-            data: parsed.currentsNode2,
+            data: parsed30d.currentsNode2,
             borderColor: '#1e90ff',
             backgroundColor: 'rgba(30,144,255,0.2)',
             fill: true,
@@ -362,8 +332,9 @@ async function createCurrentChart() {
         maintainAspectRatio: false,
       }
     });
+
   } catch (err) {
-    console.error('Error creating current chart:', err);
+    console.error('Error creating charts:', err);
   }
 }
 
@@ -423,45 +394,20 @@ function updateErrorList(data) {
         errors.push(`กระแส Node2 ผิดปกติ: ${item.i_node2}`);
       }
       if (!item.time_node1) {
-        errors.push(`เวลาวัด Node1 ผิดปกติ`);
+        errors.push(`เวลาวัด Node1 ขาดหาย`);
       }
       if (!item.time_node2) {
-        errors.push(`เวลาวัด Node2 ผิดปกติ`);
+        errors.push(`เวลาวัด Node2 ขาดหาย`);
       }
 
       const li = document.createElement('li');
-      li.innerText = `เวลา: ${item.time_node1 || item.time_node2 || '-'} — ${errors.join(', ')}`;
+      li.innerHTML = `<strong>ข้อมูลที่เวลาวัด Node1: ${item.time_node1 || '-'} / Node2: ${item.time_node2 || '-'}</strong><br>${errors.join('<br>')}`;
       errorList.appendChild(li);
     });
   }
 }
 
-// เรียกฟังก์ชันทั้งหมดที่ต้องการเมื่อโหลดหน้า
-function createCharts() {
-  createWaterLevelChart('30d');
-  createOneHourChart();
-  createBatteryChart();
-  createCurrentChart();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadData();
-  createCharts();
-
-  // ตั้ง interval รีเฟรชข้อมูลทุก 5 นาที (300000 ms)
-  setInterval(() => {
-    loadData();
-    createCharts();
-  }, 300000);
-
-  // ปุ่มเลือกช่วงเวลาในกราฟระดับน้ำย้อนหลัง
-  document.querySelectorAll('#timeRangeButtons .range-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      document.querySelectorAll('#timeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-
-      const range = e.target.getAttribute('data-range');
-      createWaterLevelChart(range);
-    });
-  });
-});
+// เริ่มโหลดข้อมูลและอัปเดตทุก 5 วินาที
+loadData(); 
+setInterval(loadData, 5000); // สร้างกราฟตอนโหลดหน้า 
+createCharts();
