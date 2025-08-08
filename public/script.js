@@ -4,6 +4,7 @@ let currentIndex = 0;
 const pageSize = 10;
 
 let waterLevelChartInstance = null;
+let currentChartInstance = null;
 
 function setupHiDPICanvas(canvas) {
   const ctx = canvas.getContext('2d');
@@ -212,11 +213,7 @@ async function createOneHourChart() {
     setupHiDPICanvas(canvas1h);
     const ctx1h = canvas1h.getContext('2d');
 
-    if (window.oneHourChartInstance) {
-      window.oneHourChartInstance.destroy();
-    }
-
-    window.oneHourChartInstance = new Chart(ctx1h, {
+    new Chart(ctx1h, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -262,11 +259,7 @@ async function createBatteryChart() {
     setupHiDPICanvas(canvasBattery);
     const ctxBattery = canvasBattery.getContext('2d');
 
-    if (window.batteryChartInstance) {
-      window.batteryChartInstance.destroy();
-    }
-
-    window.batteryChartInstance = new Chart(ctxBattery, {
+    new Chart(ctxBattery, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -316,23 +309,40 @@ async function createBatteryChart() {
   }
 }
 
-async function createCurrentChart() {
+function movingAverage(data, windowSize) {
+  const result = [];
+  for (let i = 0; i < data.length; i++) {
+    const start = Math.max(0, i - windowSize + 1);
+    const windowData = data.slice(start, i + 1).filter(v => !isNaN(v));
+    const avg = windowData.reduce((a, b) => a + b, 0) / (windowData.length || 1);
+    result.push(avg);
+  }
+  return result;
+}
+
+async function createCurrentChart(range = '30d') {
   try {
-    const data = await fetchHistoricalData('30d');
+    const data = await fetchHistoricalData(range);
     const parsed = parseChartData(data);
     parsed.labels.reverse();
     parsed.currentsNode1.reverse();
     parsed.currentsNode2.reverse();
 
+    const maCurrentsNode1 = movingAverage(parsed.currentsNode1, 5);
+    const maCurrentsNode2 = movingAverage(parsed.currentsNode2, 5);
+
+    const currentThreshold = 500;
+    const thresholdArray = new Array(parsed.currentsNode1.length).fill(currentThreshold);
+
     const canvasCurrent = document.getElementById('currentChart');
     setupHiDPICanvas(canvasCurrent);
     const ctxCurrent = canvasCurrent.getContext('2d');
 
-    if (window.currentChartInstance) {
-      window.currentChartInstance.destroy();
+    if (currentChartInstance) {
+      currentChartInstance.destroy();
     }
 
-    window.currentChartInstance = new Chart(ctxCurrent, {
+    currentChartInstance = new Chart(ctxCurrent, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -348,6 +358,16 @@ async function createCurrentChart() {
             pointBackgroundColor: '#ff4500',
           },
           {
+            label: 'MA กระแส Node 1',
+            data: maCurrentsNode1,
+            borderColor: '#ff8c00',
+            backgroundColor: 'rgba(255,140,0,0.1)',
+            fill: false,
+            borderDash: [5,5],
+            tension: 0.3,
+            pointRadius: 0,
+          },
+          {
             label: 'กระแส Node 2 (mA)',
             data: parsed.currentsNode2,
             borderColor: '#1e90ff',
@@ -356,17 +376,40 @@ async function createCurrentChart() {
             tension: 0.3,
             pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
             pointBackgroundColor: '#1e90ff',
-          }
+          },
+          {
+            label: 'MA กระแส Node 2',
+            data: maCurrentsNode2,
+            borderColor: '#00bfff',
+            backgroundColor: 'rgba(0,191,255,0.1)',
+            fill: false,
+            borderDash: [5,5],
+            tension: 0.3,
+            pointRadius: 0,
+          },
+          {
+            label: 'เส้นไฟ (Threshold) 500 mA',
+            data: thresholdArray,
+            borderColor: '#ff0000',
+            borderWidth: 2,
+            fill: false,
+            pointRadius: 0,
+            borderDash: [10, 5],
+          },
         ],
       },
       options: {
         spanGaps: true,
         scales: {
-          x: { ticks: { display: false }, grid: { drawTicks: false } },
+          x: {
+            ticks: { display: false, color: 'white' },
+            grid: { drawTicks: false, color: 'rgba(255,255,255,0.1)' }
+          },
           y: {
             beginAtZero: false,
             ticks: { color: 'white' },
-            title: { display: true, text: 'กระแส (mA)', color: 'white' }
+            title: { display: true, text: 'กระแส (mA)', color: 'white' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
           }
         },
         plugins: {
@@ -408,89 +451,46 @@ function updateErrorList(data) {
 
   if (errorItems.length === 0) {
     errorList.innerHTML = '<li>ไม่มีข้อมูลผิดปกติ</li>';
-  } else {
-    errorList.innerHTML = '';
-    errorItems.forEach(item => {
-      const errors = [];
-
-      if (!item.distance || item.distance <= 0 || item.distance > fixedDepth) {
-        errors.push(`ระดับน้ำดิบผิดปกติ: ${item.distance}`);
-      }
-      if (!item.rssi_node1 || item.rssi_node1 === 0) {
-        errors.push(`RSSI Node1 ผิดปกติ: ${item.rssi_node1}`);
-      }
-      if (!item.rssi_node2 || item.rssi_node2 === 0) {
-        errors.push(`RSSI Node2 ผิดปกติ: ${item.rssi_node2}`);
-      }
-      if (!item.v_node1 || item.v_node1 <= 0) {
-        errors.push(`แรงดัน Node1 ผิดปกติ: ${item.v_node1}`);
-      }
-      if (!item.v_node2 || item.v_node2 <= 0) {
-        errors.push(`แรงดัน Node2 ผิดปกติ: ${item.v_node2}`);
-      }
-      if (!item.i_node1 || item.i_node1 <= 0) {
-        errors.push(`กระแส Node1 ผิดปกติ: ${item.i_node1}`);
-      }
-      if (!item.i_node2 || item.i_node2 <= 0) {
-        errors.push(`กระแส Node2 ผิดปกติ: ${item.i_node2}`);
-      }
-      if (!item.time_node1) {
-        errors.push(`เวลาวัด Node1 ผิดปกติ`);
-      }
-      if (!item.time_node2) {
-        errors.push(`เวลาวัด Node2 ผิดปกติ`);
-      }
-
-      const li = document.createElement('li');
-      li.innerText = `เวลา: ${item.time_node1 || item.time_node2 || '-'} — ${errors.join(', ')}`;
-      errorList.appendChild(li);
-    });
+    return;
   }
+
+  errorList.innerHTML = errorItems.map(item => `<li>Distance: ${item.distance}, Time1: ${item.time_node1}, Time2: ${item.time_node2}</li>`).join('');
 }
 
-function refreshCharts() {
-  // รีเฟรชกราฟทั้งหมด
-  const activeRangeBtn = document.querySelector('#timeRangeButtons .range-btn.active');
-  const range = activeRangeBtn ? activeRangeBtn.getAttribute('data-range') : '30d';
-
-  createWaterLevelChart(range);
-  createOneHourChart();
-  createBatteryChart();
-  createCurrentChart();
-}
-
-function createCharts() {
-  // เริ่มต้นสร้างกราฟตามช่วงเวลาปัจจุบัน (30 วัน)
-  createWaterLevelChart('30d');
-  createOneHourChart();
-  createBatteryChart();
-  createCurrentChart();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadData();
-  createCharts();
-
-  // รีเฟรชข้อมูลและกราฟทุก 5 วินาที
-  setInterval(() => {
-    loadData();
-    refreshCharts();
-  }, 5000);
-
-  // ปุ่มเลือกช่วงเวลาระดับน้ำย้อนหลัง
-  document.querySelectorAll('#timeRangeButtons .range-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      document.querySelectorAll('#timeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-
-      const range = e.target.getAttribute('data-range');
-      createWaterLevelChart(range);
-    });
+// ปุ่มช่วงเวลากราฟกระแส
+document.querySelectorAll('#currentTimeRangeButtons .range-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    document.querySelectorAll('#currentTimeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    const range = e.target.getAttribute('data-range');
+    createCurrentChart(range);
   });
-
-  // ปุ่มแสดง/ซ่อน error box
-  const errorToggleBtn = document.getElementById('errorToggle');
-  if (errorToggleBtn) {
-    errorToggleBtn.addEventListener('click', toggleErrorBox);
-  }
 });
+
+// ปุ่มช่วงเวลากราฟระดับน้ำ
+document.querySelectorAll('#waterLevelTimeRangeButtons .range-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    document.querySelectorAll('#waterLevelTimeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    const range = e.target.getAttribute('data-range');
+    createWaterLevelChart(range);
+  });
+});
+
+async function refreshAll() {
+  await loadData();
+  await createWaterLevelChart();
+  await createCurrentChart(currentRange);
+  await createBatteryChart();
+}
+
+// เริ่มแรก
+loadData();
+createWaterLevelChart('30d');
+createCurrentChart('30d');
+createBatteryChart();
+
+// รีเฟรชอัตโนมัติทุก 60 วินาที
+setInterval(() => {
+  refreshAll();
+}, 60 * 1000);
