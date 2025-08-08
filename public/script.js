@@ -5,6 +5,15 @@ const pageSize = 10;
 
 let waterLevelChartInstance = null;
 
+function setupHiDPICanvas(canvas) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  // ตั้งขนาด canvas ตามขนาด CSS * dpr
+  canvas.width = canvas.clientWidth * dpr;
+  canvas.height = canvas.clientHeight * dpr;
+  ctx.scale(dpr, dpr);
+}
+
 // โหลดข้อมูลปัจจุบันแสดงใน node และตาราง
 async function loadData() {
   try {
@@ -36,7 +45,7 @@ async function loadData() {
   } catch (error) {
     console.error('Load data error:', error);
     ['waterLevelNode1', 'rssiNode1', 'voltageNode1', 'currentNode1', 'timeNode1',
-     'rssiNode2', 'voltageNode2', 'currentNode2', 'timeNode2'].forEach(id => {
+      'rssiNode2', 'voltageNode2', 'currentNode2', 'timeNode2'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.innerText = '-';
     });
@@ -143,10 +152,13 @@ async function createWaterLevelChart(range = '30d') {
   try {
     const data = await fetchHistoricalData(range);
     const parsed = parseChartData(data);
+
     parsed.labels.reverse();
     parsed.waterLevels.reverse();
 
-    const ctx = document.getElementById('waterLevelChart30d').getContext('2d');
+    const canvas = document.getElementById('waterLevelChart30d');
+    setupHiDPICanvas(canvas);
+    const ctx = canvas.getContext('2d');
 
     if (waterLevelChartInstance) {
       waterLevelChartInstance.destroy();
@@ -182,7 +194,7 @@ async function createWaterLevelChart(range = '30d') {
           tooltip: { mode: 'index', intersect: false }
         },
         responsive: true,
-        maintainAspectRatio: true,
+        maintainAspectRatio: false,
       }
     });
   } catch (err) {
@@ -197,7 +209,10 @@ async function createOneHourChart() {
     parsed.labels.reverse();
     parsed.waterLevels.reverse();
 
-    const ctx1h = document.getElementById('waterLevelChart1h').getContext('2d');
+    const canvas1h = document.getElementById('waterLevelChart1h');
+    setupHiDPICanvas(canvas1h);
+    const ctx1h = canvas1h.getContext('2d');
+
     new Chart(ctx1h, {
       type: 'line',
       data: {
@@ -240,7 +255,10 @@ async function createBatteryChart() {
     parsed.voltagesNode1.reverse();
     parsed.voltagesNode2.reverse();
 
-    const ctxBattery = document.getElementById('batteryChart').getContext('2d');
+    const canvasBattery = document.getElementById('batteryChart');
+    setupHiDPICanvas(canvasBattery);
+    const ctxBattery = canvasBattery.getContext('2d');
+
     new Chart(ctxBattery, {
       type: 'line',
       data: {
@@ -299,7 +317,10 @@ async function createCurrentChart() {
     parsed.currentsNode1.reverse();
     parsed.currentsNode2.reverse();
 
-    const ctxCurrent = document.getElementById('currentChart').getContext('2d');
+    const canvasCurrent = document.getElementById('currentChart');
+    setupHiDPICanvas(canvasCurrent);
+    const ctxCurrent = canvasCurrent.getContext('2d');
+
     new Chart(ctxCurrent, {
       type: 'line',
       data: {
@@ -430,20 +451,22 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
     loadData();
     createCharts();
-  }, 300000);
+  }, 60000);
 
-  // ปุ่มเลือกช่วงเวลาในกราฟระดับน้ำย้อนหลัง
-  const buttons = document.querySelectorAll('#timeRangeButtons .range-btn');
-  buttons.forEach(btn => {
+  // ปุ่มเปลี่ยนช่วงเวลา กราฟระดับน้ำย้อนหลัง
+  document.querySelectorAll('#timeRangeButtons .range-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      buttons.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#timeRangeButtons .range-btn').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
 
       const range = e.target.getAttribute('data-range');
       createWaterLevelChart(range);
     });
   });
-});
 
-// ฟังก์ชัน toggle error box ให้ปุ่มเรียกใช้ได้
-window.toggleErrorBox = toggleErrorBox;
+  // ปุ่มแสดง/ซ่อนกล่องแสดงข้อผิดพลาด
+  const errorToggleBtn = document.getElementById('errorToggle');
+  if (errorToggleBtn) {
+    errorToggleBtn.addEventListener('click', toggleErrorBox);
+  }
+});
