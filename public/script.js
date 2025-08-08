@@ -439,36 +439,26 @@ async function createCurrentChart(range = '30d') {
       options: {
         spanGaps: true,
         scales: {
-  x: {
-    type: 'time',
-    time: {
-      parser: 'yyyy-MM-dd HH:mm:ss',
-      tooltipFormat: 'dd MMM yyyy, HH:mm',
-      unit: 'hour',
-      displayFormats: {
-        hour: 'HH:mm',
-        day: 'dd MMM',
-      }
-    },
-    ticks: {
-      color: 'white',
-      maxRotation: 0,
-      minRotation: 0,
-      maxTicksLimit: 6,
-    },
-    grid: {
-      drawTicks: false,
-      color: 'rgba(255,255,255,0.1)'
-    }
-  },
-  y: {
-    beginAtZero: false,
-    ticks: { color: 'white' },
-    title: { display: true, text: 'กระแส (mA)', color: 'white' },
-    grid: { color: 'rgba(255,255,255,0.1)' }
-  }
-}
-,
+          x: {
+            ticks: {
+              display: true,
+              color: 'white',
+              maxRotation: 0,
+              minRotation: 0,
+              maxTicksLimit: 4,
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255,255,255,0.1)'
+            }
+          },
+          y: {
+            beginAtZero: false,
+            ticks: { color: 'white' },
+            title: { display: true, text: 'กระแส (mA)', color: 'white' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          }
+        },
         plugins: {
           legend: { labels: { color: 'white' } },
           tooltip: { mode: 'index', intersect: false }
