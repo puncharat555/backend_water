@@ -5,6 +5,8 @@ const pageSize = 10;
 
 let waterLevelChartInstance = null;
 let currentChartInstance = null;
+let batteryChartInstance = null;
+let oneHourChartInstance = null;
 
 function setupHiDPICanvas(canvas) {
   const ctx = canvas.getContext('2d');
@@ -213,7 +215,11 @@ async function createOneHourChart() {
     setupHiDPICanvas(canvas1h);
     const ctx1h = canvas1h.getContext('2d');
 
-    new Chart(ctx1h, {
+    if (oneHourChartInstance) {
+      oneHourChartInstance.destroy();
+    }
+
+    oneHourChartInstance = new Chart(ctx1h, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -259,7 +265,11 @@ async function createBatteryChart() {
     setupHiDPICanvas(canvasBattery);
     const ctxBattery = canvasBattery.getContext('2d');
 
-    new Chart(ctxBattery, {
+    if (batteryChartInstance) {
+      batteryChartInstance.destroy();
+    }
+
+    batteryChartInstance = new Chart(ctxBattery, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -309,6 +319,17 @@ async function createBatteryChart() {
   }
 }
 
+function movingAverage(data, windowSize) {
+  const result = [];
+  for (let i = 0; i < data.length; i++) {
+    const start = Math.max(0, i - windowSize + 1);
+    const windowData = data.slice(start, i + 1).filter(v => !isNaN(v));
+    const avg = windowData.reduce((a, b) => a + b, 0) / (windowData.length || 1);
+    result.push(avg);
+  }
+  return result;
+}
+
 async function createCurrentChart(range = '30d') {
   try {
     const data = await fetchHistoricalData(range);
@@ -340,6 +361,12 @@ async function createCurrentChart(range = '30d') {
 
     parsed = filterValidPoints(parsed.labels, parsed.currentsNode1, parsed.currentsNode2);
 
+    const maCurrentsNode1 = movingAverage(parsed.currentsNode1, 5);
+    const maCurrentsNode2 = movingAverage(parsed.currentsNode2, 5);
+
+    const currentThreshold = 500;
+    const thresholdArray = new Array(parsed.currentsNode1.length).fill(currentThreshold);
+
     const canvasCurrent = document.getElementById('currentChart');
     setupHiDPICanvas(canvasCurrent);
     const ctxCurrent = canvasCurrent.getContext('2d');
@@ -363,6 +390,17 @@ async function createCurrentChart(range = '30d') {
             pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
             pointBackgroundColor: '#ff4500',
           },
+          // ถ้าต้องการลบ MA กับ Threshold ออก ให้คอมเมนต์หรือลบ datasets นี้ออกได้
+          // {
+          //   label: 'MA กระแส Node 1',
+          //   data: maCurrentsNode1,
+          //   borderColor: '#ff8c00',
+          //   backgroundColor: 'rgba(255,140,0,0.1)',
+          //   fill: false,
+          //   borderDash: [5,5],
+          //   tension: 0.3,
+          //   pointRadius: 0,
+          // },
           {
             label: 'กระแส Node 2 (mA)',
             data: parsed.currentsNode2,
@@ -372,7 +410,26 @@ async function createCurrentChart(range = '30d') {
             tension: 0.3,
             pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
             pointBackgroundColor: '#1e90ff',
-          }
+          },
+          // {
+          //   label: 'MA กระแส Node 2',
+          //   data: maCurrentsNode2,
+          //   borderColor: '#00bfff',
+          //   backgroundColor: 'rgba(0,191,255,0.1)',
+          //   fill: false,
+          //   borderDash: [5,5],
+          //   tension: 0.3,
+          //   pointRadius: 0,
+          // },
+          // {
+          //   label: 'เส้นไฟ (Threshold) 500 mA',
+          //   data: thresholdArray,
+          //   borderColor: '#ff0000',
+          //   borderWidth: 2,
+          //   fill: false,
+          //   pointRadius: 0,
+          //   borderDash: [10, 5],
+          // },
         ],
       },
       options: {
@@ -403,28 +460,23 @@ async function createCurrentChart(range = '30d') {
 }
 
 function toggleErrorBox() {
-  const errorBox = document.getElementById('errorBox');
-  if (!errorBox) return;
-  errorBox.classList.toggle('hidden');
+  const box = document.getElementById('errorBox');
+  if (!box) return;
+  box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
 }
 
 function updateErrorList(data) {
-  const errorList = document.getElementById('errorList');
-  if (!errorList) return;
-  errorList.innerHTML = '';
-
+  const box = document.getElementById('errorList');
+  if (!box) return;
+  box.innerHTML = '';
   data.forEach(item => {
-    if (item.distance === 0) {
-      const li = document.createElement('li');
-      li.textContent = `พบข้อมูลระยะ 0 cm ที่เวลา node1: ${item.time_node1 || '-'}, node2: ${item.time_node2 || '-'}`;
-      errorList.appendChild(li);
+    if (item.rssi_node1 === 0 || item.rssi_node2 === 0) {
+      const div = document.createElement('div');
+      div.style.color = 'red';
+      div.textContent = `ผิดพลาด: RSSI = 0 เวลา: ${item.time_node1 || item.time_node2 || ''}`;
+      box.appendChild(div);
     }
   });
-
-  if (errorList.children.length > 0) {
-    const errorBox = document.getElementById('errorBox');
-    if(errorBox) errorBox.classList.remove('hidden');
-  }
 }
 
 async function refreshAll() {
@@ -437,10 +489,5 @@ async function refreshAll() {
 
 document.addEventListener('DOMContentLoaded', () => {
   refreshAll();
-  setInterval(refreshAll, 60000); // refresh ทุก 60 วินาที
-
-  const errorToggleBtn = document.getElementById('errorToggleBtn');
-  if (errorToggleBtn) {
-    errorToggleBtn.addEventListener('click', toggleErrorBox);
-  }
+  setInterval(refreshAll, 60000);
 });
