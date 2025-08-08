@@ -286,12 +286,13 @@ tbody tr:hover {
   }
 
   .charts-container {
-    grid-template-columns: 1fr; /* 1 คอลัมน์ */
-    grid-template-rows: auto;
+    grid-template-columns: 1fr;
   }
-  
+
   .chart-box {
-    max-width: 100%;
+    max-width: 90%;    
+    margin: 0 auto;    
+    width: 100%;       
   }
 
   #map {
