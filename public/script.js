@@ -176,20 +176,41 @@ async function createOneHourChart() {
     if (oneHourChartInstance) oneHourChartInstance.destroy();
 
     oneHourChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: { datasets: [{
-        label: 'ระดับน้ำ (cm) 1 ชั่วโมง',
-        data: water, borderColor: '#0f0', backgroundColor: 'rgba(29, 233, 29, 0.2)',
-        fill: true, tension: 0.3, pointRadius: 0
-      }]},
-      options: {
-        parsing: false,
-        spanGaps: true,
-        scales: { x: xScaleOpts('1h', xMin, xMax), y: { beginAtZero: true, ticks: { color: 'white' } } },
-        plugins: { legend: { labels: { color: 'white' } }, tooltip: { mode: 'index', intersect: false } },
-        responsive: true, maintainAspectRatio: false
-      }
-    });
+        type: 'line',
+        data: { datasets: [{
+          label: 'ระดับน้ำ (cm) 1 ชั่วโมง',
+          data: water,
+          borderColor: '#0f0',
+          backgroundColor: 'rgba(29,233,29,0.18)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0
+        }]},
+        options: {
+          parsing: false,
+          spanGaps: true,
+          layout: {
+            padding: { top: 0, bottom: 0 }
+          },
+          scales: {
+            x: xScaleOpts('1h', xMin, xMax),
+            y: {
+              beginAtZero: false,
+              min: yB.min,
+              max: yB.max,
+              ticks: { color: 'white' },
+              grid: { color: 'rgba(255,255,255,0.12)' }
+            }
+          },
+          plugins: {
+            legend: { labels: { color: 'white' } },
+            tooltip: { mode: 'index', intersect: false }
+          },
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+  
   } catch (err) { console.error('Error creating 1h chart:', err); }
 }
 
