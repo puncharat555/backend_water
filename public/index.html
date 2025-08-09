@@ -2,7 +2,6 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Water Level Monitoring</title>
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
@@ -38,7 +37,6 @@
   </div>
 
   <div class="charts-container">
-    <!-- กราฟระดับน้ำย้อนหลัง: ใช้ canvas เดียว -->
     <div class="chart-box">
       <h3>กราฟระดับน้ำย้อนหลัง</h3>
       <div id="timeRangeButtons" style="text-align:center; margin-bottom:15px;">
@@ -47,11 +45,17 @@
         <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
       </div>
       <div class="chart-canvas">
-        <canvas id="waterLevelChart"></canvas>
+        <canvas id="waterLevelChart30d"></canvas>
       </div>
     </div>
 
-    <!-- แรงดันแบตเตอรี่ -->
+    <div class="chart-box">
+      <h3>กราฟระดับน้ำย้อนหลัง 1 ชั่วโมง</h3>
+      <div class="chart-canvas">
+        <canvas id="waterLevelChart1h"></canvas>
+      </div>
+    </div>
+
     <div class="chart-box">
       <h3>กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2</h3>
       <div class="chart-canvas">
@@ -59,7 +63,6 @@
       </div>
     </div>
 
-    <!-- กระแส -->
     <div class="chart-box">
       <h3>กราฟกระแส (Current mA)</h3>
       <div id="currentTimeRangeButtons" style="text-align:center; margin-bottom:10px;">
@@ -83,6 +86,7 @@
 
   <script>
     const map = L.map('map').setView([19.030471, 99.884592], 16);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution:
@@ -90,16 +94,16 @@
     }).addTo(map);
 
     const locations = [
-      [19.030471, 99.884592],
-      [19.028255, 99.892867],
-      [19.026849, 99.900480],
+      [19.030471, 99.884592],  // จุดวัดระดับน้ำ
+      [19.028255, 99.892867],  // จุดส่งต่อข้อมูล
+      [19.026849, 99.900480],  // จุดรับข้อมูล
     ];
 
     locations.forEach((loc, i) => {
       L.marker(loc)
         .addTo(map)
         .bindTooltip(
-          ["จุดวัดระดับน้ำ", "จุดส่งต่อข้อมูล", "จุดรับข้อมูล"][i],
+          ["จุดวัดระดับน้ำ", "จุดส่งต่อข้อมูล", "จุดรับข้อมูล"][i], 
           { permanent: true, direction: 'right', offset: [10, 0], className: 'my-tooltip' }
         )
         .openTooltip();
@@ -110,23 +114,33 @@
 
     let blueLine;
     let progress = 0;
+
     function interpolatePoints(points, t) {
       const total = points.length - 1;
       const index = Math.floor(t * total);
       const rest = t * total - index;
-      if (index >= total) return points[total];
+
+      if (index >= total) {
+        return points[total];
+      }
       const lat = points[index][0] + (points[index + 1][0] - points[index][0]) * rest;
       const lng = points[index][1] + (points[index + 1][1] - points[index][1]) * rest;
       return [lat, lng];
     }
+
     function updateBlueLine() {
-      if (blueLine) map.removeLayer(blueLine);
-      const pointsToDraw = [];
-      for (let t = 0; t <= progress; t += 0.01) pointsToDraw.push(interpolatePoints(locations, t));
+      if (blueLine) {
+        map.removeLayer(blueLine);
+      }
+      let pointsToDraw = [];
+      for (let t = 0; t <= progress; t += 0.01) {
+        pointsToDraw.push(interpolatePoints(locations, t));
+      }
       blueLine = L.polyline(pointsToDraw, { color: 'deepskyblue', weight: 4 }).addTo(map);
       progress += 0.005;
       if (progress > 1) progress = 0;
     }
+
     setInterval(updateBlueLine, 30);
   </script>
 
@@ -139,7 +153,6 @@
       <h4>รายการข้อมูลผิดปกติ</h4>
       <ul id="errorList"></ul>
     </div>
-
     <table id="dataTable">
       <thead>
         <tr>
@@ -160,9 +173,7 @@
     <div id="moreButtonContainer" style="text-align: center; margin-top: 10px;"></div>
   </div>
 
-  <!-- Chart.js + Time adapter (สำคัญสำหรับแกนเวลา) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <script src="script.js"></script>
 </body>
 </html>
