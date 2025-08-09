@@ -1,4 +1,4 @@
-/* ===== Water Dashboard (กราฟ + เกจ + ปุ่มแยก) ===== */
+/* ===== Water Dashboard (time scale + sync buttons + x-axis title) ===== */
 const fixedDepth = 120;
 let allData = [];
 let currentIndex = 0;
@@ -22,79 +22,73 @@ function setupHiDPICanvas(canvas) {
 function parseToDate(s) {
   if (!s) return null;
   s = String(s).trim();
-  let m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(:\d{2})?)$/);
-  if (m) return new Date(`${m[1]}T${m[2]}`); // local time (ไม่ใส่ Z)
-  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{2}:\d{2}(:\d{2})?)$/);
+
+  // 1) 2025-08-09 12:34(:56)
+  let m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2})?)$/);
+  if (m) return new Date(`${m[1]}T${m[2]}`);
+
+  // 2) DD/MM/YYYY HH:MM(:SS)
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{2}:\d{2}(?::\d{2})?)$/);
   if (m) {
     const [, d, mo, y, t] = m;
-    return new Date(`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}T${t}`);
+    return new Date(`${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}T${t}`);
   }
+
+  // 3) ISO หรืออื่น ๆ
   const d2 = new Date(s);
   return isNaN(d2) ? null : d2;
+}
+
+const unitByRange = r => (r === '1h' ? 'minute' : r === '1d' ? 'hour' : 'day');
+const stepByRange = r => (r === '1h' ? 10 : 1);
+
+/* X axis options (มีชื่อแกน: เวลา (Time)) */
+function xScaleOpts(range, xMin, xMax) {
+  return {
+    type: 'time',
+    bounds: 'data',         // เริ่ม–จบเท่ากับข้อมูลจริง
+    min: xMin ?? undefined,
+    max: xMax ?? undefined,
+    offset: false,
+    time: {
+      unit: unitByRange(range),
+      stepSize: stepByRange(range),
+      displayFormats: { minute: 'HH:mm', hour: 'HH:mm', day: 'MMM d' }
+    },
+    ticks: {
+      color: 'white',
+      autoSkip: true,
+      maxRotation: 0,
+      padding: 6,
+      autoSkipPadding: 18,
+      // แสดงวัน + เวลาใต้กราฟให้อ่านง่าย
+      callback: (value) => {
+        const d = new Date(value);
+        return new Intl.DateTimeFormat('th-TH', {
+          month: 'short', day: '2-digit',
+          hour: '2-digit', minute: '2-digit',
+          hour12: false
+        }).format(d); // ตัวอย่าง: "ส.ค. 09 14:30"
+      }
+    },
+    grid: {
+      display: true,
+      color: 'rgba(255,255,255,0.22)',
+      lineWidth: 1,
+      drawTicks: true
+    },
+    title: {
+      display: true,
+      text: 'เวลา (Time)',
+      color: 'white',
+      font: { size: 14, weight: 'bold' }
+    }
+  };
 }
 
 function setActiveRange(containerId, range) {
   const btns = document.querySelectorAll(`#${containerId} .range-btn`);
   btns.forEach(b => b.classList.toggle('active', b.getAttribute('data-range') === range));
-}
-
-function yBoundsFromData(points, pad = 0.08) {
-  const ys = points.map(p => p.y).filter(v => !isNaN(v));
-  if (!ys.length) return { min: 0, max: 1 };
-  const min = Math.min(...ys), max = Math.max(...ys);
-  const span = Math.max(1, max - min), extra = span * pad;
-  return { min: Math.floor((min - extra) * 10) / 10, max: Math.ceil((max + extra) * 10) / 10 };
-}
-
-/* X axis options (จำนวนคอลัมน์พอดี + ชื่อแกน) */
-function xScaleOpts(range, xMin, xMax) {
-  const MAP = { '1h': { unit:'minute', step:5 }, '1d':{ unit:'hour', step:2 }, '7d':{ unit:'day', step:1 }, '30d':{ unit:'day', step:2 } };
-  const cfg = MAP[range] || { unit:'day', step:1 };
-  return {
-    type: 'time',
-    bounds: 'data',
-    min: xMin ?? undefined, max: xMax ?? undefined,
-    offset: false,
-    time: { unit: cfg.unit, stepSize: cfg.step, round: cfg.unit, displayFormats:{ minute:'HH:mm', hour:'HH:mm', day:'MMM d' } },
-    ticks: {
-      color:'white', autoSkip:true, autoSkipPadding:18, maxRotation:0, padding:6,
-      callback: (value) => new Intl.DateTimeFormat('th-TH',{ month:'short', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false }).format(new Date(value))
-    },
-    grid: { display:true, color:'rgba(255,255,255,0.22)', lineWidth:1, drawTicks:true },
-    title: { display:true, text:'เวลา (Time)', color:'white', font:{ size:14, weight:'bold' } }
-  };
-}
-
-/* เกจแรงดัน (10–12.9V) */
-function drawVoltageGauge(containerId, value, min = 10, max = 12.9) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  const v = Math.max(min, Math.min(max, Number(value) || min));
-  const w = el.clientWidth || 280, h = el.clientHeight || 150;
-  const cx = w/2, cy = h-12, r = Math.min(w*0.45, h*0.9);
-  const start = -Math.PI, end = 0; // ครึ่งวง 180°
-  const t = (v - min) / (max - min);
-  const angle = start + (end - start) * t;
-  const arc = (sa, ea, rr) => {
-    const x1 = cx + rr*Math.cos(sa), y1 = cy + rr*Math.sin(sa);
-    const x2 = cx + rr*Math.cos(ea), y2 = cy + rr*Math.sin(ea);
-    const large = (ea - sa) % (2*Math.PI) > Math.PI ? 1 : 0;
-    return `M ${x1} ${y1} A ${rr} ${rr} 0 ${large} 1 ${x2} ${y2}`;
-  };
-  const z1 = min, z2 = Math.min(max, 11.5), z3 = Math.min(max, 12.3);
-  const toAng = x => start + (end - start) * ((x - min)/(max - min));
-  const svg = `
-    <svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
-      <path d="${arc(start, toAng(z2), r)}" stroke="#e74c3c" stroke-width="12" fill="none" opacity="0.85"/>
-      <path d="${arc(toAng(z2), toAng(z3), r)}" stroke="#f39c12" stroke-width="12" fill="none" opacity="0.9"/>
-      <path d="${arc(toAng(z3), end, r)}" stroke="#2ecc71" stroke-width="12" fill="none" opacity="0.9"/>
-      <line x1="${cx}" y1="${cy}" x2="${cx + (r-6)*Math.cos(angle)}" y2="${cy + (r-6)*Math.sin(angle)}" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="${cx}" cy="${cy}" r="4" fill="#fff"/>
-      <text x="${cx}" y="${cy - r*0.55}" class="val-text">${v.toFixed(2)} V</text>
-      <text x="${cx - r + 14}" y="${cy - 6}" class="tick-text">${min.toFixed(1)}V</text>
-      <text x="${cx + r - 14}" y="${cy - 6}" class="tick-text">${max.toFixed(1)}V</text>
-    </svg>`;
-  el.innerHTML = svg;
 }
 
 /* ---------- Data ---------- */
@@ -104,13 +98,21 @@ async function fetchHistoricalData(range = '30d') {
   const data = await res.json();
   return data.filter(item => item.distance > 0);
 }
+
+/* คืนค่าเป็นชุด {x,y} เพื่อกันเวลาเพี้ยน */
 function parseChartData(rows) {
-  const water = [], v1 = [], v2 = [], i1 = [], i2 = [];
+  const water = [];
+  const v1 = [], v2 = [];
+  const i1 = [], i2 = [];
+
   for (const item of rows) {
-    const ts = parseToDate(item.time_node1 || item.time_node2); if (!ts) continue;
-    const levelRaw = (item.distance && item.distance > 0) ? Number((fixedDepth - item.distance).toFixed(2)) : NaN;
-    const outlier = isNaN(levelRaw) || levelRaw < 0 || levelRaw > 100; // กันเสาเด้ง
-    if (!outlier) water.push({ x: ts, y: levelRaw });
+    const ts = parseToDate(item.time_node1 || item.time_node2);
+    if (!ts) continue;
+
+    const level = (item.distance && item.distance > 0)
+      ? Number((fixedDepth - item.distance).toFixed(2)) : NaN;
+
+    if (!isNaN(level)) water.push({ x: ts, y: level });
     if (item.v_node1 > 0) v1.push({ x: ts, y: item.v_node1 });
     if (item.v_node2 > 0) v2.push({ x: ts, y: item.v_node2 });
     if (item.i_node1 > 0) i1.push({ x: ts, y: item.i_node1 });
@@ -124,56 +126,71 @@ async function createWaterLevelChart(range = '1d') {
   try {
     const rows = await fetchHistoricalData(range);
     const { water } = parseChartData(rows);
-    water.sort((a,b)=>a.x-b.x);
-    const xMin = water[0]?.x, xMax = water.at(-1)?.x, yB = yBoundsFromData(water, 0.08);
+    water.sort((a, b) => a.x - b.x);
 
-    const canvas = document.getElementById('waterLevelChart30d'); setupHiDPICanvas(canvas);
-    const ctx = canvas.getContext('2d'); if (waterLevelChartInstance) waterLevelChartInstance.destroy();
+    const xMin = water[0]?.x, xMax = water.at(-1)?.x;
+    const canvas = document.getElementById('waterLevelChart30d');
+    setupHiDPICanvas(canvas);
+    const ctx = canvas.getContext('2d');
+    if (waterLevelChartInstance) waterLevelChartInstance.destroy();
 
     waterLevelChartInstance = new Chart(ctx, {
       type: 'line',
       data: { datasets: [{
         label: `ระดับน้ำย้อนหลัง ${range}`,
-        data: water, borderColor:'#00c0ff', backgroundColor:'rgba(0,192,255,0.2)',
-        fill: true, tension: 0.3, pointRadius: 0, cubicInterpolationMode: 'monotone'
+        data: water, borderColor: '#00c0ff', backgroundColor: 'rgba(0,192,255,0.2)',
+        fill: true, tension: 0.3, pointRadius: 0
       }]},
       options: {
-        parsing:false, spanGaps: 2*60*60*1000, // เชื่อมช่องว่างสั้นๆ (≤2ชม.)
-        layout:{ padding:{ top:0, bottom:0 } },
-        scales:{ x:xScaleOpts(range, xMin, xMax), y:{ beginAtZero:false, min:yB.min, max:yB.max, ticks:{ color:'white' }, grid:{ color:'rgba(255,255,255,0.1)' } } },
-        plugins:{ legend:{ labels:{ color:'white' } }, tooltip:{ mode:'index', intersect:false } },
-        responsive:true, maintainAspectRatio:false
+        parsing: false,
+        spanGaps: true,
+        scales: {
+          x: xScaleOpts(range, xMin, xMax),
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
+            ticks: { color: 'white' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true, maintainAspectRatio: false
       }
     });
-  } catch (e) { console.error('water chart', e); }
+  } catch (err) { console.error('Error creating water level chart:', err); }
 }
 
 async function createOneHourChart() {
   try {
     const rows = await fetchHistoricalData('1h');
     const { water } = parseChartData(rows);
-    water.sort((a,b)=>a.x-b.x);
-    const xMin = water[0]?.x, xMax = water.at(-1)?.x, yB = yBoundsFromData(water, 0.08);
+    water.sort((a,b) => a.x - b.x);
 
-    const canvas = document.getElementById('waterLevelChart1h'); setupHiDPICanvas(canvas);
-    const ctx = canvas.getContext('2d'); if (oneHourChartInstance) oneHourChartInstance.destroy();
+    const xMin = water[0]?.x, xMax = water.at(-1)?.x;
+    const canvas = document.getElementById('waterLevelChart1h');
+    setupHiDPICanvas(canvas);
+    const ctx = canvas.getContext('2d');
+    if (oneHourChartInstance) oneHourChartInstance.destroy();
 
     oneHourChartInstance = new Chart(ctx, {
       type: 'line',
       data: { datasets: [{
         label: 'ระดับน้ำ (cm) 1 ชั่วโมง',
-        data: water, borderColor:'#0f0', backgroundColor:'rgba(29,233,29,0.18)',
-        fill:true, tension:0.3, pointRadius:0, cubicInterpolationMode:'monotone'
+        data: water, borderColor: '#0f0', backgroundColor: 'rgba(29, 233, 29, 0.2)',
+        fill: true, tension: 0.3, pointRadius: 0
       }]},
       options: {
-        parsing:false, spanGaps: 20*60*1000, // 20 นาที
-        layout:{ padding:{ top:0, bottom:0 } },
-        scales:{ x:xScaleOpts('1h', xMin, xMax), y:{ beginAtZero:false, min:yB.min, max:yB.max, ticks:{ color:'white' }, grid:{ color:'rgba(255,255,255,0.12)' } } },
-        plugins:{ legend:{ labels:{ color:'white' } }, tooltip:{ mode:'index', intersect:false } },
-        responsive:true, maintainAspectRatio:false
+        parsing: false,
+        spanGaps: true,
+        scales: { x: xScaleOpts('1h', xMin, xMax), y: { beginAtZero: true, ticks: { color: 'white' } } },
+        plugins: { legend: { labels: { color: 'white' } }, tooltip: { mode: 'index', intersect: false } },
+        responsive: true, maintainAspectRatio: false
       }
     });
-  } catch (e) { console.error('1h chart', e); }
+  } catch (err) { console.error('Error creating 1h chart:', err); }
 }
 
 async function createBatteryChart(range = '1d') {
@@ -181,27 +198,39 @@ async function createBatteryChart(range = '1d') {
     const rows = await fetchHistoricalData(range);
     const { v1, v2 } = parseChartData(rows);
     v1.sort((a,b)=>a.x-b.x); v2.sort((a,b)=>a.x-b.x);
-    const merged = (v1.length?v1:[]).concat(v2.length?v2:[]).sort((a,b)=>a.x-b.x);
+
+    const merged = (v1.length ? v1 : []).concat(v2.length ? v2 : []).sort((a,b)=>a.x-b.x);
     const xMin = merged[0]?.x, xMax = merged.at(-1)?.x;
 
-    const canvas = document.getElementById('batteryChart'); setupHiDPICanvas(canvas);
-    const ctx = canvas.getContext('2d'); if (batteryChartInstance) batteryChartInstance.destroy();
+    const canvas = document.getElementById('batteryChart');
+    setupHiDPICanvas(canvas);
+    const ctx = canvas.getContext('2d');
+    if (batteryChartInstance) batteryChartInstance.destroy();
 
     batteryChartInstance = new Chart(ctx, {
-      type:'line',
-      data:{ datasets:[
-        { label:'แรงดัน Node 1 (V)', data:v1, borderColor:'#ff7f00', backgroundColor:'rgba(255,127,0,0.2)', fill:true, tension:0.3, pointRadius:0 },
-        { label:'แรงดัน Node 2 (V)', data:v2, borderColor:'#007fff', backgroundColor:'rgba(0,127,255,0.2)', fill:true, tension:0.3, pointRadius:0 }
-      ]},
-      options:{
-        parsing:false, spanGaps:true,
-        layout:{ padding:{ top:0, bottom:0 } },
-        scales:{ x:xScaleOpts(range, xMin, xMax), y:{ beginAtZero:false, ticks:{ color:'white' }, title:{ display:true, text:'แรงดัน (V)', color:'white' }, grid:{ color:'rgba(255,255,255,0.1)' } } },
-        plugins:{ legend:{ labels:{ color:'white' } }, tooltip:{ mode:'index', intersect:false } },
-        responsive:true, maintainAspectRatio:false
+      type: 'line',
+      data: {
+        datasets: [
+          { label: 'แรงดัน Node 1 (V)', data: v1, borderColor: '#ff7f00', backgroundColor: 'rgba(255,127,0,0.2)', fill: true, tension: 0.3, pointRadius: 0 },
+          { label: 'แรงดัน Node 2 (V)', data: v2, borderColor: '#007fff', backgroundColor: 'rgba(0,127,255,0.2)', fill: true, tension: 0.3, pointRadius: 0 }
+        ]
+      },
+      options: {
+        parsing: false,
+        spanGaps: true,
+        scales: {
+          x: xScaleOpts(range, xMin, xMax),
+          y: {
+            beginAtZero: false, ticks: { color: 'white' },
+            title: { display: true, text: 'แรงดัน (V)', color: 'white' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          }
+        },
+        plugins: { legend: { labels: { color: 'white' } }, tooltip: { mode: 'index', intersect: false } },
+        responsive: true, maintainAspectRatio: false
       }
     });
-  } catch (e) { console.error('battery chart', e); }
+  } catch (err) { console.error('Error creating battery chart:', err); }
 }
 
 async function createCurrentChart(range = '1d') {
@@ -209,34 +238,46 @@ async function createCurrentChart(range = '1d') {
     const rows = await fetchHistoricalData(range);
     const { i1, i2 } = parseChartData(rows);
     i1.sort((a,b)=>a.x-b.x); i2.sort((a,b)=>a.x-b.x);
-    const merged = (i1.length?i1:[]).concat(i2.length?i2:[]).sort((a,b)=>a.x-b.x);
-    const xMin = merged[0]?.x, xMax = merged.at(-1)?.x, yB = yBoundsFromData(merged, 0.08);
 
-    const canvas = document.getElementById('currentChart'); setupHiDPICanvas(canvas);
-    const ctx = canvas.getContext('2d'); if (currentChartInstance) currentChartInstance.destroy();
+    const merged = (i1.length ? i1 : []).concat(i2.length ? i2 : []).sort((a,b)=>a.x-b.x);
+    const xMin = merged[0]?.x, xMax = merged.at(-1)?.x;
+
+    const canvas = document.getElementById('currentChart');
+    setupHiDPICanvas(canvas);
+    const ctx = canvas.getContext('2d');
+    if (currentChartInstance) currentChartInstance.destroy();
 
     currentChartInstance = new Chart(ctx, {
-      type:'line',
-      data:{ datasets:[
-        { label:'กระแส Node 1 (mA)', data:i1, borderColor:'#ff4500', backgroundColor:'rgba(255,69,0,0.2)', fill:true, tension:0.3, pointRadius:0 },
-        { label:'กระแส Node 2 (mA)', data:i2, borderColor:'#1e90ff', backgroundColor:'rgba(30,144,255,0.2)', fill:true, tension:0.3, pointRadius:0 }
-      ]},
-      options:{
-        parsing:false, spanGaps:true,
-        layout:{ padding:{ top:0, bottom:0 } },
-        scales:{ x:xScaleOpts(range, xMin, xMax), y:{ beginAtZero:false, min:yB.min, max:yB.max, ticks:{ color:'white' }, title:{ display:true, text:'กระแส (mA)', color:'white' }, grid:{ color:'rgba(255,255,255,0.1)' } } },
-        plugins:{ legend:{ labels:{ color:'white' } }, tooltip:{ mode:'index', intersect:false } },
-        responsive:true, maintainAspectRatio:false
+      type: 'line',
+      data: {
+        datasets: [
+          { label: 'กระแส Node 1 (mA)', data: i1, borderColor: '#ff4500', backgroundColor: 'rgba(255,69,0,0.2)', fill: true, tension: 0.3, pointRadius: 0 },
+          { label: 'กระแส Node 2 (mA)', data: i2, borderColor: '#1e90ff', backgroundColor: 'rgba(30,144,255,0.2)', fill: true, tension: 0.3, pointRadius: 0 }
+        ]
+      },
+      options: {
+        parsing: false,
+        spanGaps: true,
+        scales: {
+          x: xScaleOpts(range, xMin, xMax),
+          y: {
+            beginAtZero: false, ticks: { color: 'white' },
+            title: { display: true, text: 'กระแส (mA)', color: 'white' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          }
+        },
+        plugins: { legend: { labels: { color: 'white' } }, tooltip: { mode: 'index', intersect: false } },
+        responsive: true, maintainAspectRatio: false
       }
     });
-  } catch (e) { console.error('current chart', e); }
+  } catch (err) { console.error('Error creating current chart:', err); }
 }
 
 /* ---------- Live nodes/table ---------- */
 async function loadData() {
   try {
     const url = `https://backend-water-rf88.onrender.com/distance?_=${Date.now()}`;
-    const res = await fetch(url, { cache:'no-store' });
+    const res = await fetch(url, { cache: 'no-store' });
     const data = await res.json();
 
     allData = data.filter(item => item.distance > 0);
@@ -249,39 +290,45 @@ async function loadData() {
     if (latest) {
       const level = (fixedDepth - latest.distance).toFixed(1);
       document.getElementById('waterLevelNode1').innerText = `ระดับน้ำปัจจุบัน: ${level} cm`;
+      document.getElementById('rssiNode1').innerText = (latest.rssi_node1 && latest.rssi_node1 !== 0) ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
+      document.getElementById('voltageNode1').innerText = (latest.v_node1 && latest.v_node1 > 0) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
+      document.getElementById('currentNode1').innerText = (latest.i_node1 && latest.i_node1 > 0) ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
+      document.getElementById('timeNode1').innerText = latest.time_node1 || 'เวลาวัด: -';
 
-      document.getElementById('rssiNode1').innerText  = (latest.rssi_node1 && latest.rssi_node1 !== 0) ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
-      document.getElementById('voltageNode1').innerText= (latest.v_node1 && latest.v_node1 > 0) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
-      document.getElementById('currentNode1').innerText= (latest.i_node1 && latest.i_node1 > 0) ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
-      document.getElementById('timeNode1').innerText   = latest.time_node1 || 'เวลาวัด: -';
-
-      document.getElementById('rssiNode2').innerText  = (latest.rssi_node2 && latest.rssi_node2 !== 0) ? `RSSI: ${latest.rssi_node2}` : 'RSSI: -';
-      document.getElementById('voltageNode2').innerText= (latest.v_node2 && latest.v_node2 > 0) ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
-      document.getElementById('currentNode2').innerText= (latest.i_node2 && latest.i_node2 > 0) ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
-      document.getElementById('timeNode2').innerText   = latest.time_node2 || 'เวลาวัด: -';
-
-      // อัปเดตเกจ
-      drawVoltageGauge('voltGauge1', (latest.v_node1 > 0 ? latest.v_node1 : 10), 10, 12.9);
-      drawVoltageGauge('voltGauge2', (latest.v_node2 > 0 ? latest.v_node2 : 10), 10, 12.9);
+      document.getElementById('rssiNode2').innerText = (latest.rssi_node2 && latest.rssi_node2 !== 0) ? `RSSI: ${latest.rssi_node2}` : 'RSSI: -';
+      document.getElementById('voltageNode2').innerText = (latest.v_node2 && latest.v_node2 > 0) ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
+      document.getElementById('currentNode2').innerText = (latest.i_node2 && latest.i_node2 > 0) ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
+      document.getElementById('timeNode2').innerText = latest.time_node2 || 'เวลาวัด: -';
     }
   } catch (error) {
     console.error('Load data error:', error);
     ['waterLevelNode1','rssiNode1','voltageNode1','currentNode1','timeNode1','rssiNode2','voltageNode2','currentNode2','timeNode2']
       .forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '-'; });
-    const tbody = document.querySelector('#dataTable tbody'); if (tbody) tbody.innerHTML = '';
-    const more = document.getElementById('moreButtonContainer'); if (more) more.innerHTML = '';
+    const waterLevelEl = document.getElementById('waterLevelNode1');
+    if (waterLevelEl) waterLevelEl.innerText = 'โหลดข้อมูลล้มเหลว';
+
+    const tbody = document.querySelector('#dataTable tbody');
+    if (tbody) tbody.innerHTML = '';
+    const moreButtonContainer = document.getElementById('moreButtonContainer');
+    if (moreButtonContainer) moreButtonContainer.innerHTML = '';
   }
 }
 
-function updateTable(clear=false) {
-  const tbody = document.querySelector('#dataTable tbody'); if (!tbody) return;
-  if (clear) { tbody.innerHTML=''; currentIndex=0; }
+function updateTable(clear = false) {
+  const tbody = document.querySelector('#dataTable tbody');
+  if (!tbody) return;
+
+  if (clear) { tbody.innerHTML = ''; currentIndex = 0; }
+
   const sliceData = allData.slice(currentIndex, currentIndex + pageSize);
+
   sliceData.forEach(item => {
-    const level = (fixedDepth - item.distance).toFixed(1), distRaw = item.distance.toFixed(1);
+    const level = (fixedDepth - item.distance).toFixed(1);
+    const distanceRaw = item.distance.toFixed(1);
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${distRaw}</td><td>${level}</td>
+      <td>${distanceRaw}</td>
+      <td>${level}</td>
       <td>${(item.rssi_node1 && item.rssi_node1 !== 0) ? item.rssi_node1 : '-'}</td>
       <td>${(item.rssi_node2 && item.rssi_node2 !== 0) ? item.rssi_node2 : '-'}</td>
       <td>${(item.v_node1 && item.v_node1 > 0) ? item.v_node1 + ' V' : '-'}</td>
@@ -289,64 +336,106 @@ function updateTable(clear=false) {
       <td>${(item.v_node2 && item.v_node2 > 0) ? item.v_node2 + ' V' : '-'}</td>
       <td>${(item.i_node2 && item.i_node2 > 0) ? item.i_node2 + ' mA' : '-'}</td>
       <td>${item.time_node1 || '-'}</td>
-      <td>${item.time_node2 || '-'}</td>`;
+      <td>${item.time_node2 || '-'}</td>
+    `;
     tbody.appendChild(tr);
   });
-  currentIndex += sliceData.length; updateMoreButton();
+
+  currentIndex += sliceData.length;
+  updateMoreButton();
 }
+
 function updateMoreButton() {
-  const c = document.getElementById('moreButtonContainer'); if (!c) return; c.innerHTML='';
+  const c = document.getElementById('moreButtonContainer');
+  if (!c) return;
+  c.innerHTML = '';
   if (currentIndex < allData.length) {
     const btn = document.createElement('button');
-    btn.innerText='ดูข้อมูลเพิ่มเติม'; btn.style.padding='8px 16px'; btn.style.margin='10px auto';
-    btn.style.display='inline-block'; btn.style.cursor='pointer'; btn.onclick=()=>updateTable(false); c.appendChild(btn);
+    btn.innerText = 'ดูข้อมูลเพิ่มเติม';
+    btn.style.padding = '8px 16px';
+    btn.style.margin = '10px auto';
+    btn.style.display = 'inline-block';
+    btn.style.cursor = 'pointer';
+    btn.onclick = () => updateTable(false);
+    c.appendChild(btn);
   }
 }
-function toggleErrorBox(){ const box=document.getElementById('errorBox'); if(!box)return; box.style.display=(box.style.display==='none'||box.style.display==='')?'block':'none'; }
-function updateErrorList(data){
-  const box=document.getElementById('errorList'); if(!box)return; box.innerHTML='';
-  data.forEach(item=>{ if(item.distance < 10){ const div=document.createElement('div'); div.innerText=`Warning! ระดับน้ำต่ำเกินไป: ${item.distance.toFixed(1)} cm เวลา: ${item.time_node1}`; box.appendChild(div); }});
+
+function toggleErrorBox() {
+  const box = document.getElementById('errorBox');
+  if (!box) return;
+  box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+}
+
+function updateErrorList(data) {
+  const box = document.getElementById('errorList');
+  if (!box) return;
+  box.innerHTML = '';
+  data.forEach(item => {
+    if (item.distance < 10) {
+      const div = document.createElement('div');
+      div.innerText = `Warning! ระดับน้ำต่ำเกินไป: ${item.distance.toFixed(1)} cm เวลา: ${item.time_node1}`;
+      box.appendChild(div);
+    }
+  });
 }
 
 /* ---------- Init & Buttons ---------- */
 async function initDashboard() {
   const initialRange = '1d';
+
   await loadData();
   await createWaterLevelChart(initialRange);
   await createOneHourChart();
   await createBatteryChart(initialRange);
   await createCurrentChart(initialRange);
+
+  // sync ปุ่มให้ตรงกับช่วงที่โหลดจริง
   setActiveRange('timeRangeButtons', initialRange);
   setActiveRange('batteryTimeRangeButtons', initialRange);
   setActiveRange('currentTimeRangeButtons', initialRange);
 }
+
 function setupRangeButtons() {
-  // น้ำ
+  // ระดับน้ำ
   const waterBtns = document.querySelectorAll('#timeRangeButtons .range-btn');
   waterBtns.forEach(button => {
     button.addEventListener('click', async () => {
-      waterBtns.forEach(b => b.classList.remove('active')); button.classList.add('active');
-      await createWaterLevelChart(button.getAttribute('data-range'));
+      waterBtns.forEach(b => b.classList.remove('active'));
+      button.classList.add('active');
+      const range = button.getAttribute('data-range');
+      if (range === '1h') await createOneHourChart();
+      else await createWaterLevelChart(range);
+      await createCurrentChart(range); // ให้กราฟกระแสตามช่วงเดียวกันด้วย
     });
   });
+
   // กระแส
   const currentBtns = document.querySelectorAll('#currentTimeRangeButtons .range-btn');
   currentBtns.forEach(button => {
     button.addEventListener('click', async () => {
-      currentBtns.forEach(b => b.classList.remove('active')); button.classList.add('active');
-      await createCurrentChart(button.getAttribute('data-range'));
+      currentBtns.forEach(b => b.classList.remove('active'));
+      button.classList.add('active');
+      const range = button.getAttribute('data-range');
+      await createCurrentChart(range);
     });
   });
-  // แบต
+
+  // แบตเตอรี่
   const batteryBtns = document.querySelectorAll('#batteryTimeRangeButtons .range-btn');
   batteryBtns.forEach(button => {
     button.addEventListener('click', async () => {
-      batteryBtns.forEach(b => b.classList.remove('active')); button.classList.add('active');
-      await createBatteryChart(button.getAttribute('data-range'));
+      batteryBtns.forEach(b => b.classList.remove('active'));
+      button.classList.add('active');
+      const range = button.getAttribute('data-range');
+      await createBatteryChart(range);
     });
   });
 }
 
-window.onload = async () => { await initDashboard(); setupRangeButtons(); };
+/* boot */
+window.onload = async () => {
+  await initDashboard();
+  setupRangeButtons();
+};
 setInterval(() => { loadData(); }, 60000);
-
