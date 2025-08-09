@@ -169,7 +169,7 @@ async function createWaterLevelChart(range = '1d') {
     const now = new Date();
     const xMin = water[0]?.x ?? new Date(now.getTime() - 24*60*60*1000);
     const xMax = water.at(-1)?.x ?? now;
-    const yB = water.length ? yBoundsFromData(water, 0.08) : { min: 0, max: 50 };
+    const yB = water.length ? yBoundsFromData(water, 0.8) : { min: 0, max: 50 };
 
     const canvas = document.getElementById('waterLevelChart30d');
     setupHiDPICanvas(canvas);
