@@ -327,7 +327,7 @@ async function createCurrentChart(range = '1d') {
     const now = new Date();
     const xMin = merged[0]?.x ?? new Date(now.getTime() - 24*60*60*1000);
     const xMax = merged.at(-1)?.x ?? now;
-    const yB = merged.length ? yBoundsFromData(merged, 0.08) : { min: 0, max: 500 };
+    const yB = merged.length ? yBoundsFromData(merged, 0.2) : { min: 0, max: 500 };
 
     const canvas = document.getElementById('currentChart');
     setupHiDPICanvas(canvas);
