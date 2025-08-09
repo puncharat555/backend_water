@@ -224,11 +224,21 @@ async function createOneHourChart() {
       }
     }
 
-    const now = new Date();
     const hasData = water.length > 0;
-    const xMin = hasData ? new Date(water.at(-1).x.getTime() - 60*60*1000) : new Date(now.getTime() - 60*60*1000);
-    const xMax = hasData ? water.at(-1).x : now;
-    const yB = hasData ? yBoundsFromData(water, 0.08) : { min: 0, max: 50 };
+let xMin, xMax;
+
+if (hasData) {
+  // ตัดช่องว่างด้านซ้าย: เริ่มที่เวลาของจุดแรกจริง ๆ
+  xMin = water[0].x;
+  xMax = water.at(-1).x;
+} else {
+  // ไม่มีข้อมูลเลย: ใช้หน้าต่าง 1 ชม. ตามปกติ
+  const now = new Date();
+  xMin = new Date(now.getTime() - 60*60*1000);
+  xMax = now;
+}
+
+const yB = hasData ? yBoundsFromData(water, 0.08) : { min: 0, max: 50 };
 
     const canvas = document.getElementById('waterLevelChart1h');
     setupHiDPICanvas(canvas);
