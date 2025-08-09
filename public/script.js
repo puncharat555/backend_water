@@ -143,6 +143,11 @@ function parseChartData(rows) {
     const levelRaw = (item.distance || item.distance === 0)
       ? Number((fixedDepth - item.distance).toFixed(2)) : NaN;
 
+    // กรองค่า outlier — เช่น ระดับน้ำเกิน 50 cm ในกราฟ 1 ชั่วโมงตัดทิ้ง
+    if (!isNaN(levelRaw) && levelRaw >= 0 && levelRaw <= 50) {
+      water.push({ x: ts, y: levelRaw });
+    }
+
     const outlier = isNaN(levelRaw) || levelRaw < 0 || levelRaw > 100;
     if (!outlier) water.push({ x: ts, y: levelRaw });
 
