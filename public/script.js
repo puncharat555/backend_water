@@ -1,4 +1,4 @@
-/* ===== Water Dashboard (time scale + sync buttons) ===== */
+/* ===== Water Dashboard (time scale + sync buttons + x-axis title) ===== */
 const fixedDepth = 120;
 let allData = [];
 let currentIndex = 0;
@@ -42,10 +42,11 @@ function parseToDate(s) {
 const unitByRange = r => (r === '1h' ? 'minute' : r === '1d' ? 'hour' : 'day');
 const stepByRange = r => (r === '1h' ? 10 : 1);
 
+/* X axis options (มีชื่อแกน: เวลา (Time)) */
 function xScaleOpts(range, xMin, xMax) {
   return {
     type: 'time',
-    bounds: 'data',     // เริ่ม/จบตามข้อมูลจริง
+    bounds: 'data',         // เริ่ม–จบเท่ากับข้อมูลจริง
     min: xMin ?? undefined,
     max: xMax ?? undefined,
     offset: false,
@@ -54,8 +55,34 @@ function xScaleOpts(range, xMin, xMax) {
       stepSize: stepByRange(range),
       displayFormats: { minute: 'HH:mm', hour: 'HH:mm', day: 'MMM d' }
     },
-    ticks: { color: 'white', autoSkip: true, maxRotation: 0, padding: 6, autoSkipPadding: 18 },
-    grid: { display: true, color: 'rgba(255,255,255,0.22)', lineWidth: 1, drawTicks: true }
+    ticks: {
+      color: 'white',
+      autoSkip: true,
+      maxRotation: 0,
+      padding: 6,
+      autoSkipPadding: 18,
+      // แสดงวัน + เวลาใต้กราฟให้อ่านง่าย
+      callback: (value) => {
+        const d = new Date(value);
+        return new Intl.DateTimeFormat('th-TH', {
+          month: 'short', day: '2-digit',
+          hour: '2-digit', minute: '2-digit',
+          hour12: false
+        }).format(d); // ตัวอย่าง: "ส.ค. 09 14:30"
+      }
+    },
+    grid: {
+      display: true,
+      color: 'rgba(255,255,255,0.22)',
+      lineWidth: 1,
+      drawTicks: true
+    },
+    title: {
+      display: true,
+      text: 'เวลา (Time)',
+      color: 'white',
+      font: { size: 14, weight: 'bold' }
+    }
   };
 }
 
@@ -102,8 +129,9 @@ async function createWaterLevelChart(range = '1d') {
     water.sort((a, b) => a.x - b.x);
 
     const xMin = water[0]?.x, xMax = water.at(-1)?.x;
-    const ctx = document.getElementById('waterLevelChart30d').getContext('2d');
-    setupHiDPICanvas(document.getElementById('waterLevelChart30d'));
+    const canvas = document.getElementById('waterLevelChart30d');
+    setupHiDPICanvas(canvas);
+    const ctx = canvas.getContext('2d');
     if (waterLevelChartInstance) waterLevelChartInstance.destroy();
 
     waterLevelChartInstance = new Chart(ctx, {
@@ -210,9 +238,6 @@ async function createCurrentChart(range = '1d') {
     const rows = await fetchHistoricalData(range);
     const { i1, i2 } = parseChartData(rows);
     i1.sort((a,b)=>a.x-b.x); i2.sort((a,b)=>a.x-b.x);
-
-    // กรองให้สองโหนดมีค่าในเวลาเดียวกัน (ถ้าต้องการ)
-    // (ที่นี่เราแสดงตามจริง ไม่บังคับต้องคู่กัน)
 
     const merged = (i1.length ? i1 : []).concat(i2.length ? i2 : []).sort((a,b)=>a.x-b.x);
     const xMin = merged[0]?.x, xMax = merged.at(-1)?.x;
