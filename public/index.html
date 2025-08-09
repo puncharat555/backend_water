@@ -8,32 +8,15 @@
   <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20190511/ourmid/pngtree-vector-drop-icon-png-image_1029752.jpg">
 </head>
 <body>
-
-  <!-- Top bar + Hamburger -->
-  <header class="topbar">
-    <button id="hamburgerBtn" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">☰</button>
-    <div class="topbar-title">Water Level Monitoring</div>
-  </header>
-
-  <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar" aria-hidden="true">
-    <div class="sidebar-header">DASHBOARD</div>
-    <nav class="sidebar-nav">
-      <a href="#" class="nav-item" data-target="waterSection">Water Level</a>
-      <a href="#" class="nav-item" data-target="oneHourSection">Water (1h)</a>
-      <a href="#" class="nav-item" data-target="batterySection">Battery Voltage</a>
-      <a href="#" class="nav-item" data-target="currentSection">Current (mA)</a>
-      <a href="#" class="nav-item" data-target="mapSection">Map</a>
-      <a href="#" class="nav-item" data-target="tableSection">Table</a>
-      <hr/>
-      <a href="#" class="nav-item" data-target="">Settings (placeholder)</a>
-    </nav>
-  </aside>
-  <div id="backdrop" class="sidebar-backdrop"></div>
-
   <h1 class="title">Water Level Monitoring</h1>
 
-  <!-- โหนด: แยก 2 กล่อง/โหนด (ข้อมูล | เกจ) -->
+  <div class="water-level-display">
+    <div class="water-depth">
+      <p id="waterLevelNode1" class="main-water-level">ระดับน้ำปัจจุบัน: -</p>
+    </div>
+  </div>
+
+  <!-- กล่องโหนด: แยกเป็น 2 กล่อง/โหนด (ข้อมูล | เกจ) -->
   <div class="container nodes-grid">
     <!-- Node 1 : ข้อมูล -->
     <div class="node-box info-box">
@@ -66,9 +49,8 @@
     </div>
   </div>
 
-  <!-- กราฟ -->
   <div class="charts-container">
-    <div id="waterSection" class="chart-box">
+    <div class="chart-box">
       <h3>กราฟระดับน้ำย้อนหลัง</h3>
       <div id="timeRangeButtons" style="text-align:center; margin-bottom:15px;">
         <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
@@ -80,14 +62,14 @@
       </div>
     </div>
 
-    <div id="oneHourSection" class="chart-box">
+    <div class="chart-box">
       <h3>กราฟระดับน้ำย้อนหลัง 1 ชั่วโมง</h3>
       <div class="chart-canvas">
         <canvas id="waterLevelChart1h"></canvas>
       </div>
     </div>
 
-    <div id="batterySection" class="chart-box">
+    <div class="chart-box">
       <h3>กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2</h3>
       <div id="batteryTimeRangeButtons" style="text-align:center; margin-bottom:10px;">
         <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
@@ -99,7 +81,7 @@
       </div>
     </div>
 
-    <div id="currentSection" class="chart-box">
+    <div class="chart-box">
       <h3>กราฟกระแส (Current mA)</h3>
       <div id="currentTimeRangeButtons" style="text-align:center; margin-bottom:10px;">
         <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
@@ -112,15 +94,57 @@
     </div>
   </div>
 
-  <!-- แผนที่ -->
-  <div id="mapSection" class="chart-box map-box">
+  <div class="chart-box map-box">
     <h3>ตำแหน่งอุปกรณ์</h3>
     <div id="map" style="height: 300px; border:1px solid rgba(255,255,255,0.3); border-radius: 10px;"></div>
   </div>
 
-  <!-- ตาราง -->
-  <div id="tableSection" class="table-wrapper">
-    <h3>ประวัติข้อมูล <span class="error-toggle" onclick="toggleErrorBox()" title="คลิกเพื่อแสดงข้อมูลผิดปกติ">❗</span></h3>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+  <script>
+    const map = L.map('map').setView([19.030471, 99.884592], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+    const locations = [
+      [19.030471, 99.884592],
+      [19.028255, 99.892867],
+      [19.026849, 99.900480],
+    ];
+    locations.forEach((loc, i) => {
+      L.marker(loc).addTo(map).bindTooltip(
+        ["จุดวัดระดับน้ำ","จุดส่งต่อข้อมูล","จุดรับข้อมูล"][i],
+        { permanent:true, direction:'right', offset:[10,0], className:'my-tooltip' }
+      ).openTooltip();
+    });
+    const grayLine = L.polyline(locations, { color:'gray', weight:5 }).addTo(map);
+    map.fitBounds(grayLine.getBounds());
+    let blueLine, progress = 0;
+    function interpolatePoints(points, t){
+      const total = points.length - 1;
+      const index = Math.floor(t*total);
+      const rest  = t*total - index;
+      if (index >= total) return points[total];
+      const lat = points[index][0] + (points[index+1][0]-points[index][0])*rest;
+      const lng = points[index][1] + (points[index+1][1]-points[index][1])*rest;
+      return [lat,lng];
+    }
+    function updateBlueLine(){
+      if (blueLine) map.removeLayer(blueLine);
+      const pts = []; for (let t=0; t<=progress; t+=0.01) pts.push(interpolatePoints(locations, t));
+      blueLine = L.polyline(pts, { color:'deepskyblue', weight:4 }).addTo(map);
+      progress += 0.005; if (progress > 1) progress = 0;
+    }
+    setInterval(updateBlueLine, 30);
+  </script>
+
+  <div class="table-wrapper">
+    <h3>
+      ประวัติข้อมูล
+      <span class="error-toggle" onclick="toggleErrorBox()" title="คลิกเพื่อแสดงข้อมูลผิดปกติ">❗</span>
+    </h3>
     <div id="errorBox" class="error-box hidden">
       <h4>รายการข้อมูลผิดปกติ</h4>
       <ul id="errorList"></ul>
@@ -145,43 +169,6 @@
     <div id="moreButtonContainer" style="text-align: center; margin-top: 10px;"></div>
   </div>
 
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-  <script>
-    const map = L.map('map').setView([19.030471, 99.884592], 16);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(map);
-    const locations = [
-      [19.030471, 99.884592],
-      [19.028255, 99.892867],
-      [19.026849, 99.900480],
-    ];
-    locations.forEach((loc, i) => {
-      L.marker(loc).addTo(map).bindTooltip(
-        ["จุดวัดระดับน้ำ","จุดส่งต่อข้อมูล","จุดรับข้อมูล"][i],
-        { permanent:true, direction:'right', offset:[10,0], className:'my-tooltip' }
-      ).openTooltip();
-    });
-    const grayLine = L.polyline(locations, { color:'gray', weight:5 }).addTo(map);
-    map.fitBounds(grayLine.getBounds());
-    let blueLine, progress = 0;
-    function interpolatePoints(points, t){
-      const total = points.length-1, index = Math.floor(t*total), rest = t*total - index;
-      if(index >= total) return points[total];
-      const lat = points[index][0] + (points[index+1][0]-points[index][0]) * rest;
-      const lng = points[index][1] + (points[index+1][1]-points[index][1]) * rest;
-      return [lat,lng];
-    }
-    function updateBlueLine(){
-      if (blueLine) map.removeLayer(blueLine);
-      const pts=[]; for(let t=0;t<=progress;t+=0.01) pts.push(interpolatePoints(locations,t));
-      blueLine = L.polyline(pts,{ color:'deepskyblue', weight:4 }).addTo(map);
-      progress += 0.005; if(progress>1) progress=0;
-    }
-    setInterval(updateBlueLine, 30);
-  </script>
-
-  <!-- Charts + App -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <script src="script.js"></script>
