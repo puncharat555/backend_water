@@ -309,7 +309,4 @@ tbody tr:hover {
   text-decoration: underline;
   padding: 0;
 }
-.chart-canvas canvas {
-  height: 300px !important; /* หรือ 100% ของกล่อง */
-}
 
