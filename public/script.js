@@ -25,13 +25,13 @@ function parseToDate(s) {
 
   // 1) 2025-08-09 12:34(:56)
   let m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2})?)$/);
-  if (m) return new Date(`${m[1]}T${m[2]}Z`); // ตีความเป็น UTC ถ้าไม่มีโซน
+  if (m) return new Date(`${m[1]}T${m[2]}`);
 
   // 2) DD/MM/YYYY HH:MM(:SS)
   m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{2}:\d{2}(?::\d{2})?)$/);
   if (m) {
     const [, d, mo, y, t] = m;
-    return new Date(`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}T${t}Z`);
+    return new Date(`${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}T${t}`);
   }
 
   // 3) ISO หรืออื่น ๆ
@@ -39,63 +39,56 @@ function parseToDate(s) {
   return isNaN(d2) ? null : d2;
 }
 
-function setActiveRange(containerId, range) {
-  const btns = document.querySelectorAll(`#${containerId} .range-btn`);
-  btns.forEach(b => b.classList.toggle('active', b.getAttribute('data-range') === range));
-}
+const unitByRange = r => (r === '1h' ? 'minute' : r === '1d' ? 'hour' : 'day');
+const stepByRange = r => (r === '1h' ? 10 : 1);
 
-function yBoundsFromData(points, pad = 0.08) {
-  const ys = points.map(p => p.y).filter(v => !isNaN(v));
-  if (!ys.length) return { min: 0, max: 1 };
-  const min = Math.min(...ys);
-  const max = Math.max(...ys);
-  const span = Math.max(1, max - min);
-  const extra = span * pad;
-  const niceMin = Math.floor((min - extra) * 10) / 10;
-  const niceMax = Math.ceil((max + extra) * 10) / 10;
-  return { min: niceMin, max: niceMax };
-}
-
-/* X axis options (มีชื่อแกน: เวลา (Time)) + คุมจำนวนคอลัมน์ใกล้กัน */
+/* X axis options (มีชื่อแกน: เวลา (Time)) */
 function xScaleOpts(range, xMin, xMax) {
-  const MAP = {
-    '1h':  { unit: 'minute', step: 5  }, // ~12 ช่อง
-    '1d':  { unit: 'hour',   step: 2  }, // ~12 ช่อง
-    '7d':  { unit: 'day',    step: 1  }, // 7 ช่อง
-    '30d': { unit: 'day',    step: 2  }  // ~15 ช่อง
-  };
-  const cfg = MAP[range] || { unit: 'day', step: 1 };
-
   return {
     type: 'time',
-    bounds: 'data',
+    bounds: 'data',         // เริ่ม–จบเท่ากับข้อมูลจริง
     min: xMin ?? undefined,
     max: xMax ?? undefined,
     offset: false,
     time: {
-      unit: cfg.unit,
-      stepSize: cfg.step,
-      round: cfg.unit,
+      unit: unitByRange(range),
+      stepSize: stepByRange(range),
       displayFormats: { minute: 'HH:mm', hour: 'HH:mm', day: 'MMM d' }
     },
     ticks: {
       color: 'white',
       autoSkip: true,
-      autoSkipPadding: 18,
       maxRotation: 0,
       padding: 6,
+      autoSkipPadding: 18,
+      // แสดงวัน + เวลาใต้กราฟให้อ่านง่าย
       callback: (value) => {
         const d = new Date(value);
         return new Intl.DateTimeFormat('th-TH', {
           month: 'short', day: '2-digit',
           hour: '2-digit', minute: '2-digit',
           hour12: false
-        }).format(d);
+        }).format(d); // ตัวอย่าง: "ส.ค. 09 14:30"
       }
     },
-    grid: { display: true, color: 'rgba(255,255,255,0.22)', lineWidth: 1, drawTicks: true },
-    title: { display: true, text: 'เวลา (Time)', color: 'white', font: { size: 14, weight: 'bold' } }
+    grid: {
+      display: true,
+      color: 'rgba(255,255,255,0.22)',
+      lineWidth: 1,
+      drawTicks: true
+    },
+    title: {
+      display: true,
+      text: 'เวลา (Time)',
+      color: 'white',
+      font: { size: 14, weight: 'bold' }
+    }
   };
+}
+
+function setActiveRange(containerId, range) {
+  const btns = document.querySelectorAll(`#${containerId} .range-btn`);
+  btns.forEach(b => b.classList.toggle('active', b.getAttribute('data-range') === range));
 }
 
 /* ---------- Data ---------- */
@@ -136,8 +129,6 @@ async function createWaterLevelChart(range = '1d') {
     water.sort((a, b) => a.x - b.x);
 
     const xMin = water[0]?.x, xMax = water.at(-1)?.x;
-    const yB = yBoundsFromData(water, 0.08);
-
     const canvas = document.getElementById('waterLevelChart30d');
     setupHiDPICanvas(canvas);
     const ctx = canvas.getContext('2d');
@@ -153,13 +144,11 @@ async function createWaterLevelChart(range = '1d') {
       options: {
         parsing: false,
         spanGaps: true,
-        layout: { padding: { top: 0, bottom: 0 } },
         scales: {
           x: xScaleOpts(range, xMin, xMax),
           y: {
-            beginAtZero: false,
-            min: yB.min,
-            max: yB.max,
+            beginAtZero: true,
+            title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
             ticks: { color: 'white' },
             grid: { color: 'rgba(255,255,255,0.1)' }
           }
@@ -181,8 +170,6 @@ async function createOneHourChart() {
     water.sort((a,b) => a.x - b.x);
 
     const xMin = water[0]?.x, xMax = water.at(-1)?.x;
-    const yB = yBoundsFromData(water, 0.08);
-
     const canvas = document.getElementById('waterLevelChart1h');
     setupHiDPICanvas(canvas);
     const ctx = canvas.getContext('2d');
@@ -231,7 +218,6 @@ async function createBatteryChart(range = '1d') {
       options: {
         parsing: false,
         spanGaps: true,
-        layout: { padding: { top: 0, bottom: 0 } },
         scales: {
           x: xScaleOpts(range, xMin, xMax),
           y: {
@@ -256,8 +242,6 @@ async function createCurrentChart(range = '1d') {
     const merged = (i1.length ? i1 : []).concat(i2.length ? i2 : []).sort((a,b)=>a.x-b.x);
     const xMin = merged[0]?.x, xMax = merged.at(-1)?.x;
 
-    const yB = yBoundsFromData(merged, 0.08);
-
     const canvas = document.getElementById('currentChart');
     setupHiDPICanvas(canvas);
     const ctx = canvas.getContext('2d');
@@ -274,14 +258,10 @@ async function createCurrentChart(range = '1d') {
       options: {
         parsing: false,
         spanGaps: true,
-        layout: { padding: { top: 0, bottom: 0 } },
         scales: {
           x: xScaleOpts(range, xMin, xMax),
           y: {
-            beginAtZero: false,
-            min: yB.min,
-            max: yB.max,
-            ticks: { color: 'white' },
+            beginAtZero: false, ticks: { color: 'white' },
             title: { display: true, text: 'กระแส (mA)', color: 'white' },
             grid: { color: 'rgba(255,255,255,0.1)' }
           }
@@ -417,19 +397,20 @@ async function initDashboard() {
 }
 
 function setupRangeButtons() {
-  // ปุ่มกราฟน้ำ — อัปเดตเฉพาะกราฟน้ำเท่านั้น
+  // ระดับน้ำ
   const waterBtns = document.querySelectorAll('#timeRangeButtons .range-btn');
   waterBtns.forEach(button => {
     button.addEventListener('click', async () => {
       waterBtns.forEach(b => b.classList.remove('active'));
       button.classList.add('active');
       const range = button.getAttribute('data-range');
-      await createWaterLevelChart(range);
-      // ❌ ไม่เรียก createCurrentChart(range) อีกแล้ว
+      if (range === '1h') await createOneHourChart();
+      else await createWaterLevelChart(range);
+      await createCurrentChart(range); // ให้กราฟกระแสตามช่วงเดียวกันด้วย
     });
   });
 
-  // ปุ่มกราฟกระแส — อัปเดตเฉพาะกราฟกระแส
+  // กระแส
   const currentBtns = document.querySelectorAll('#currentTimeRangeButtons .range-btn');
   currentBtns.forEach(button => {
     button.addEventListener('click', async () => {
@@ -440,7 +421,7 @@ function setupRangeButtons() {
     });
   });
 
-  // ปุ่มกราฟแบตเตอรี่ — อัปเดตเฉพาะกราฟแบต
+  // แบตเตอรี่
   const batteryBtns = document.querySelectorAll('#batteryTimeRangeButtons .range-btn');
   batteryBtns.forEach(button => {
     button.addEventListener('click', async () => {
