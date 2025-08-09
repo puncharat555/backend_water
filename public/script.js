@@ -277,9 +277,10 @@ async function createOneHourChart() {
   }
 }
 
-async function createBatteryChart() {
+// ✅ ปรับให้รับช่วงเวลา 1/7/30 วัน ได้
+async function createBatteryChart(range = '30d') {
   try {
-    const data = await fetchHistoricalData('30d');
+    const data = await fetchHistoricalData(range); // เดิม fix 30d → ใช้ range
     const parsed = parseChartData(data);
     parsed.labels.reverse();
     parsed.voltagesNode1.reverse();
@@ -495,7 +496,7 @@ async function initDashboard() {
   await loadData();
   await createWaterLevelChart('30d');
   await createOneHourChart();
-  await createBatteryChart();
+  await createBatteryChart('30d'); // ค่าเริ่มต้นให้ตรงกับปุ่ม 30 วัน
   await createCurrentChart('30d');
 }
 
@@ -526,6 +527,18 @@ function setupRangeButtons() {
       await createCurrentChart(range);
     });
   });
+
+  // ✅ ปุ่มช่วงเวลากราฟแบตเตอรี่ (1/7/30 วัน)
+  const batteryButtons = document.querySelectorAll('#batteryTimeRangeButtons .range-btn');
+  batteryButtons.forEach(button => {
+    button.addEventListener('click', async () => {
+      batteryButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+
+      const range = button.getAttribute('data-range');
+      await createBatteryChart(range);
+    });
+  });
 }
 
 window.onload = async () => {
@@ -534,4 +547,4 @@ window.onload = async () => {
 };
 setInterval(() => {
   loadData();
-}, 60000); 
+}, 60000);
