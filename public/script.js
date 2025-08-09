@@ -1,3 +1,4 @@
+// ===== script.js (เวอร์ชันใช้กราฟเดียว สลับช่วงเวลาได้: 1h / 1d / 7d / 30d) =====
 const fixedDepth = 120;
 let allData = [];
 let currentIndex = 0;
@@ -7,7 +8,7 @@ let waterLevelChartInstance = null;
 let currentChartInstance = null;
 let batteryChartInstance = null;
 
-/* HiDPI (ของเดิม) */
+/* HiDPI (คงของเดิม) */
 function setupHiDPICanvas(canvas) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
@@ -16,9 +17,9 @@ function setupHiDPICanvas(canvas) {
   ctx.scale(dpr, dpr);
 }
 
-/* Utils: เวลา + ช่วง tick */
+/* Utils: เวลา + แกนเวลา */
 function toDateSafe(str) {
-  return str ? new Date(str.replace(' ', 'T')) : null;
+  return str ? new Date(str.replace(' ', 'T')) : null; // "YYYY-MM-DD HH:mm:ss" -> Date
 }
 function getTimeStep(range) {
   switch (range) {
@@ -30,7 +31,7 @@ function getTimeStep(range) {
   }
 }
 
-/* โหลดข้อมูลปัจจุบัน & ตาราง (ของเดิม) */
+/* ---------- โหลดข้อมูลปัจจุบัน & ตาราง (ของเดิม) ---------- */
 async function loadData() {
   try {
     const url = `https://backend-water-rf88.onrender.com/distance?_=${Date.now()}`;
@@ -127,7 +128,7 @@ function updateMoreButton() {
   }
 }
 
-/* ประวัติ (ย้อนหลัง) */
+/* ---------- ประวัติ (ย้อนหลัง) ---------- */
 async function fetchHistoricalData(range = '30d') {
   const url = `https://backend-water-rf88.onrender.com/distance?range=${range}&_=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
@@ -135,7 +136,7 @@ async function fetchHistoricalData(range = '30d') {
   return data.filter(item => item.distance > 0);
 }
 
-/* กราฟ: ระดับน้ำย้อนหลัง (ใช้ canvas เดียว) */
+/* ---------- กราฟ: ระดับน้ำย้อนหลัง (แคนวาสเดียว) ---------- */
 async function createWaterLevelChart(range = '30d') {
   try {
     const data = await fetchHistoricalData(range);
@@ -201,7 +202,7 @@ async function createWaterLevelChart(range = '30d') {
   }
 }
 
-/* กราฟ: แบตเตอรี่ (30 วัน, tick รายวัน) */
+/* ---------- กราฟ: แบตเตอรี่ (30 วัน, tick รายวัน) ---------- */
 async function createBatteryChart() {
   try {
     const data = await fetchHistoricalData('30d');
@@ -267,7 +268,7 @@ async function createBatteryChart() {
   }
 }
 
-/* กราฟ: กระแส (ตามช่วง) */
+/* ---------- กราฟ: กระแส (ตามช่วง) ---------- */
 async function createCurrentChart(range = '30d') {
   try {
     const data = await fetchHistoricalData(range);
@@ -334,12 +335,13 @@ async function createCurrentChart(range = '30d') {
   }
 }
 
-/* Error Box (ของเดิม) */
+/* ---------- Error box (ของเดิม) ---------- */
 function toggleErrorBox() {
   const box = document.getElementById('errorBox');
   if (!box) return;
   box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
 }
+
 function updateErrorList(data) {
   const box = document.getElementById('errorList');
   if (!box) return;
@@ -353,7 +355,7 @@ function updateErrorList(data) {
   });
 }
 
-/* Init & ปุ่ม */
+/* ---------- Init & ปุ่ม ---------- */
 async function initDashboard() {
   await loadData();
   await createWaterLevelChart('30d'); // เริ่มต้นที่ 30 วัน
@@ -368,7 +370,7 @@ function setupRangeButtons() {
       waterLevelButtons.forEach(btn => btn.classList.remove('active'));
       button.classList.add('active');
 
-      const range = button.getAttribute('data-range');
+      const range = button.getAttribute('data-range'); // 1h / 1d / 7d / 30d
       await createWaterLevelChart(range);   // ใช้แคนวาสเดียว
       await createCurrentChart(range);      // ให้กราฟกระแสตามช่วงเดียวกัน
     });
