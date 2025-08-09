@@ -38,6 +38,7 @@
   </div>
 
   <div class="charts-container">
+    <!-- กราฟระดับน้ำย้อนหลัง: ใช้ canvas เดียว -->
     <div class="chart-box">
       <h3>กราฟระดับน้ำย้อนหลัง</h3>
       <div id="timeRangeButtons" style="text-align:center; margin-bottom:15px;">
@@ -46,17 +47,11 @@
         <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
       </div>
       <div class="chart-canvas">
-        <canvas id="waterLevelChart30d"></canvas>
+        <canvas id="waterLevelChart"></canvas>
       </div>
     </div>
 
-    <div class="chart-box">
-      <h3>กราฟระดับน้ำย้อนหลัง 1 ชั่วโมง</h3>
-      <div class="chart-canvas">
-        <canvas id="waterLevelChart1h"></canvas>
-      </div>
-    </div>
-
+    <!-- แรงดันแบตเตอรี่ -->
     <div class="chart-box">
       <h3>กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2</h3>
       <div class="chart-canvas">
@@ -64,6 +59,7 @@
       </div>
     </div>
 
+    <!-- กระแส -->
     <div class="chart-box">
       <h3>กราฟกระแส (Current mA)</h3>
       <div id="currentTimeRangeButtons" style="text-align:center; margin-bottom:10px;">
@@ -82,7 +78,6 @@
     <div id="map" style="height: 300px; border:1px solid rgba(255,255,255,0.3); border-radius: 10px;"></div>
   </div>
 
-  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
@@ -95,9 +90,9 @@
     }).addTo(map);
 
     const locations = [
-      [19.030471, 99.884592],  // จุดวัดระดับน้ำ
-      [19.028255, 99.892867],  // จุดส่งต่อข้อมูล
-      [19.026849, 99.900480],  // จุดรับข้อมูล
+      [19.030471, 99.884592],
+      [19.028255, 99.892867],
+      [19.026849, 99.900480],
     ];
 
     locations.forEach((loc, i) => {
@@ -165,7 +160,7 @@
     <div id="moreButtonContainer" style="text-align: center; margin-top: 10px;"></div>
   </div>
 
-  <!-- Chart.js + Time adapter (สำคัญมากสำหรับแกนเวลา) -->
+  <!-- Chart.js + Time adapter (สำคัญสำหรับแกนเวลา) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <script src="script.js"></script>
