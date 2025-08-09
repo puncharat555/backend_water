@@ -16,23 +16,36 @@
     </div>
   </div>
 
-  <div class="container">
-    <!-- Node 1 -->
-    <div class="node-box">
+  <!-- กล่องโหนด: แยกเป็น 2 กล่อง/โหนด (ข้อมูล | เกจ) -->
+  <div class="container nodes-grid">
+    <!-- Node 1 : ข้อมูล -->
+    <div class="node-box info-box">
       <h2>Node 1</h2>
       <p id="rssiNode1">RSSI: -</p>
       <p id="voltageNode1">แรงดัน: -</p>
       <p id="currentNode1">กระแส: -</p>
       <p id="timeNode1">เวลาวัด: -</p>
     </div>
+    <!-- Node 1 : เกจ -->
+    <div class="node-box gauge-box">
+      <h2>แรงดันแบตเตอรี่ (Node 1)</h2>
+      <div id="voltGauge1" class="gauge"></div>
+      <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
+    </div>
 
-    <!-- Node 2 -->
-    <div class="node-box">
+    <!-- Node 2 : ข้อมูล -->
+    <div class="node-box info-box">
       <h2>Node 2</h2>
       <p id="rssiNode2">RSSI: -</p>
       <p id="voltageNode2">แรงดัน: -</p>
       <p id="currentNode2">กระแส: -</p>
       <p id="timeNode2">เวลาวัด: -</p>
+    </div>
+    <!-- Node 2 : เกจ -->
+    <div class="node-box gauge-box">
+      <h2>แรงดันแบตเตอรี่ (Node 2)</h2>
+      <div id="voltGauge2" class="gauge"></div>
+      <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
     </div>
   </div>
 
@@ -58,13 +71,11 @@
 
     <div class="chart-box">
       <h3>กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2</h3>
-      <!-- เพิ่มปุ่มช่วงเวลา -->
       <div id="batteryTimeRangeButtons" style="text-align:center; margin-bottom:10px;">
         <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
         <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
         <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
       </div>
-
       <div class="chart-canvas">
         <canvas id="batteryChart"></canvas>
       </div>
@@ -93,61 +104,39 @@
 
   <script>
     const map = L.map('map').setView([19.030471, 99.884592], 16);
-
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     }).addTo(map);
-
     const locations = [
-      [19.030471, 99.884592],  // จุดวัดระดับน้ำ
-      [19.028255, 99.892867],  // จุดส่งต่อข้อมูล
-      [19.026849, 99.900480],  // จุดรับข้อมูล
+      [19.030471, 99.884592],
+      [19.028255, 99.892867],
+      [19.026849, 99.900480],
     ];
-
     locations.forEach((loc, i) => {
-      L.marker(loc)
-        .addTo(map)
-        .bindTooltip(
-          ["จุดวัดระดับน้ำ", "จุดส่งต่อข้อมูล", "จุดรับข้อมูล"][i], 
-          { permanent: true, direction: 'right', offset: [10, 0], className: 'my-tooltip' }
-        )
-        .openTooltip();
+      L.marker(loc).addTo(map).bindTooltip(
+        ["จุดวัดระดับน้ำ","จุดส่งต่อข้อมูล","จุดรับข้อมูล"][i],
+        { permanent:true, direction:'right', offset:[10,0], className:'my-tooltip' }
+      ).openTooltip();
     });
-
-    const grayLine = L.polyline(locations, { color: 'gray', weight: 5 }).addTo(map);
+    const grayLine = L.polyline(locations, { color:'gray', weight:5 }).addTo(map);
     map.fitBounds(grayLine.getBounds());
-
-    let blueLine;
-    let progress = 0;
-
-    function interpolatePoints(points, t) {
+    let blueLine, progress = 0;
+    function interpolatePoints(points, t){
       const total = points.length - 1;
-      const index = Math.floor(t * total);
-      const rest = t * total - index;
-
-      if (index >= total) {
-        return points[total];
-      }
-      const lat = points[index][0] + (points[index + 1][0] - points[index][0]) * rest;
-      const lng = points[index][1] + (points[index + 1][1] - points[index][1]) * rest;
-      return [lat, lng];
+      const index = Math.floor(t*total);
+      const rest  = t*total - index;
+      if (index >= total) return points[total];
+      const lat = points[index][0] + (points[index+1][0]-points[index][0])*rest;
+      const lng = points[index][1] + (points[index+1][1]-points[index][1])*rest;
+      return [lat,lng];
     }
-
-    function updateBlueLine() {
-      if (blueLine) {
-        map.removeLayer(blueLine);
-      }
-      let pointsToDraw = [];
-      for (let t = 0; t <= progress; t += 0.01) {
-        pointsToDraw.push(interpolatePoints(locations, t));
-      }
-      blueLine = L.polyline(pointsToDraw, { color: 'deepskyblue', weight: 4 }).addTo(map);
-      progress += 0.005;
-      if (progress > 1) progress = 0;
+    function updateBlueLine(){
+      if (blueLine) map.removeLayer(blueLine);
+      const pts = []; for (let t=0; t<=progress; t+=0.01) pts.push(interpolatePoints(locations, t));
+      blueLine = L.polyline(pts, { color:'deepskyblue', weight:4 }).addTo(map);
+      progress += 0.005; if (progress > 1) progress = 0;
     }
-
     setInterval(updateBlueLine, 30);
   </script>
 
@@ -180,9 +169,8 @@
     <div id="moreButtonContainer" style="text-align: center; margin-top: 10px;"></div>
   </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-<script src="script.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="script.js"></script>
 </body>
 </html>
