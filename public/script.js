@@ -349,3 +349,49 @@ function setupRangeButtons() {
 
 window.onload = async () => { await initDashboard(); setupRangeButtons(); };
 setInterval(() => { loadData(); }, 60000);
+
+// ===== Sidebar / Hamburger =====
+(function initSidebar() {
+  const sidebar  = document.getElementById('sidebar');
+  const btn      = document.getElementById('hamburgerBtn');
+  const backdrop = document.getElementById('backdrop');
+
+  if (!sidebar || !btn || !backdrop) return;
+
+  const open  = () => {
+    sidebar.classList.add('open');
+    backdrop.classList.add('show');
+    btn.setAttribute('aria-expanded', 'true');
+    sidebar.setAttribute('aria-hidden', 'false');
+  };
+  const close = () => {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('show');
+    btn.setAttribute('aria-expanded', 'false');
+    sidebar.setAttribute('aria-hidden', 'true');
+  };
+
+  btn.addEventListener('click', () => {
+    const isOpen = sidebar.classList.contains('open');
+    isOpen ? close() : open();
+  });
+  backdrop.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+
+  // คลิกเมนูแล้วเลื่อนไปยัง section
+  sidebar.querySelectorAll('.nav-item').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = a.getAttribute('data-target');
+      close();
+      if (!targetId) return;
+      const el = document.getElementById(targetId);
+      if (el) {
+        // เผื่อ Topbar สูง ~ 60px
+        const topbarH = document.querySelector('.topbar')?.offsetHeight ?? 0;
+        const y = el.getBoundingClientRect().top + window.scrollY - (topbarH + 12);
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    });
+  });
+})();
