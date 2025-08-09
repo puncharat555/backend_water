@@ -81,12 +81,12 @@
     <div id="map" style="height: 300px; border:1px solid rgba(255,255,255,0.3); border-radius: 10px;"></div>
   </div>
 
-  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
   <script>
     const map = L.map('map').setView([19.030471, 99.884592], 16);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution:
@@ -103,7 +103,7 @@
       L.marker(loc)
         .addTo(map)
         .bindTooltip(
-          ["จุดวัดระดับน้ำ", "จุดส่งต่อข้อมูล", "จุดรับข้อมูล"][i],
+          ["จุดวัดระดับน้ำ", "จุดส่งต่อข้อมูล", "จุดรับข้อมูล"][i], 
           { permanent: true, direction: 'right', offset: [10, 0], className: 'my-tooltip' }
         )
         .openTooltip();
@@ -114,23 +114,33 @@
 
     let blueLine;
     let progress = 0;
+
     function interpolatePoints(points, t) {
       const total = points.length - 1;
       const index = Math.floor(t * total);
       const rest = t * total - index;
-      if (index >= total) return points[total];
+
+      if (index >= total) {
+        return points[total];
+      }
       const lat = points[index][0] + (points[index + 1][0] - points[index][0]) * rest;
       const lng = points[index][1] + (points[index + 1][1] - points[index][1]) * rest;
       return [lat, lng];
     }
+
     function updateBlueLine() {
-      if (blueLine) map.removeLayer(blueLine);
-      const pointsToDraw = [];
-      for (let t = 0; t <= progress; t += 0.01) pointsToDraw.push(interpolatePoints(locations, t));
+      if (blueLine) {
+        map.removeLayer(blueLine);
+      }
+      let pointsToDraw = [];
+      for (let t = 0; t <= progress; t += 0.01) {
+        pointsToDraw.push(interpolatePoints(locations, t));
+      }
       blueLine = L.polyline(pointsToDraw, { color: 'deepskyblue', weight: 4 }).addTo(map);
       progress += 0.005;
       if (progress > 1) progress = 0;
     }
+
     setInterval(updateBlueLine, 30);
   </script>
 
@@ -143,7 +153,6 @@
       <h4>รายการข้อมูลผิดปกติ</h4>
       <ul id="errorList"></ul>
     </div>
-
     <table id="dataTable">
       <thead>
         <tr>

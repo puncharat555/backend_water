@@ -8,69 +8,15 @@ let currentChartInstance = null;
 let batteryChartInstance = null;
 let oneHourChartInstance = null;
 
-/* ========= Styling Helpers (Minimal, clean like reference image) ========= */
-function makeGradients(ctx){
-  const h = ctx.canvas.clientHeight || 300;
-  const gBlue = ctx.createLinearGradient(0,0,0,h);
-  gBlue.addColorStop(0,'rgba(0,122,255,0.30)');
-  gBlue.addColorStop(1,'rgba(0,122,255,0.00)');
-
-  const gPink = ctx.createLinearGradient(0,0,0,h);
-  gPink.addColorStop(0,'rgba(255,99,132,0.30)');
-  gPink.addColorStop(1,'rgba(255,99,132,0.00)');
-
-  const gOrange = ctx.createLinearGradient(0,0,0,h);
-  gOrange.addColorStop(0,'rgba(255,159,64,0.30)');
-  gOrange.addColorStop(1,'rgba(255,159,64,0.00)');
-
-  const gGreen = ctx.createLinearGradient(0,0,0,h);
-  gGreen.addColorStop(0,'rgba(46,204,113,0.30)');
-  gGreen.addColorStop(1,'rgba(46,204,113,0.00)');
-
-  return { gBlue, gPink, gOrange, gGreen };
+function setupHiDPICanvas(canvas) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * dpr;
+  canvas.height = canvas.clientHeight * dpr;
+  ctx.scale(dpr, dpr);
 }
 
-function baseLineOptions(yTitle){
-  return {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    layout: { padding: { left: 8, right: 8, top: 8, bottom: 8 } },
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, color: '#cfd8e3', padding: 18 }
-      },
-      tooltip: {
-        backgroundColor: 'rgba(255,255,255,0.95)',
-        titleColor: '#111',
-        bodyColor: '#333',
-        borderColor: 'rgba(0,0,0,0.06)',
-        borderWidth: 1,
-        displayColors: false,
-        padding: 10
-      }
-    },
-    scales: {
-      x: {
-        grid: { color: 'rgba(0,0,0,0.06)', drawTicks: false },
-        ticks:{ color:'#cfd8e3', maxRotation:0, autoSkip:true, maxTicksLimit:6 }
-      },
-      y: {
-        grid: { color: 'rgba(0,0,0,0.06)' },
-        ticks:{ color:'#cfd8e3' },
-        title: yTitle ? { display:true, text:yTitle, color:'#cfd8e3' } : undefined
-      }
-    },
-    elements: {
-      line: { tension: 0.4, borderWidth: 2 },
-      point:{ radius: 2, hoverRadius: 5, hitRadius: 8 }
-    },
-    animation: { duration: 600 }
-  };
-}
-
-/* ======================= Data Loading & Table ======================= */
+// โหลดข้อมูลปัจจุบันแสดงใน node และตาราง
 async function loadData() {
   try {
     const url = `https://backend-water-rf88.onrender.com/distance?_=${Date.now()}`;
@@ -172,7 +118,6 @@ function updateMoreButton() {
   }
 }
 
-/* ======================= Fetch & Parse Chart Data ======================= */
 async function fetchHistoricalData(range = '30d') {
   const url = `https://backend-water-rf88.onrender.com/distance?range=${range}&_=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
@@ -205,7 +150,6 @@ function parseChartData(data) {
   return { labels, waterLevels, voltagesNode1, voltagesNode2, currentsNode1, currentsNode2 };
 }
 
-/* ======================= Charts ======================= */
 async function createWaterLevelChart(range = '30d') {
   try {
     const data = await fetchHistoricalData(range);
@@ -214,10 +158,13 @@ async function createWaterLevelChart(range = '30d') {
     parsed.labels.reverse();
     parsed.waterLevels.reverse();
 
-    const ctx = document.getElementById('waterLevelChart30d').getContext('2d');
-    const { gBlue } = makeGradients(ctx);
+    const canvas = document.getElementById('waterLevelChart30d');
+    setupHiDPICanvas(canvas);
+    const ctx = canvas.getContext('2d');
 
-    if (waterLevelChartInstance) waterLevelChartInstance.destroy();
+    if (waterLevelChartInstance) {
+      waterLevelChartInstance.destroy();
+    }
 
     waterLevelChartInstance = new Chart(ctx, {
       type: 'line',
@@ -226,14 +173,43 @@ async function createWaterLevelChart(range = '30d') {
         datasets: [{
           label: `ระดับน้ำย้อนหลัง ${range}`,
           data: parsed.waterLevels,
-          borderColor: '#007AFF',
-          backgroundColor: gBlue,
+          borderColor: '#00c0ff',
+          backgroundColor: 'rgba(0,192,255,0.2)',
           fill: true,
-          spanGaps: true,
-          pointRadius: (c) => c.dataIndex === c.dataset.data.length - 1 ? 5 : 2
-        }]
+          tension: 0.3,
+          pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+          pointBackgroundColor: '#00c0ff',
+        }],
       },
-      options: baseLineOptions('ระดับน้ำ (cm)')
+      options: {
+        spanGaps: true,
+        scales: {
+          x: {
+            ticks: {
+              display: true,
+              color: 'white',
+              maxRotation: 0,
+              minRotation: 0,
+              maxTicksLimit: 3
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255,255,255,0.1)'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'ระดับน้ำ (cm)', color: 'white' },
+            ticks: { color: 'white' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      }
     });
   } catch (err) {
     console.error('Error creating water level chart:', err);
@@ -247,26 +223,54 @@ async function createOneHourChart() {
     parsed.labels.reverse();
     parsed.waterLevels.reverse();
 
-    const ctx = document.getElementById('waterLevelChart1h').getContext('2d');
-    const { gGreen } = makeGradients(ctx);
+    const canvas1h = document.getElementById('waterLevelChart1h');
+    setupHiDPICanvas(canvas1h);
+    const ctx1h = canvas1h.getContext('2d');
 
-    if (oneHourChartInstance) oneHourChartInstance.destroy();
+    if (oneHourChartInstance) {
+      oneHourChartInstance.destroy();
+    }
 
-    oneHourChartInstance = new Chart(ctx, {
+    oneHourChartInstance = new Chart(ctx1h, {
       type: 'line',
       data: {
         labels: parsed.labels,
         datasets: [{
           label: 'ระดับน้ำ (cm) 1 ชั่วโมง',
           data: parsed.waterLevels,
-          borderColor: '#2ecc71',
-          backgroundColor: gGreen,
+          borderColor: '#0f0',
+          backgroundColor: 'rgba(29, 233, 29, 0.2)',
           fill: true,
-          spanGaps: true,
-          pointRadius: (c) => c.dataIndex === c.dataset.data.length - 1 ? 5 : 2
-        }]
+          tension: 0.3,
+          pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+          pointBackgroundColor: 'rgba(29, 241, 29, 0.83)',
+        }],
       },
-      options: baseLineOptions('ระดับน้ำ (cm)')
+      options: {
+        spanGaps: true,
+        scales: {
+          x: {
+            ticks: {
+              display: true,
+              color: 'white',
+              maxRotation: 0,
+              minRotation: 0,
+              maxTicksLimit: 3
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255,255,255,0.1)'
+            }
+          },
+          y: { beginAtZero: true, ticks: { color: 'white' } }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      }
     });
   } catch (err) {
     console.error('Error creating 1h chart:', err);
@@ -281,12 +285,15 @@ async function createBatteryChart() {
     parsed.voltagesNode1.reverse();
     parsed.voltagesNode2.reverse();
 
-    const ctx = document.getElementById('batteryChart').getContext('2d');
-    const { gPink, gOrange } = makeGradients(ctx);
+    const canvasBattery = document.getElementById('batteryChart');
+    setupHiDPICanvas(canvasBattery);
+    const ctxBattery = canvasBattery.getContext('2d');
 
-    if (batteryChartInstance) batteryChartInstance.destroy();
+    if (batteryChartInstance) {
+      batteryChartInstance.destroy();
+    }
 
-    batteryChartInstance = new Chart(ctx, {
+    batteryChartInstance = new Chart(ctxBattery, {
       type: 'line',
       data: {
         labels: parsed.labels,
@@ -294,28 +301,69 @@ async function createBatteryChart() {
           {
             label: 'แรงดัน Node 1 (V)',
             data: parsed.voltagesNode1,
-            borderColor: '#FF6384',
-            backgroundColor: gPink,
+            borderColor: '#ff7f00',
+            backgroundColor: 'rgba(255,127,0,0.2)',
             fill: true,
-            spanGaps: true,
-            pointRadius: (c) => c.dataIndex === c.dataset.data.length - 1 ? 5 : 2
+            tension: 0.3,
+            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+            pointBackgroundColor: '#ff7f00',
           },
           {
             label: 'แรงดัน Node 2 (V)',
             data: parsed.voltagesNode2,
-            borderColor: '#FF9F40',
-            backgroundColor: gOrange,
+            borderColor: '#007fff',
+            backgroundColor: 'rgba(0,127,255,0.2)',
             fill: true,
-            spanGaps: true,
-            pointRadius: (c) => c.dataIndex === c.dataset.data.length - 1 ? 5 : 2
+            tension: 0.3,
+            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+            pointBackgroundColor: '#007fff',
           }
         ],
       },
-      options: baseLineOptions('แรงดัน (V)')
+      options: {
+        spanGaps: true,
+        scales: {
+          x: {
+            ticks: {
+              display: true,
+              color: 'white',
+              maxRotation: 0,
+              minRotation: 0,
+              maxTicksLimit: 3
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255,255,255,0.1)'
+            }
+          },
+          y: {
+            beginAtZero: false,
+            ticks: { color: 'white' },
+            title: { display: true, text: 'แรงดัน (V)', color: 'white' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      }
     });
   } catch (err) {
     console.error('Error creating battery chart:', err);
   }
+}
+
+function movingAverage(data, windowSize) {
+  const result = [];
+  for (let i = 0; i < data.length; i++) {
+    const start = Math.max(0, i - windowSize + 1);
+    const windowData = data.slice(start, i + 1).filter(v => !isNaN(v));
+    const avg = windowData.reduce((a, b) => a + b, 0) / (windowData.length || 1);
+    result.push(avg);
+  }
+  return result;
 }
 
 async function createCurrentChart(range = '30d') {
@@ -327,56 +375,103 @@ async function createCurrentChart(range = '30d') {
     parsed.currentsNode1.reverse();
     parsed.currentsNode2.reverse();
 
-    // กรองเฉพาะจุดที่มีค่า N1 และ N2 ครบ
-    const labels = [];
-    const n1 = [];
-    const n2 = [];
-    for (let i = 0; i < parsed.labels.length; i++) {
-      if (!isNaN(parsed.currentsNode1[i]) && !isNaN(parsed.currentsNode2[i])) {
-        labels.push(parsed.labels[i]);
-        n1.push(parsed.currentsNode1[i]);
-        n2.push(parsed.currentsNode2[i]);
+    function filterValidPoints(labels, data1, data2) {
+      const filteredLabels = [];
+      const filteredData1 = [];
+      const filteredData2 = [];
+      for (let i = 0; i < labels.length; i++) {
+        if (!isNaN(data1[i]) && !isNaN(data2[i])) {
+          filteredLabels.push(labels[i]);
+          filteredData1.push(data1[i]);
+          filteredData2.push(data2[i]);
+        }
       }
+      return {
+        labels: filteredLabels,
+        currentsNode1: filteredData1,
+        currentsNode2: filteredData2,
+      };
     }
 
-    const ctx = document.getElementById('currentChart').getContext('2d');
-    const { gBlue, gPink } = makeGradients(ctx);
+    parsed = filterValidPoints(parsed.labels, parsed.currentsNode1, parsed.currentsNode2);
 
-    if (currentChartInstance) currentChartInstance.destroy();
+    const maCurrentsNode1 = movingAverage(parsed.currentsNode1, 5);
+    const maCurrentsNode2 = movingAverage(parsed.currentsNode2, 5);
 
-    currentChartInstance = new Chart(ctx, {
+    const currentThreshold = 500;
+    const thresholdArray = new Array(parsed.currentsNode1.length).fill(currentThreshold);
+
+    const canvasCurrent = document.getElementById('currentChart');
+    setupHiDPICanvas(canvasCurrent);
+    const ctxCurrent = canvasCurrent.getContext('2d');
+
+    if (currentChartInstance) {
+      currentChartInstance.destroy();
+    }
+
+    currentChartInstance = new Chart(ctxCurrent, {
       type: 'line',
       data: {
-        labels,
+        labels: parsed.labels,
         datasets: [
           {
             label: 'กระแส Node 1 (mA)',
-            data: n1,
-            borderColor: '#007AFF',
-            backgroundColor: gBlue,
+            data: parsed.currentsNode1,
+            borderColor: '#ff4500',
+            backgroundColor: 'rgba(255,69,0,0.2)',
             fill: true,
-            spanGaps: true,
-            pointRadius: (c) => c.dataIndex === c.dataset.data.length - 1 ? 5 : 2
+            tension: 0.3,
+            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+            pointBackgroundColor: '#ff4500',
           },
           {
             label: 'กระแส Node 2 (mA)',
-            data: n2,
-            borderColor: '#FF6384',
-            backgroundColor: gPink,
+            data: parsed.currentsNode2,
+            borderColor: '#1e90ff',
+            backgroundColor: 'rgba(30,144,255,0.2)',
             fill: true,
-            spanGaps: true,
-            pointRadius: (c) => c.dataIndex === c.dataset.data.length - 1 ? 5 : 2
+            tension: 0.3,
+            pointRadius: ctx => ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 0,
+            pointBackgroundColor: '#1e90ff',
           },
         ],
       },
-      options: baseLineOptions('กระแส (mA)')
+      options: {
+        spanGaps: true,
+        scales: {
+          x: {
+            ticks: {
+              display: true,
+              color: 'white',
+              maxRotation: 0,
+              minRotation: 0,
+              maxTicksLimit: 3
+            },
+            grid: {
+              drawTicks: false,
+              color: 'rgba(255,255,255,0.1)'
+            }
+          },
+          y: {
+            beginAtZero: false,
+            ticks: { color: 'white' },
+            title: { display: true, text: 'กระแส (mA)', color: 'white' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          }
+        },
+        plugins: {
+          legend: { labels: { color: 'white' } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      }
     });
   } catch (err) {
     console.error('Error creating current chart:', err);
   }
 }
 
-/* ======================= Error Box ======================= */
 function toggleErrorBox() {
   const box = document.getElementById('errorBox');
   if (!box) return;
@@ -389,14 +484,13 @@ function updateErrorList(data) {
   box.innerHTML = '';
   data.forEach(item => {
     if (item.distance < 10) {
-      const li = document.createElement('li');
-      li.innerText = `Warning! ระดับน้ำต่ำเกินไป: ${item.distance.toFixed(1)} cm เวลา: ${item.time_node1}`;
-      box.appendChild(li);
+      const div = document.createElement('div');
+      div.innerText = `Warning! ระดับน้ำต่ำเกินไป: ${item.distance.toFixed(1)} cm เวลา: ${item.time_node1}`;
+      box.appendChild(div);
     }
   });
 }
 
-/* ======================= Init & Buttons ======================= */
 async function initDashboard() {
   await loadData();
   await createWaterLevelChart('30d');
@@ -411,6 +505,7 @@ function setupRangeButtons() {
     button.addEventListener('click', async () => {
       waterLevelButtons.forEach(btn => btn.classList.remove('active'));
       button.classList.add('active');
+
       const range = button.getAttribute('data-range');
       if (range === '1h') {
         await createOneHourChart();
@@ -426,6 +521,7 @@ function setupRangeButtons() {
     button.addEventListener('click', async () => {
       currentButtons.forEach(btn => btn.classList.remove('active'));
       button.classList.add('active');
+
       const range = button.getAttribute('data-range');
       await createCurrentChart(range);
     });
@@ -438,4 +534,4 @@ window.onload = async () => {
 };
 setInterval(() => {
   loadData();
-}, 60000);
+}, 60000); 
