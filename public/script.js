@@ -130,7 +130,7 @@ async function fetchHistoricalData(range = '30d') {
   const url = `https://backend-water-rf88.onrender.com/distance?range=${range}&_=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
   const data = await res.json();
-  return data.filter(item => item.distance > 0);
+  return data; // ไม่กรองที่นี่ เพื่อไม่ให้ข้อมูลหาย
 }
 
 function parseChartData(rows) {
@@ -139,7 +139,8 @@ function parseChartData(rows) {
     const ts = parseToDate(item.time_node1 || item.time_node2);
     if (!ts) continue;
 
-    const levelRaw = (item.distance && item.distance > 0)
+    // ยอมรับ distance = 0
+    const levelRaw = (item.distance || item.distance === 0)
       ? Number((fixedDepth - item.distance).toFixed(2)) : NaN;
 
     const outlier = isNaN(levelRaw) || levelRaw < 0 || levelRaw > 100; // กันค่าหลุด
@@ -159,7 +160,12 @@ async function createWaterLevelChart(range = '1d') {
     const rows = await fetchHistoricalData(range);
     const { water } = parseChartData(rows);
     water.sort((a,b)=>a.x-b.x);
-    const xMin = water[0]?.x, xMax = water.at(-1)?.x, yB = yBoundsFromData(water, 0.08);
+
+    // ถ้าไม่มีข้อมูลเลย ตั้งแกนสำรองให้เห็นกราฟ
+    const now = new Date();
+    const xMin = water[0]?.x ?? new Date(now.getTime() - 24*60*60*1000);
+    const xMax = water.at(-1)?.x ?? now;
+    const yB = water.length ? yBoundsFromData(water, 0.08) : { min: 0, max: 50 };
 
     const canvas = document.getElementById('waterLevelChart30d');
     setupHiDPICanvas(canvas);
@@ -183,19 +189,44 @@ async function createWaterLevelChart(range = '1d') {
           x: xScaleOpts(range, xMin, xMax),
           y: { beginAtZero:false, min:yB.min, max:yB.max, ticks:{ color:'white' }, grid:{ color:'rgba(255,255,255,0.1)' } }
         },
-        plugins:{ legend:{ labels:{ color:'white' } }, tooltip:{ mode:'index', intersect:false } },
+        plugins:{
+          legend:{ labels:{ color:'white' } },
+          tooltip:{ mode:'index', intersect:false },
+          subtitle:{ display: water.length===0, text:'ไม่มีข้อมูลในช่วงนี้', color:'#ddd' }
+        },
         responsive:true, maintainAspectRatio:false
       }
     });
   } catch (err) { console.error('Error creating water chart:', err); }
 }
 
+// >>> เวอร์ชันใหม่: 1 ชั่วโมง ยึดจาก "ข้อมูลล่าสุด"
 async function createOneHourChart() {
   try {
-    const rows = await fetchHistoricalData('1h');
-    const { water } = parseChartData(rows);
+    // ดึง 1 ชั่วโมงล่าสุดก่อน
+    let rows = await fetchHistoricalData('1h');
+    let { water } = parseChartData(rows);
     water.sort((a,b)=>a.x-b.x);
-    const xMin = water[0]?.x, xMax = water.at(-1)?.x, yB = yBoundsFromData(water, 0.08);
+
+    // ถ้าไม่มีจุดเลย -> fallback 30 วัน หา timestamp ล่าสุด แล้วตัดหน้าต่าง 1 ชม. ย้อน
+    if (water.length === 0) {
+      const rowsWide = await fetchHistoricalData('30d');
+      const parsedWide = parseChartData(rowsWide);
+      const allWater = parsedWide.water.sort((a,b)=>a.x-b.x);
+      const latestTs = allWater.at(-1)?.x;
+
+      if (latestTs) {
+        const start = new Date(latestTs.getTime() - 60*60*1000);
+        water = allWater.filter(p => p.x >= start && p.x <= latestTs);
+        if (water.length === 0) water = [ { x: latestTs, y: allWater.at(-1).y } ];
+      }
+    }
+
+    const now = new Date();
+    const hasData = water.length > 0;
+    const xMin = hasData ? new Date(water.at(-1).x.getTime() - 60*60*1000) : new Date(now.getTime() - 60*60*1000);
+    const xMax = hasData ? water.at(-1).x : now;
+    const yB = hasData ? yBoundsFromData(water, 0.08) : { min: 0, max: 50 };
 
     const canvas = document.getElementById('waterLevelChart1h');
     setupHiDPICanvas(canvas);
@@ -205,7 +236,7 @@ async function createOneHourChart() {
     oneHourChartInstance = new Chart(ctx, {
       type: 'line',
       data: { datasets: [{
-        label: 'ระดับน้ำ (cm) 1 ชั่วโมง',
+        label: 'ระดับน้ำ (cm) 1 ชั่วโมง (อิงข้อมูลล่าสุด)',
         data: water,
         borderColor:'#0f0',
         backgroundColor:'rgba(29,233,29,0.18)',
@@ -219,11 +250,19 @@ async function createOneHourChart() {
           x: xScaleOpts('1h', xMin, xMax),
           y: { beginAtZero:false, min:yB.min, max:yB.max, ticks:{ color:'white' }, grid:{ color:'rgba(255,255,255,0.12)' } }
         },
-        plugins:{ legend:{ labels:{ color:'white' } }, tooltip:{ mode:'index', intersect:false } },
+        plugins:{
+          legend:{ labels:{ color:'white' } },
+          tooltip:{ mode:'index', intersect:false },
+          subtitle:{
+            display: !hasData,
+            text: 'ไม่พบข้อมูล 1 ชั่วโมงล่าสุด — กำลังรอข้อมูลใหม่',
+            color:'#ddd'
+          }
+        },
         responsive:true, maintainAspectRatio:false
       }
     });
-  } catch (err) { console.error('Error creating 1h chart:', err); }
+  } catch (err) { console.error('Error creating 1h chart (latest-window):', err); }
 }
 
 async function createBatteryChart(range = '1d') {
@@ -233,7 +272,9 @@ async function createBatteryChart(range = '1d') {
     v1.sort((a,b)=>a.x-b.x); v2.sort((a,b)=>a.x-b.x);
 
     const merged = (v1.length?v1:[]).concat(v2.length?v2:[]).sort((a,b)=>a.x-b.x);
-    const xMin = merged[0]?.x, xMax = merged.at(-1)?.x;
+    const now = new Date();
+    const xMin = merged[0]?.x ?? new Date(now.getTime() - 24*60*60*1000);
+    const xMax = merged.at(-1)?.x ?? now;
 
     const canvas = document.getElementById('batteryChart');
     setupHiDPICanvas(canvas);
@@ -269,7 +310,10 @@ async function createCurrentChart(range = '1d') {
     i1.sort((a,b)=>a.x-b.x); i2.sort((a,b)=>a.x-b.x);
 
     const merged = (i1.length?i1:[]).concat(i2.length?i2:[]).sort((a,b)=>a.x-b.x);
-    const xMin = merged[0]?.x, xMax = merged.at(-1)?.x, yB = yBoundsFromData(merged, 0.08);
+    const now = new Date();
+    const xMin = merged[0]?.x ?? new Date(now.getTime() - 24*60*60*1000);
+    const xMax = merged.at(-1)?.x ?? now;
+    const yB = merged.length ? yBoundsFromData(merged, 0.08) : { min: 0, max: 500 };
 
     const canvas = document.getElementById('currentChart');
     setupHiDPICanvas(canvas);
@@ -338,7 +382,7 @@ async function loadData() {
     ['waterLevelNode1','rssiNode1','voltageNode1','currentNode1','timeNode1','rssiNode2','voltageNode2','currentNode2','timeNode2']
       .forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '-'; });
 
-    // วาดเกจค่าเริ่มต้นแม้โหลดล้มเหลว
+    // วาดเกจค่าเริ่มต้นแม้โหลดข้อมูลล้มเหลว
     drawVoltageGauge('voltGauge1', 10, 10, 12.9);
     drawVoltageGauge('voltGauge2', 10, 10, 12.9);
 
@@ -404,7 +448,7 @@ async function initDashboard() {
   const initialRange = '1d';
   await loadData();
   await createWaterLevelChart(initialRange);
-  await createOneHourChart();
+  await createOneHourChart();              // <-- ใช้เวอร์ชันอิงข้อมูลล่าสุด
   await createBatteryChart(initialRange);
   await createCurrentChart(initialRange);
   setActiveRange('timeRangeButtons', initialRange);
@@ -486,4 +530,7 @@ function setupRangeButtons() {
 
 /* boot */
 window.onload = async () => { await initDashboard(); setupRangeButtons(); };
-setInterval(() => { loadData(); }, 60000);
+setInterval(() => {
+  loadData();
+  createOneHourChart(); // อัปเดตกราฟ 1 ชม. ตามข้อมูลล่าสุด
+}, 60000);
