@@ -130,7 +130,7 @@ async function fetchHistoricalData(range = '30d') {
   const url = `https://backend-water-rf88.onrender.com/distance?range=${range}&_=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
   const data = await res.json();
-  return data; // ไม่กรองที่นี่ เพื่อไม่ให้ข้อมูลหาย
+  return data; // ไม่กรองที่นี่
 }
 
 function parseChartData(rows) {
@@ -143,7 +143,7 @@ function parseChartData(rows) {
     const levelRaw = (item.distance || item.distance === 0)
       ? Number((fixedDepth - item.distance).toFixed(2)) : NaN;
 
-    const outlier = isNaN(levelRaw) || levelRaw < 0 || levelRaw > 100; // กันค่าหลุด
+    const outlier = isNaN(levelRaw) || levelRaw < 0 || levelRaw > 100;
     if (!outlier) water.push({ x: ts, y: levelRaw });
 
     if (item.v_node1 > 0) v1.push({ x: ts, y: item.v_node1 });
@@ -161,7 +161,6 @@ async function createWaterLevelChart(range = '1d') {
     const { water } = parseChartData(rows);
     water.sort((a,b)=>a.x-b.x);
 
-    // ถ้าไม่มีข้อมูลเลย ตั้งแกนสำรองให้เห็นกราฟ
     const now = new Date();
     const xMin = water[0]?.x ?? new Date(now.getTime() - 24*60*60*1000);
     const xMax = water.at(-1)?.x ?? now;
@@ -183,7 +182,8 @@ async function createWaterLevelChart(range = '1d') {
       }]},
       options: {
         parsing:false,
-        spanGaps: 2*60*60*1000, // ≤ 2 ชม.
+        // >>> แก้ตรงนี้: เชื่อมช่องว่างทั้งหมด (ไม่ให้กราฟขาด)
+        spanGaps: true,
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts(range, xMin, xMax),
@@ -200,21 +200,18 @@ async function createWaterLevelChart(range = '1d') {
   } catch (err) { console.error('Error creating water chart:', err); }
 }
 
-// >>> เวอร์ชันใหม่: 1 ชั่วโมง ยึดจาก "ข้อมูลล่าสุด"
+// 1 ชั่วโมง (อิง “ข้อมูลล่าสุด” ถ้าชั่วโมงปัจจุบันว่าง)
 async function createOneHourChart() {
   try {
-    // ดึง 1 ชั่วโมงล่าสุดก่อน
     let rows = await fetchHistoricalData('1h');
     let { water } = parseChartData(rows);
     water.sort((a,b)=>a.x-b.x);
 
-    // ถ้าไม่มีจุดเลย -> fallback 30 วัน หา timestamp ล่าสุด แล้วตัดหน้าต่าง 1 ชม. ย้อน
     if (water.length === 0) {
       const rowsWide = await fetchHistoricalData('30d');
       const parsedWide = parseChartData(rowsWide);
       const allWater = parsedWide.water.sort((a,b)=>a.x-b.x);
       const latestTs = allWater.at(-1)?.x;
-
       if (latestTs) {
         const start = new Date(latestTs.getTime() - 60*60*1000);
         water = allWater.filter(p => p.x >= start && p.x <= latestTs);
@@ -244,7 +241,8 @@ async function createOneHourChart() {
       }]},
       options: {
         parsing:false,
-        spanGaps: 20*60*1000, // ≤ 20 นาที
+        // 1 ชั่วโมง: อนุญาตเว้นช่องว่างได้ถึง 20 นาที (เพื่อไม่ลากเส้นลวง)
+        spanGaps: 20*60*1000,
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts('1h', xMin, xMax),
@@ -290,7 +288,8 @@ async function createBatteryChart(range = '1d') {
         ]
       },
       options: {
-        parsing:false, spanGaps:true,
+        parsing:false,
+        spanGaps:true,   // เชื่อมช่องว่างทั้งหมดสำหรับกราฟแบต
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts(range, xMin, xMax),
@@ -329,7 +328,8 @@ async function createCurrentChart(range = '1d') {
         ]
       },
       options: {
-        parsing:false, spanGaps:true,
+        parsing:false,
+        spanGaps:true,   // เชื่อมช่องว่างทั้งหมดสำหรับกราฟกระแส
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts(range, xMin, xMax),
@@ -372,7 +372,6 @@ async function loadData() {
       document.getElementById('timeNode2').innerText    = latest.time_node2 || 'เวลาวัด: -';
     }
 
-    // วาดเกจเสมอ (ถ้าไม่มีข้อมูลใช้ 10V)
     drawVoltageGauge('voltGauge1', (latest?.v_node1 > 0 ? latest.v_node1 : 10), 10, 12.9);
     drawVoltageGauge('voltGauge2', (latest?.v_node2 > 0 ? latest.v_node2 : 10), 10, 12.9);
 
@@ -382,7 +381,6 @@ async function loadData() {
     ['waterLevelNode1','rssiNode1','voltageNode1','currentNode1','timeNode1','rssiNode2','voltageNode2','currentNode2','timeNode2']
       .forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '-'; });
 
-    // วาดเกจค่าเริ่มต้นแม้โหลดข้อมูลล้มเหลว
     drawVoltageGauge('voltGauge1', 10, 10, 12.9);
     drawVoltageGauge('voltGauge2', 10, 10, 12.9);
 
@@ -448,7 +446,7 @@ async function initDashboard() {
   const initialRange = '1d';
   await loadData();
   await createWaterLevelChart(initialRange);
-  await createOneHourChart();              // <-- ใช้เวอร์ชันอิงข้อมูลล่าสุด
+  await createOneHourChart();
   await createBatteryChart(initialRange);
   await createCurrentChart(initialRange);
   setActiveRange('timeRangeButtons', initialRange);
