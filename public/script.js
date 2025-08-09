@@ -494,10 +494,10 @@ function updateErrorList(data) {
 
 async function initDashboard() {
   await loadData();
-  await createWaterLevelChart('30d');
+  await createWaterLevelChart('1d');
   await createOneHourChart();
-  await createBatteryChart('30d'); // ค่าเริ่มต้นให้ตรงกับปุ่ม 30 วัน
-  await createCurrentChart('30d');
+  await createBatteryChart('1d'); 
+  await createCurrentChart('1d');
 }
 
 function setupRangeButtons() {
