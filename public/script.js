@@ -144,21 +144,26 @@ function drawVoltageGauge(containerId, value, min = 10, max = 12.9) {
 }
 
 /* ========= SVG Gauge ระดับน้ำ (0–40 G, 40–70 O, 70–120 R) ========= */
+/* ========= SVG Gauge ระดับน้ำ (0–40 G, 40–70 O, 70–120 R) — 0 อยู่ "ขวา" ========= */
 function drawWaterArc(containerId, value, min = 0, max = fixedDepth) {
   const el = document.getElementById(containerId);
   if (!el) return;
 
+  const clamp = (v, mn, mx) => Math.max(mn, Math.min(mx, v));
   const v = clamp(Number(value) || 0, min, max);
 
-  // พื้นที่วาด (ไซส์คงที่เพื่อให้สัดส่วนคม — ให้กล่อง .gauge คุมขนาด)
+  // ตั้งทิศ: 0° = ขวา, 180° = ซ้าย  →  เดินจากขวาไปซ้าย
+  const startDeg = 0;
+  const endDeg   = 180;
+
+  // พื้นที่วาดแบบคงสัดส่วน (กล่อง .gauge คุมขนาดภายนอก)
   const cx = 250, cy = 220; // center
   const r  = 180;           // radius
   const thick = 24;         // ความหนาแถบ
-  const startDeg = 180, endDeg = 0;
 
-  const cm2ang = (cm) => startDeg + (endDeg - startDeg) * (cm - min) / (max - min);
+  const cm2deg = (cm) => startDeg + (endDeg - startDeg) * (cm - min) / (max - min);
   const polar = (deg, rad) => {
-    const t = (deg - 90) * Math.PI / 180;
+    const t = (deg - 90) * Math.PI / 180; // shift ให้อยู่ครึ่งวงบน
     return [cx + rad * Math.cos(t), cy + rad * Math.sin(t)];
   };
   const arcPath = (a0, a1, rOut, rIn) => {
@@ -173,24 +178,30 @@ function drawWaterArc(containerId, value, min = 0, max = fixedDepth) {
       Z`;
   };
 
-  // สีโซน
-  const colG = '#2ecc71', colO = '#ffb300', colR = '#e74c3c';
-  const a0 = cm2ang(0), a40 = cm2ang(40), a70 = cm2ang(70), a120 = cm2ang(max);
-  const aVal = cm2ang(v);
+  // ตำแหน่งโซน (ขวา→ซ้าย)
+  const a0   = cm2deg(0);
+  const a40  = cm2deg(40);
+  const a70  = cm2deg(70);
+  const aMax = cm2deg(max);
 
+  // เข็ม
+  const aVal = cm2deg(v);
   const needleLen = r - 12;
   const [nx, ny] = polar(aVal, needleLen);
 
+  // สี
+  const colG = '#2ecc71', colO = '#ffb300', colR = '#e74c3c';
+
   const svg = `
   <svg viewBox="0 0 500 240" preserveAspectRatio="xMidYMid meet">
-    <!-- พื้นหลังโค้งจาง -->
-    <path d="${arcPath(a0, a120, r, r - thick)}"
+    <!-- พื้นหลังครึ่งวง -->
+    <path d="${arcPath(a0, aMax, r, r - thick)}"
           fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
 
-    <!-- แถบโซน -->
-    <path d="${arcPath(a0,  a40,  r, r - thick)}" fill="${colG}" opacity="0.35"/>
-    <path d="${arcPath(a40, a70,  r, r - thick)}" fill="${colO}" opacity="0.35"/>
-    <path d="${arcPath(a70, a120, r, r - thick)}" fill="${colR}" opacity="0.35"/>
+    <!-- โซนสี: 0–40 เขียว / 40–70 ส้ม / 70–120 แดง (ขวา→ซ้าย) -->
+    <path d="${arcPath(a0,  a40,  r, r - thick)}" fill="${colG}" opacity="0.45"/>
+    <path d="${arcPath(a40, a70,  r, r - thick)}" fill="${colO}" opacity="0.45"/>
+    <path d="${arcPath(a70, aMax, r, r - thick)}" fill="${colR}" opacity="0.45"/>
 
     <!-- เข็ม -->
     <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
@@ -199,12 +210,13 @@ function drawWaterArc(containerId, value, min = 0, max = fixedDepth) {
     <!-- ค่ากลาง -->
     <text x="${cx}" y="${cy - 18}" class="arc-label" style="font-size:18px;">${v.toFixed(1)} cm</text>
 
-    <!-- ป้ายปลายซ้าย/ขวา -->
-    <text x="${polar(a0, r+10)[0]}"  y="${polar(a0, r+10)[1]}"  class="arc-end" text-anchor="start">0</text>
-    <text x="${polar(a120, r+10)[0]}" y="${polar(a120, r+10)[1]}" class="arc-end" text-anchor="end">${max}</text>
+    <!-- ป้ายปลายขวา = 0, ปลายซ้าย = max -->
+    <text x="${polar(a0, r+12)[0]}"  y="${polar(a0, r+12)[1]}"  class="arc-end" text-anchor="start">0</text>
+    <text x="${polar(aMax, r+12)[0]}" y="${polar(aMax, r+12)[1]}" class="arc-end" text-anchor="end">${max}</text>
   </svg>`;
   el.innerHTML = svg;
 }
+
 
 function updateWaterGauge(levelCm) {
   drawWaterArc('waterGauge', Number(levelCm) || 0, 0, fixedDepth);
