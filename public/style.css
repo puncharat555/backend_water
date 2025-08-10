@@ -271,3 +271,24 @@ tbody tr:hover {
   #map { height: 300px; }
   .gauge-box { min-height: 200px; }
 }
+/* จัดการ์ดระดับน้ำให้อยู่กึ่งกลาง กว้างเท่า container กราฟ */
+.container.single-col{
+  max-width: 1300px;
+  margin: 0 auto 18px;
+}
+.container.single-col .node-box.gauge-box{
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  min-height: 260px;
+}
+
+/* สไตล์การ์ดให้ตรงกับการ์ด Node อื่น */
+.node-box.gauge-box{
+  background: var(--card-bg);
+  backdrop-filter: blur(6px);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 18px 22px;
+  color: var(--text-main);
+}
