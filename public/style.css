@@ -1,3 +1,99 @@
+* { font-family: 'Sarabun', sans-serif; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(to bottom, #2c3e50, #4ca1af);
+  color: #fff; margin: 0; padding: 20px;
+}
+.title { font-size: 2.4rem; font-weight: 700; text-align: center; margin-bottom: 30px; text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+
+.water-level-display { display: flex; justify-content: center; margin-bottom: 40px; }
+.main-water-level { font-size: 3rem; font-weight: 700; color: #fff; min-width: 240px; text-align: center; }
+
+/* กล่องโหนด — ใช้ Grid 2 คอลัมน์ (ข้อมูล | เกจ) x 2 แถว */
+.container.nodes-grid {
+  max-width: 1300px; margin: 0 auto 20px;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+  background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(5px);
+  border-radius: 20px; padding: 20px; box-shadow: 0 5px 18px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+}
+.node-box {
+  background: rgba(255,255,255,0.08);
+  border-radius: 15px; padding: 18px 22px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  color: #eee; transition: background 0.3s ease;
+}
+.node-box:hover { background: rgba(255,255,255,0.16); }
+.node-box h2 { margin-top: 0; margin-bottom: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.7); }
+.node-box p { margin: 6px 0; font-size: 1.1rem; color: #ddd; letter-spacing: 0.03em; }
+
+.info-box { display: flex; flex-direction: column; justify-content: center; }
+.gauge-box { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+/* เกจ */
+.gauge { width: 280px; height: 150px; }
+.gauge .val-text { font-weight: 700; font-size: 1.15rem; fill: #fff; text-anchor: middle; }
+.gauge .tick-text { font-size: 0.85rem; fill: #ddd; text-anchor: middle; }
+.gauge-caption { margin-top: 6px; color: #ddd; font-size: 0.9rem; }
+
+/* ตาราง */
+.table-wrapper { max-width: 1260px; margin: 0 auto 50px; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; backdrop-filter: blur(4px); box-shadow: 0 5px 20px rgba(0,0,0,0.3); overflow-x: auto; color: white; }
+.table-wrapper h3 { font-size: 1.4rem; margin-bottom: 20px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+table { width: 100%; border-collapse: collapse; color: #f0f0f0; font-size: 0.95rem; min-width: 700px; }
+thead th { background: rgba(255,255,255,0.25); padding: 12px 15px; text-align: left; font-weight: 600; border-bottom: 2px solid rgba(255,255,255,0.4); }
+tbody td { padding: 10px 15px; border-top: 1px solid rgba(255,255,255,0.1); }
+tbody tr:hover { background: rgba(255,255,255,0.15); cursor: default; transition: background 0.3s ease; }
+
+/* กราฟ */
+.charts-container {
+  display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, auto);
+  gap: 20px; max-width: 1300px; margin: 0 auto 40px;
+}
+.chart-box {
+  width: 100%; background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
+  border-radius: 15px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  color: white; box-sizing: border-box;
+}
+.chart-box h3 { margin-bottom: 15px; text-align: center; }
+
+.chart-box.map-box { margin: 20px auto 40px; text-align: center; max-width: 1300px; width: 100%; }
+#map { height: 1200px; width: 100%; max-width: 1200px; margin: 0 auto; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); border: none; display: block; }
+
+.my-tooltip { background-color: rgba(0, 0, 0, 0.6); color: #e0f7ff; font-weight: 600; border-radius: 8px; padding: 6px 10px; font-size: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.4); pointer-events: none; }
+
+#timeRangeButtons, #currentTimeRangeButtons { text-align: center; margin-bottom: 15px; }
+.range-btn {
+  background: rgba(255,255,255,0.15); color: white; border: 1.5px solid rgba(255,255,255,0.4);
+  border-radius: 6px; padding: 8px 20px; margin: 0 6px; font-weight: 600; cursor: pointer;
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+}
+.range-btn:hover { background: rgba(0,192,255,0.3); border-color: #00c0ff; color: #00c0ff; font-weight: 700; }
+.range-btn.active { background: rgba(255,255,255,0.5); border-color: white; font-weight: 700; }
+
+/* Error box */
+.error-toggle { cursor: pointer; color: #ff4d4d; margin-left: 10px; font-size: 18px; }
+.error-box {
+  color: #313030; background-color: rgba(255,0,0,0.15); border: 1px solid rgba(255,0,0,0.5);
+  padding: 10px; margin: 10px 0; border-radius: 6px; max-height: 200px; overflow-y: auto;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 0 10px rgba(255,0,0,0.3);
+}
+.error-box.hidden { display: none; }
+.error-box h4 { margin-top: 0; color: #cc0000; }
+
+/* Chart container */
+.chart-canvas { position: relative; width: 100%; height: 360px; }
+.chart-canvas > canvas { width: 100% !important; height: 100% !important; display: block; }
+@media (max-width: 1024px) { .chart-canvas { height: 300px; } }
+@media (max-width: 650px) {
+  .container.nodes-grid { grid-template-columns: 1fr; }
+  .chart-canvas { height: 240px; }
+  #map { height: 300px; }
+}
+
+/* ปุ่มโหลดข้อมูลเพิ่ม */
+#moreButtonContainer { text-align: center; margin-top: 10px; }
+#moreButtonContainer button { background: none; border: none; color: white; cursor: pointer; font-size: 1rem; text-decoration: underline; padding: 0; }
+
 :root{
   --bg:#0f1216;
   --card:#171b22;
