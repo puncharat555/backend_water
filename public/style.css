@@ -330,3 +330,21 @@ tbody tr:hover {
 #waterGauge svg { width: 100%; height: auto; display: block; }
 #waterGauge .arc-label { fill: #fff; font-weight: 700; text-anchor: middle; }
 #waterGauge .arc-end { fill: #ddd; font-size: 12px; }
+
+/* ให้การ์ดเกจน้ำมีสไตล์/ขนาดเหมือนเกจอื่น ๆ */
+.water-level-display {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0 20px;
+}
+.water-gauge-card {
+  width: 100%;
+  max-width: 520px;        /* การ์ดไม่ยืดเต็มจอ */
+  padding: 18px 22px;      /* เท่ากับ .node-box */
+}
+
+/* ขนาดเกจเหมือนกันทุกตัว */
+.gauge { width: 280px; height: 150px; }
+
+/* (ทางเลือก) ลดช่องว่างด้านบนของหัวข้อในการ์ด */
+.water-gauge-card h2 { margin-top: 0; text-align: center; }
