@@ -957,34 +957,12 @@ function setupSummaryToggle() {
 }
 
 
-// ส่งออก CSV (เปิด Excel ได้)
-function exportCSV() {
-  const headers = ['distance_raw_cm','level_cm','rssi_node1','rssi_node2','v_node1','i_node1','v_node2','i_node2','time_node1','time_node2'];
-  const rows = getTableRowsForExport();
-  const csv = [headers, ...rows].map(r => r.map(v => {
-    const s = (v ?? '').toString();
-    // escape เครื่องหมายคำพูด/คอมมา/บรรทัดใหม่
-    if (/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
-    return s;
-  }).join(',')).join('\n');
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `Water_Data_${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
 
 /* ===== Hook ปุ่ม ===== */
 function setupExportButtons() {
   const pdfBtn = document.getElementById('exportPdfBtn');
-  const csvBtn = document.getElementById('exportCsvBtn');
   if (pdfBtn) pdfBtn.addEventListener('click', exportDashboardPDF);
-  if (csvBtn) csvBtn.addEventListener('click', exportCSV);
 }
 
 // เรียกหลัง DOM พร้อมแล้ว (มีอยู่แล้วใน onload → เติมบรรทัดนี้ก็พอ)

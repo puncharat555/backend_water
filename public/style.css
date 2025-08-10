@@ -473,3 +473,15 @@ tbody tr:hover {
 }
 .toolbar.sticky-export .range-btn{ margin:0 6px; }
 
+.export-footer{
+  max-width: 1260px;
+  margin: 24px auto 40px;
+  text-align: center;
+}
+.export-footer .range-btn{
+  padding: 10px 24px;
+  font-weight: 700;
+}
+
+/* ถ้ามีอันนี้อยู่ ให้ลบทิ้ง เพื่อไม่ให้ลอยทับ */
+.toolbar.sticky-export{ display:none; }
