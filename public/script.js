@@ -687,140 +687,70 @@ window.onload = async () => {
 /* ===== Export helpers ===== */
 
 // ดึงข้อมูลตารางเป็น array (ใช้ตัวแปร allData ที่มีอยู่แล้ว)
-async function waitChartsReady() {
-  const charts = [
-    waterLevelChartInstance,
-    oneHourChartInstance,
-    batteryChartInstance,
-    currentChartInstance
-  ].filter(Boolean);
-
-  charts.forEach(ch => {
-    if (!ch) return;
-    ch.options.animation = false;
-    ch.resize();
-    ch.update('none');
+// ===== รวมข้อมูลเป็นรายเดือน =====
+function aggregateRowsMonthly(rows) {
+  const grouped = {};
+  rows.forEach(r => {
+    const date = new Date(r.timestamp || r.time_node1);
+    if (isNaN(date)) return;
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    if (!grouped[key]) grouped[key] = { sum: 0, count: 0, timestamp: key };
+    grouped[key].sum += fixedDepth - Number(r.distance ?? 0);
+    grouped[key].count++;
   });
-
-  // รอสองเฟรมให้ layout/scale เสถียร
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  return Object.entries(grouped).map(([k, v]) => ({
+    timestamp: k,
+    level: (v.sum / v.count).toFixed(1)
+  })).sort((a,b) => a.timestamp.localeCompare(b.timestamp));
 }
 
-// แปลง element → PNG (พื้นหลังขาว, useCORS, สเกลสูง)
-async function elementToPngFixed(el, scale = 2) {
-  if (!el) return null;
-  const canvas = await html2canvas(el, {
-    backgroundColor: '#ffffff',
-    useCORS: true,
-    allowTaint: false,
-    scale
+// ===== ปรับ Chart.js options สำหรับรายเดือน + สีดำ =====
+function renderMonthlyChart(monthlyData) {
+  const ctx = document.getElementById('waterLevelChart').getContext('2d');
+  if (waterLevelChartInstance) waterLevelChartInstance.destroy();
+
+  waterLevelChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: monthlyData.map(d => d.timestamp),
+      datasets: [{
+        label: 'ระดับน้ำเฉลี่ยต่อเดือน (cm)',
+        data: monthlyData.map(d => d.level),
+        fill: true,
+        backgroundColor: 'rgba(0, 150, 255, 0.15)',
+        borderColor: 'rgba(0, 120, 200, 1)',
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 4,
+        pointBackgroundColor: 'rgba(0, 120, 200, 1)',
+      }]
+    },
+    options: {
+      plugins: {
+        legend: {
+          labels: { color: '#000', font: { weight: 'bold' } }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#000', font: { weight: 'bold' } },
+          grid: { color: 'rgba(0,0,0,0.1)' }
+        },
+        y: {
+          ticks: { color: '#000', font: { weight: 'bold' } },
+          grid: { color: 'rgba(0,0,0,0.1)' }
+        }
+      }
+    }
   });
-  return canvas.toDataURL('image/png');
 }
 
-// แปลง Chart.js → PNG (มี fallback เป็น element capture)
-async function chartToPNGFixed(chart) {
-  if (!chart) return null;
-  try {
-    await waitChartsReady();
-    const prev = chart.options.devicePixelRatio;
-    chart.options.devicePixelRatio = 2;   // คมขึ้น
-    chart.resize();
-    const dataUrl = chart.toBase64Image('image/png', 1.0);
-    chart.options.devicePixelRatio = prev;
-    chart.resize();
-    return dataUrl;
-  } catch (e) {
-    // เผื่อโดน CORS/block → จับภาพจาก DOM แทน
-    const container = chart.canvas?.parentElement || chart.canvas;
-    return elementToPngFixed(container, 2);
-  }
+// ===== เรียกใช้หลังโหลดข้อมูล =====
+function updateMonthlyView() {
+  const monthlyData = aggregateRowsMonthly(allData);
+  renderMonthlyChart(monthlyData);
 }
 
-// วางรูปแบบไหลขึ้นหน้าใหม่อัตโนมัติ
-function addImageWithFlow(doc, imgData, x, y, w, h, margin) {
-  const pageH = doc.internal.pageSize.getHeight();
-  if (y + h + margin > pageH) {
-    doc.addPage();
-    y = margin;
-  }
-  doc.addImage(imgData, 'PNG', x, y, w, h);
-  return y + h + 10; // เว้นบรรทัด
-}
-
-// header เป็น DOM ชั่วคราวเพื่อรองรับฟอนต์ไทย แล้วแคปเป็นรูป
-async function buildHeaderImage() {
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'width:1024px;padding:16px 20px;background:#fff;color:#222;font-family:Sarabun,Segoe UI,Tahoma;';
-  wrap.innerHTML = `
-    <div style="font-size:22px;font-weight:700;line-height:1.4;">
-      Water Level Monitoring — รายงานสรุป
-    </div>
-    <div style="font-size:13px;opacity:.8;">
-      วันที่พิมพ์: ${new Intl.DateTimeFormat('th-TH',{ dateStyle:'medium', timeStyle:'short' }).format(new Date())}
-    </div>
-  `;
-  document.body.appendChild(wrap);
-  const png = await elementToPngFixed(wrap, 2);
-  document.body.removeChild(wrap);
-  return png;
-}
-
-// ===== main: ส่งออก PDF (แทนของเดิมชื่อเดียวกัน) =====
-async function exportDashboardPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'a4' });
-
-  const margin = 28;
-  const pageW  = doc.internal.pageSize.getWidth();
-  let y = margin;
-
-  // Header
-  const headPng = await buildHeaderImage();
-  if (headPng) y = addImageWithFlow(doc, headPng, margin, y, pageW - margin*2, 60, margin);
-
-  // เกจระดับน้ำ (ทั้งการ์ด) — ถ้าไม่มี .water-gauge-card จะ fallback เป็น #waterGauge
-  const waterCard = document.querySelector('.water-gauge-card') || document.getElementById('waterGauge');
-  if (waterCard) {
-    const waterPng = await elementToPngFixed(waterCard, 2);
-    if (waterPng) y = addImageWithFlow(doc, waterPng, margin, y, pageW - margin*2, 180, margin);
-  }
-
-  // กราฟ (ทีละรูป)
-  const graphs = [
-    await chartToPNGFixed(waterLevelChartInstance),
-    await chartToPNGFixed(oneHourChartInstance),
-    await chartToPNGFixed(batteryChartInstance),
-    await chartToPNGFixed(currentChartInstance)
-  ].filter(Boolean);
-
-  for (const g of graphs) {
-    y = addImageWithFlow(doc, g, margin, y, pageW - margin*2, 210, margin);
-  }
-
-  // สรุปล่าสุด (Text)
-  const latest = allData[0];
-  if (latest) {
-    const pageH = doc.internal.pageSize.getHeight();
-    if (y + 60 + margin > pageH) { doc.addPage(); y = margin; }
-    const level = (fixedDepth - Number(latest.distance ?? 0)).toFixed(1);
-
-    doc.setFont('Helvetica','bold'); doc.setFontSize(12);
-    doc.text('สรุปล่าสุด', margin, y);
-    doc.setFont('Helvetica','normal'); doc.setFontSize(11);
-
-    const line = `ระดับน้ำ: ${level} cm | RSSI N1/N2: ${latest.rssi_node1 ?? '-'} / ${latest.rssi_node2 ?? '-'} | `
-               + `V/I N1: ${latest.v_node1 ?? '-'}V / ${latest.i_node1 ?? '-'}mA | `
-               + `V/I N2: ${latest.v_node2 ?? '-'}V / ${latest.i_node2 ?? '-'}mA | `
-               + `เวลา: ${latest.time_node1 || latest.timestamp || '-'}`;
-
-    // รองรับข้อความยาว — ตัดบรรทัดอัตโนมัติ
-    const wrapped = doc.splitTextToSize(line, pageW - margin*2);
-    doc.text(wrapped, margin, y + 16);
-  }
-
-  doc.save(`Water_Report_${new Date().toISOString().slice(0,10)}.pdf`);
-}
 // รวมข้อมูลเป็นรายวัน/รายเดือน
 function aggregateRows(rows, mode = 'day') {
   const fmt = (d) => {
