@@ -326,3 +326,7 @@ tbody tr:hover {
   text-decoration: underline;
   padding: 0;
 }
+/* Water arc gauge texts */
+#waterGauge svg { width: 100%; height: auto; display: block; }
+#waterGauge .arc-label { fill: #fff; font-weight: 700; text-anchor: middle; }
+#waterGauge .arc-end { fill: #ddd; font-size: 12px; }

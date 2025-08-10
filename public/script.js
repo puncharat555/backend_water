@@ -19,7 +19,7 @@ const msForRange  = (range) => (RANGE_HOURS[range] ?? 24) * 60 * 60 * 1000;
 const isDef = (v) => v !== null && v !== undefined;
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
-/* HiDPI canvas */
+/* ====== HiDPI canvas ====== */
 function setupHiDPICanvas(canvas) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
@@ -33,14 +33,14 @@ function parseToDate(s) {
   if (!s) return null;
   s = String(s).trim();
 
-  // ตัด .sss หรือ .sssZ ทิ้ง (กรณีมี)
+  // ตัด .sss หรือ .sssZ (ถ้ามี)
   s = s.replace(/\.\d+Z?$/, '');
 
-  // รูปแบบ YYYY-MM-DD HH:mm[:ss]
+  // YYYY-MM-DD HH:mm[:ss]
   let m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(:\d{2})?)$/);
-  if (m) return new Date(`${m[1]}T${m[2]}`); // local time
+  if (m) return new Date(`${m[1]}T${m[2]}`);
 
-  // รูปแบบ DD/MM/YYYY HH:mm[:ss]
+  // DD/MM/YYYY HH:mm[:ss]
   m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{2}:\d{2}(:\d{2})?)$/);
   if (m) {
     const [, d, mo, y, t] = m;
@@ -104,7 +104,7 @@ function xScaleOpts(range, xMin, xMax) {
   };
 }
 
-/* ========= SVG Gauge (10–12.9V) ========= */
+/* ========= SVG Gauge แรงดันแบต (10–12.9V) ========= */
 function drawVoltageGauge(containerId, value, min = 10, max = 12.9) {
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -143,6 +143,73 @@ function drawVoltageGauge(containerId, value, min = 10, max = 12.9) {
   el.innerHTML = svg;
 }
 
+/* ========= SVG Gauge ระดับน้ำ (0–40 G, 40–70 O, 70–120 R) ========= */
+function drawWaterArc(containerId, value, min = 0, max = fixedDepth) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  const v = clamp(Number(value) || 0, min, max);
+
+  // พื้นที่วาด (ไซส์คงที่เพื่อให้สัดส่วนคม — ให้กล่อง .gauge คุมขนาด)
+  const cx = 250, cy = 220; // center
+  const r  = 180;           // radius
+  const thick = 24;         // ความหนาแถบ
+  const startDeg = 180, endDeg = 0;
+
+  const cm2ang = (cm) => startDeg + (endDeg - startDeg) * (cm - min) / (max - min);
+  const polar = (deg, rad) => {
+    const t = (deg - 90) * Math.PI / 180;
+    return [cx + rad * Math.cos(t), cy + rad * Math.sin(t)];
+  };
+  const arcPath = (a0, a1, rOut, rIn) => {
+    const [x0,y0] = polar(a0, rOut), [x1,y1] = polar(a1, rOut);
+    const [x2,y2] = polar(a1, rIn ), [x3,y3] = polar(a0, rIn );
+    const large = Math.abs(a1 - a0) > 180 ? 1 : 0;
+    return `
+      M ${x0} ${y0}
+      A ${rOut} ${rOut} 0 ${large} 1 ${x1} ${y1}
+      L ${x2} ${y2}
+      A ${rIn} ${rIn} 0 ${large} 0 ${x3} ${y3}
+      Z`;
+  };
+
+  // สีโซน
+  const colG = '#2ecc71', colO = '#ffb300', colR = '#e74c3c';
+  const a0 = cm2ang(0), a40 = cm2ang(40), a70 = cm2ang(70), a120 = cm2ang(max);
+  const aVal = cm2ang(v);
+
+  const needleLen = r - 12;
+  const [nx, ny] = polar(aVal, needleLen);
+
+  const svg = `
+  <svg viewBox="0 0 500 240" preserveAspectRatio="xMidYMid meet">
+    <!-- พื้นหลังโค้งจาง -->
+    <path d="${arcPath(a0, a120, r, r - thick)}"
+          fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
+
+    <!-- แถบโซน -->
+    <path d="${arcPath(a0,  a40,  r, r - thick)}" fill="${colG}" opacity="0.35"/>
+    <path d="${arcPath(a40, a70,  r, r - thick)}" fill="${colO}" opacity="0.35"/>
+    <path d="${arcPath(a70, a120, r, r - thick)}" fill="${colR}" opacity="0.35"/>
+
+    <!-- เข็ม -->
+    <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="#fff"/>
+
+    <!-- ค่ากลาง -->
+    <text x="${cx}" y="${cy - 18}" class="arc-label" style="font-size:18px;">${v.toFixed(1)} cm</text>
+
+    <!-- ป้ายปลายซ้าย/ขวา -->
+    <text x="${polar(a0, r+10)[0]}"  y="${polar(a0, r+10)[1]}"  class="arc-end" text-anchor="start">0</text>
+    <text x="${polar(a120, r+10)[0]}" y="${polar(a120, r+10)[1]}" class="arc-end" text-anchor="end">${max}</text>
+  </svg>`;
+  el.innerHTML = svg;
+}
+
+function updateWaterGauge(levelCm) {
+  drawWaterArc('waterGauge', Number(levelCm) || 0, 0, fixedDepth);
+}
+
 /* ---------- Data ---------- */
 async function fetchHistoricalData(range = '30d') {
   const url = `https://backend-water-rf88.onrender.com/distance?range=${range}&_=${Date.now()}`;
@@ -162,7 +229,6 @@ function parseChartData(rows) {
 
     if (isDef(item.distance)) {
       const level = Number((fixedDepth - Number(item.distance)).toFixed(2));
-      // เดิมล็อค <= 100 อาจตัดข้อมูล; ใช้ขอบเขตจริงของบ่อแทน
       if (Number.isFinite(level) && level >= 0 && level <= fixedDepth) {
         water.push({ x: ts, y: level });
       }
@@ -267,7 +333,7 @@ async function createOneHourChart() {
       }
     }
 
-    // กรอง outlier ≤ 50 cm
+    // กรอง outlier ≤ 50 cm (ตามเดิม)
     water = water.filter(p => p.y <= 50);
 
     const hasData = water.length > 0;
@@ -446,6 +512,7 @@ async function loadData() {
     if (latest) {
       const level = (fixedDepth - latest.distance).toFixed(1);
       document.getElementById('waterLevelNode1').innerText = `ระดับน้ำปัจจุบัน: ${level} cm`;
+      updateWaterGauge(level); // ⬅️ อัปเดตเกจน้ำ
 
       document.getElementById('rssiNode1').innerText    = (latest.rssi_node1 && latest.rssi_node1 !== 0) ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
       document.getElementById('voltageNode1').innerText  = (isDef(latest.v_node1)) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
@@ -456,6 +523,9 @@ async function loadData() {
       document.getElementById('voltageNode2').innerText  = (isDef(latest.v_node2)) ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
       document.getElementById('currentNode2').innerText  = (isDef(latest.i_node2)) ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
       document.getElementById('timeNode2').innerText     = latest.time_node2 || latest.timestamp || 'เวลาวัด: -';
+    } else {
+      // ถ้าไม่มีข้อมูลเลย รีเซ็ตเกจน้ำไปที่ 0
+      updateWaterGauge(0);
     }
 
     drawVoltageGauge('voltGauge1', (latest?.v_node1 ?? 10), 10, 12.9);
@@ -469,6 +539,7 @@ async function loadData() {
 
     drawVoltageGauge('voltGauge1', 10, 10, 12.9);
     drawVoltageGauge('voltGauge2', 10, 10, 12.9);
+    updateWaterGauge(0);
 
     const tbody = document.querySelector('#dataTable tbody'); if (tbody) tbody.innerHTML = '';
     const more  = document.getElementById('moreButtonContainer'); if (more) more.innerHTML = '';
@@ -510,13 +581,13 @@ function updateMoreButton() {
   if (currentIndex < allData.length) {
     const btn = document.createElement('button');
     btn.innerText = 'ดูข้อมูลเพิ่มเติม';
-    // แนะนำให้ย้ายสไตล์ไป CSS (#moreButtonContainer button) ตามไฟล์ style.css
+    // (สไตล์ใช้ใน style.css: #moreButtonContainer button)
     btn.onclick = () => updateTable(false);
     c.appendChild(btn);
   }
 }
 
-/* ใช้คลาส .hidden ตาม CSS (เดิมใช้ style.display) */
+/* ใช้คลาส .hidden ตาม CSS */
 function toggleErrorBox() {
   const box = document.getElementById('errorBox');
   if (!box) return;
@@ -534,69 +605,6 @@ function updateErrorList(data) {
       box.appendChild(div);
     }
   });
-}
-
-/* ===== Water Arc Gauge (0–40 G, 40–70 O, 70–120 R) ===== */
-function drawWaterArc(containerId, value, min = 0, max = fixedDepth) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-
-  const v = clamp(Number(value) || 0, min, max);
-
-  // พื้นที่วาด
-  const cx = 250, cy = 220; // center
-  const r  = 180;           // radius
-  const thick = 24;         // ความหนาแถบ
-  const startDeg = 180, endDeg = 0;
-
-  const cm2ang = (cm) => startDeg + (endDeg - startDeg) * (cm - min) / (max - min);
-  const polar = (deg, rad) => {
-    const t = (deg - 90) * Math.PI / 180;
-    return [cx + rad * Math.cos(t), cy + rad * Math.sin(t)];
-  };
-  const arcPath = (a0, a1, rOut, rIn) => {
-    const [x0,y0] = polar(a0, rOut), [x1,y1] = polar(a1, rOut);
-    const [x2,y2] = polar(a1, rIn ), [x3,y3] = polar(a0, rIn );
-    const large = Math.abs(a1 - a0) > 180 ? 1 : 0;
-    return `
-      M ${x0} ${y0}
-      A ${rOut} ${rOut} 0 ${large} 1 ${x1} ${y1}
-      L ${x2} ${y2}
-      A ${rIn} ${rIn} 0 ${large} 0 ${x3} ${y3}
-      Z`;
-  };
-
-  // สีโซน
-  const colG = '#2ecc71', colO = '#ffb300', colR = '#e74c3c';
-  const a0 = cm2ang(0), a40 = cm2ang(40), a70 = cm2ang(70), a120 = cm2ang(max);
-  const aVal = cm2ang(v);
-
-  const needleLen = r - 12;
-  const [nx, ny] = polar(aVal, needleLen);
-
-  const svg = `
-  <svg viewBox="0 0 500 240" preserveAspectRatio="xMidYMid meet">
-    <!-- พื้นหลังโค้งจาง -->
-    <path d="${arcPath(a0, a120, r, r - thick)}"
-          fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
-
-    <!-- แถบโซน -->
-    <path d="${arcPath(a0,  a40,  r, r - thick)}" fill="${colG}" opacity="0.35"/>
-    <path d="${arcPath(a40, a70,  r, r - thick)}" fill="${colO}" opacity="0.35"/>
-    <path d="${arcPath(a70, a120, r, r - thick)}" fill="${colR}" opacity="0.35"/>
-
-    <!-- เข็ม -->
-    <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-    <circle cx="${cx}" cy="${cy}" r="5" fill="#fff"/>
-
-    <!-- ตัวเลขตรงกลางเข็ม -->
-    <text x="${cx}" y="${cy - 18}" class="arc-label" style="font-size:18px;">${v.toFixed(1)} cm</text>
-
-    <!-- ป้ายปลายซ้าย/ขวา -->
-    <text x="${polar(a0, r+10)[0]}"  y="${polar(a0, r+10)[1]}"  class="arc-end" text-anchor="start">0</text>
-    <text x="${polar(a120, r+10)[0]}" y="${polar(a120, r+10)[1]}" class="arc-end" text-anchor="end">${max}</text>
-  </svg>`;
-  el.innerHTML = svg;
 }
 
 /* ===== Sidebar / Hamburger ===== */
