@@ -58,6 +58,7 @@ body {
 
 .node-box:hover {
   background: rgba(255,255,255,0.16);
+  background: inherit;
 }
 
 .node-box h2 {
@@ -471,3 +472,4 @@ tbody tr:hover {
   border-radius:12px;
 }
 .toolbar.sticky-export .range-btn{ margin:0 6px; }
+
