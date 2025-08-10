@@ -271,3 +271,24 @@ tbody tr:hover {
   #map { height: 300px; }
   .gauge-box { min-height: 200px; }
 }
+/* ให้การ์ดเกจ "ระดับน้ำปัจจุบัน" กว้างเท่าการ์ดใน nodes-grid */
+.node-box.gauge-box{
+  max-width: 640px;            /* = (1300 - 14 gap) / 2 โดยประมาณ */
+  margin: 0 auto 18px;         /* จัดกลาง */
+}
+@media (min-width: 1310px){
+  .node-box.gauge-box{
+    max-width: calc((1300px - 14px) / 2);   /* ตรงกับคอลัมน์จริงเป๊ะ */
+  }
+}
+@media (max-width: 700px){
+  .node-box.gauge-box{ max-width: 100%; }   /* มือถือให้เต็มความกว้างคอลัมน์ */
+}
+
+/* ความสูงการ์ดให้พอๆ กันกับการ์ดเกจในกริด */
+.node-box.gauge-box{
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+}
