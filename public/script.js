@@ -96,7 +96,7 @@ function drawVoltageGauge(containerId, value, min = 10, max = 12.9) {
   const v = Math.max(min, Math.min(max, Number(value) || min));
   const w = el.clientWidth || 280, h = el.clientHeight || 150;
   const cx = w/2, cy = h-12, r = Math.min(w*0.45, h*0.9);
-  const start = -Math.PI, end = 0;
+  const start = -Math.PI, end = 0; // ครึ่งวง 180°
   const t = (v - min) / (max - min);
   const angle = start + (end - start) * t;
 
@@ -152,7 +152,8 @@ function parseChartData(rows) {
 
     const pushNum = (arr, v) => {
       const n = Number(v);
-      if (Number.isFinite(n) && n > 0) arr.push({ x: ts, y: n });
+      // ✅ แก้: ยอมรับค่า 0 ด้วย (เดิม > 0)
+      if (Number.isFinite(n) && n >= 0) arr.push({ x: ts, y: n });
     };
     pushNum(v1, item.v_node1);
     pushNum(v2, item.v_node2);
@@ -418,18 +419,18 @@ async function loadData() {
       document.getElementById('waterLevelNode1').innerText = `ระดับน้ำปัจจุบัน: ${level} cm`;
 
       document.getElementById('rssiNode1').innerText   = (latest.rssi_node1 && latest.rssi_node1 !== 0) ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
-      document.getElementById('voltageNode1').innerText = (latest.v_node1 && latest.v_node1 > 0) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
-      document.getElementById('currentNode1').innerText = (latest.i_node1 && latest.i_node1 > 0) ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
+      document.getElementById('voltageNode1').innerText = (latest.v_node1 && latest.v_node1 >= 0) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
+      document.getElementById('currentNode1').innerText = (latest.i_node1 && latest.i_node1 >= 0) ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
       document.getElementById('timeNode1').innerText    = latest.time_node1 || latest.timestamp || 'เวลาวัด: -';
 
       document.getElementById('rssiNode2').innerText   = (latest.rssi_node2 && latest.rssi_node2 !== 0) ? `RSSI: ${latest.rssi_node2}` : 'RSSI: -';
-      document.getElementById('voltageNode2').innerText = (latest.v_node2 && latest.v_node2 > 0) ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
-      document.getElementById('currentNode2').innerText = (latest.i_node2 && latest.i_node2 > 0) ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
+      document.getElementById('voltageNode2').innerText = (latest.v_node2 && latest.v_node2 >= 0) ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
+      document.getElementById('currentNode2').innerText = (latest.i_node2 && latest.i_node2 >= 0) ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
       document.getElementById('timeNode2').innerText    = latest.time_node2 || latest.timestamp || 'เวลาวัด: -';
     }
 
-    drawVoltageGauge('voltGauge1', (latest?.v_node1 > 0 ? latest.v_node1 : 10), 10, 12.9);
-    drawVoltageGauge('voltGauge2', (latest?.v_node2 > 0 ? latest.v_node2 : 10), 10, 12.9);
+    drawVoltageGauge('voltGauge1', (latest?.v_node1 >= 0 ? latest.v_node1 : 10), 10, 12.9);
+    drawVoltageGauge('voltGauge2', (latest?.v_node2 >= 0 ? latest.v_node2 : 10), 10, 12.9);
 
   } catch (error) {
     console.error('Load data error:', error);
@@ -458,10 +459,10 @@ function updateTable(clear=false) {
       <td>${distRaw}</td><td>${level}</td>
       <td>${(item.rssi_node1 && item.rssi_node1 !== 0) ? item.rssi_node1 : '-'}</td>
       <td>${(item.rssi_node2 && item.rssi_node2 !== 0) ? item.rssi_node2 : '-'}</td>
-      <td>${(item.v_node1 && item.v_node1 > 0) ? item.v_node1 + ' V' : '-'}</td>
-      <td>${(item.i_node1 && item.i_node1 > 0) ? item.i_node1 + ' mA' : '-'}</td>
-      <td>${(item.v_node2 && item.v_node2 > 0) ? item.v_node2 + ' V' : '-'}</td>
-      <td>${(item.i_node2 && item.i_node2 > 0) ? item.i_node2 + ' mA' : '-'}</td>
+      <td>${(item.v_node1 || item.v_node1 === 0) ? item.v_node1 + ' V' : '-'}</td>
+      <td>${(item.i_node1 || item.i_node1 === 0) ? item.i_node1 + ' mA' : '-'}</td>
+      <td>${(item.v_node2 || item.v_node2 === 0) ? item.v_node2 + ' V' : '-'}</td>
+      <td>${(item.i_node2 || item.i_node2 === 0) ? item.i_node2 + ' mA' : '-'}</td>
       <td>${item.time_node1 || item.timestamp || '-'}</td>
       <td>${item.time_node2 || item.timestamp || '-'}</td>`;
     tbody.appendChild(tr);
