@@ -108,7 +108,6 @@ app.get('/distance', async (req, res) => {
   }
 });
 
-
 // ==== Start Server ====
 async function startServer() {
   try {
