@@ -19,6 +19,13 @@ function setupHiDPICanvas(canvas) {
 }
 
 /* ---------- Utils ---------- */
+function toNum(v) {
+  if (v === null || v === undefined) return NaN;
+  // รองรับค่าที่เป็นสตริงและมีหน่วย เช่น "12.6", "12.6 V", " 0 "
+  const n = parseFloat(String(v).replace(/,/g, ' ').split(' ')[0]);
+  return Number.isFinite(n) ? n : NaN;
+}
+
 function parseToDate(s) {
   if (!s) return null;
   s = String(s).trim();
@@ -133,31 +140,32 @@ async function fetchHistoricalData(range = '30d') {
   return data; // ไม่กรองที่นี่
 }
 
+
 function parseChartData(rows) {
   const water = [], v1 = [], v2 = [], i1 = [], i2 = [];
   for (const item of rows) {
     const ts = parseToDate(item.time_node1 || item.time_node2);
     if (!ts) continue;
 
-    // ยอมรับ distance = 0
-    const levelRaw = (item.distance || item.distance === 0)
-      ? Number((fixedDepth - item.distance).toFixed(2)) : NaN;
-
-    // กรองค่า outlier — เช่น ระดับน้ำเกิน 50 cm ในกราฟ 1 ชั่วโมงตัดทิ้ง
-    if (!isNaN(levelRaw) && levelRaw >= 0 && levelRaw <= 50) {
+    // ระดับน้ำ = fixedDepth - distance (ยอมรับ 0 และ String)
+    const d = toNum(item.distance);
+    const levelRaw = Number.isFinite(d) ? Number((fixedDepth - d).toFixed(2)) : NaN;
+    if (!Number.isNaN(levelRaw) && levelRaw >= 0 && levelRaw <= 100) {
       water.push({ x: ts, y: levelRaw });
     }
 
-    const outlier = isNaN(levelRaw) || levelRaw < 0 || levelRaw > 100;
-    if (!outlier) water.push({ x: ts, y: levelRaw });
-
-    if (item.v_node1 > 0) v1.push({ x: ts, y: item.v_node1 });
-    if (item.v_node2 > 0) v2.push({ x: ts, y: item.v_node2 });
-    if (item.i_node1 > 0) i1.push({ x: ts, y: item.i_node1 });
-    if (item.i_node2 > 0) i2.push({ x: ts, y: item.i_node2 });
+    const _v1 = toNum(item.v_node1);
+    const _v2 = toNum(item.v_node2);
+    const _i1 = toNum(item.i_node1);
+    const _i2 = toNum(item.i_node2);
+    if (Number.isFinite(_v1)) v1.push({ x: ts, y: _v1 });
+    if (Number.isFinite(_v2)) v2.push({ x: ts, y: _v2 });
+    if (Number.isFinite(_i1)) i1.push({ x: ts, y: _i1 });
+    if (Number.isFinite(_i2)) i2.push({ x: ts, y: _i2 });
   }
   return { water, v1, v2, i1, i2 };
 }
+
 
 /* ---------- Charts ---------- */
 async function createWaterLevelChart(range = '1d') {
@@ -183,7 +191,7 @@ async function createWaterLevelChart(range = '1d') {
         data: water,
         borderColor:'#00c0ff',
         backgroundColor:'rgba(0,192,255,0.2)',
-        fill:true, tension:0.3, pointRadius:0, cubicInterpolationMode:'monotone'
+        fill:true, tension:0.3, pointRadius: (water.length===1?3:0), cubicInterpolationMode:'monotone'
       }]},
       options: {
         parsing:false,
@@ -252,7 +260,7 @@ const yB = hasData ? yBoundsFromData(water, 0.08) : { min: 0, max: 50 };
         data: water,
         borderColor:'#0f0',
         backgroundColor:'rgba(29,233,29,0.18)',
-        fill:true, tension:0.3, pointRadius:0, cubicInterpolationMode:'monotone'
+        fill:true, tension:0.3, pointRadius: (water.length===1?3:0), cubicInterpolationMode:'monotone'
       }]},
       options: {
         parsing:false,
