@@ -548,51 +548,64 @@ function setupRangeButtons() {
     });
   });
 }
-/* ========= Water Tube (0–40 เขียว, 40–70 ส้ม, 70–120 แดง) ========= */
-function drawWaterTube(containerId, value, min = 0, max = fixedDepth) {
+/* ===== Water Arc Gauge (0–40 G, 40–70 O, 70–120 R) ===== */
+function drawWaterArc(containerId, value, min = 0, max = fixedDepth) {
   const el = document.getElementById(containerId);
   if (!el) return;
-
   const v = Math.max(min, Math.min(max, Number(value) || 0));
-  const ratio = (v - min) / (max - min);
 
-  let liquidColor = '#33d17a';       // green
-  if (v >= 70) liquidColor = '#ff6d00';     // red-ish
-  else if (v >= 40) liquidColor = '#ffb300'; // orange
+  // พื้นที่วาด
+  const cx = 250, cy = 220;     // center
+  const r  = 180;               // radius
+  const thick = 24;             // ความหนาแถบ
+  const startDeg = 180, endDeg = 0;
 
-  const W = 960;
-  const X = (cm) => 20 + (cm / (max - min)) * W;
+  const cm2ang = (cm) => startDeg + (endDeg - startDeg) * (cm - min) / (max - min);
+  const polar = (deg, rad) => {
+    const t = (deg - 90) * Math.PI / 180;
+    return [cx + rad * Math.cos(t), cy + rad * Math.sin(t)];
+  };
+  const arcPath = (a0, a1, rOut, rIn) => {
+    const [x0,y0] = polar(a0, rOut), [x1,y1] = polar(a1, rOut);
+    const [x2,y2] = polar(a1, rIn ), [x3,y3] = polar(a0, rIn );
+    const large = Math.abs(a1 - a0) > 180 ? 1 : 0;
+    return `
+      M ${x0} ${y0}
+      A ${rOut} ${rOut} 0 ${large} 1 ${x1} ${y1}
+      L ${x2} ${y2}
+      A ${rIn} ${rIn} 0 ${large} 0 ${x3} ${y3}
+      Z`;
+  };
+
+  // สีโซน
+  const colG = '#2ecc71', colO = '#ffb300', colR = '#e74c3c';
+  const a0 = cm2ang(0), a40 = cm2ang(40), a70 = cm2ang(70), a120 = cm2ang(max);
+  const aVal = cm2ang(v);
+
+  const needleLen = r - 12;
+  const [nx, ny] = polar(aVal, needleLen);
 
   const svg = `
-  <svg viewBox="0 0 1000 140" preserveAspectRatio="none">
-    <rect x="20" y="40" width="${W}" height="44" rx="22" ry="22"
-          fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.35)" stroke-width="3"/>
-    <clipPath id="tubeClip">
-      <rect x="20" y="40" width="${W}" height="44" rx="22" ry="22"/>
-    </clipPath>
+  <svg viewBox="0 0 500 240" preserveAspectRatio="xMidYMid meet">
+    <!-- พื้นหลังโค้งจาง -->
+    <path d="${arcPath(a0, a120, r, r - thick)}"
+          fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
 
-    <!-- โซนพื้นหลัง -->
-    <rect x="20"     y="40" width="${W*(40/max)}"          height="44" fill="rgba(51,209,122,0.25)" clip-path="url(#tubeClip)"/>
-    <rect x="${X(40)}" y="40" width="${W*((70-40)/max)}"   height="44" fill="rgba(255,179,0,0.25)"  clip-path="url(#tubeClip)"/>
-    <rect x="${X(70)}" y="40" width="${W*((max-70)/max)}"  height="44" fill="rgba(255,109,0,0.25)"  clip-path="url(#tubeClip)"/>
+    <!-- แถบโซน -->
+    <path d="${arcPath(a0,  a40,  r, r - thick)}" fill="${colG}" opacity="0.35"/>
+    <path d="${arcPath(a40, a70,  r, r - thick)}" fill="${colO}" opacity="0.35"/>
+    <path d="${arcPath(a70, a120, r, r - thick)}" fill="${colR}" opacity="0.35"/>
 
-    <!-- ของเหลว -->
-    <rect x="20" y="40" width="${W*ratio}" height="44" clip-path="url(#tubeClip)" fill="${liquidColor}"/>
+    <!-- เข็ม -->
+    <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="${cx}" cy="${cy}" r="5" fill="#fff"/>
 
-    <!-- เส้นแบ่งช่วง -->
-    <line x1="${X(40)}" y1="36" x2="${X(40)}" y2="88" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
-    <line x1="${X(70)}" y1="36" x2="${X(70)}" y2="88" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
+    <!-- ตัวเลขตรงกลางเข็ม -->
+    <text x="${cx}" y="${cy - 18}" class="arc-label" style="font-size:18px;">${v.toFixed(1)} cm</text>
 
-    <!-- เข็ม/ตัวเลข -->
-    <line x1="${20 + W*ratio}" y1="28" x2="${20 + W*ratio}" y2="96" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="${20 + W*ratio}" cy="28" r="4" fill="#fff"/>
-    <text x="${20 + W*ratio}" y="24" class="tube-label" style="font-size:1.1rem;">${v.toFixed(1)} cm</text>
-
-    <!-- ticks -->
-    <text x="${X(0)}"   y="120" class="tube-tick">0</text>
-    <text x="${X(40)}"  y="120" class="tube-tick">40</text>
-    <text x="${X(70)}"  y="120" class="tube-tick">70</text>
-    <text x="${X(max)}" y="120" class="tube-tick" text-anchor="end">${max}</text>
+    <!-- ป้ายปลายซ้าย/ขวา -->
+    <text x="${polar(a0, r+10)[0]}" y="${polar(a0, r+10)[1]}" class="arc-end" text-anchor="start">0</text>
+    <text x="${polar(a120, r+10)[0]}" y="${polar(a120, r+10)[1]}" class="arc-end" text-anchor="end">${max}</text>
   </svg>`;
   el.innerHTML = svg;
 }
