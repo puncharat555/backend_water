@@ -356,3 +356,12 @@ tbody tr:hover {
 .water-gauge-card:hover {
   background: rgba(255,255,255,0.08) !important;
 }
+/* จัดปุ่มช่วงเวลาให้อยู่ตรงกลางในกราฟ */
+#timeRangeButtons,
+#currentTimeRangeButtons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
