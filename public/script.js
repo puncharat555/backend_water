@@ -135,7 +135,7 @@ async function fetchHistoricalData(range = '30d') {
   return await res.json();
 }
 
-// ใช้ timestamp เป็นสำรอง และไม่ push ซ้ำ
+// ใช้ timestamp เป็นสำรอง และไม่ push ซ้ำ + รองรับสตริงมีหน่วย/รับค่า 0
 function parseChartData(rows) {
   const water = [], v1 = [], v2 = [], i1 = [], i2 = [];
   for (const item of rows) {
@@ -144,15 +144,15 @@ function parseChartData(rows) {
     if (!ts) continue;
 
     if (item.distance || item.distance === 0) {
-      const level = Number((fixedDepth - item.distance).toFixed(2));
+      const level = Number((fixedDepth - Number(item.distance)).toFixed(2));
       if (!Number.isNaN(level) && level >= 0 && level <= 100) {
         water.push({ x: ts, y: level });
       }
     }
 
     const pushNum = (arr, v) => {
-      const n = Number(v);
-      // ✅ แก้: ยอมรับค่า 0 ด้วย (เดิม > 0)
+      if (v === null || v === undefined) return;
+      const n = parseFloat(String(v).replace(/[^\d.+-eE]/g, '')); // "12.3 V" -> 12.3
       if (Number.isFinite(n) && n >= 0) arr.push({ x: ts, y: n });
     };
     pushNum(v1, item.v_node1);
@@ -293,7 +293,7 @@ async function createOneHourChart() {
 async function createBatteryChart(range = '1d') {
   try {
     const rows = await fetchHistoricalData(range);
-    const { v1, v2 } = parseChartData(rows);
+    let { v1, v2 } = parseChartData(rows);
 
     let merged = (v1.length?v1:[]).concat(v2.length?v2:[]).sort((a,b)=>a.x-b.x);
 
@@ -305,7 +305,10 @@ async function createBatteryChart(range = '1d') {
       if (latest) {
         const RANGE_MS = { '1d': 24, '7d': 24*7, '30d': 24*30 }[range] * 60 * 60 * 1000;
         const start = new Date(latest.x.getTime() - RANGE_MS);
-        merged = all.filter(pt => pt.x >= start && pt.x <= latest.x);
+        // อัปเดตซีรีส์จริงตามหน้าต่าง fallback
+        v1 = p.v1.filter(pt => pt.x >= start && pt.x <= latest.x);
+        v2 = p.v2.filter(pt => pt.x >= start && pt.x <= latest.x);
+        merged = v1.concat(v2).sort((a,b)=>a.x-b.x);
       }
     }
 
@@ -343,7 +346,7 @@ async function createBatteryChart(range = '1d') {
 async function createCurrentChart(range = '1d') {
   try {
     const rows = await fetchHistoricalData(range);
-    const { i1, i2 } = parseChartData(rows);
+    let { i1, i2 } = parseChartData(rows);
 
     let merged = (i1.length?i1:[]).concat(i2.length?i2:[]).sort((a,b)=>a.x-b.x);
 
@@ -355,7 +358,10 @@ async function createCurrentChart(range = '1d') {
       if (latest) {
         const RANGE_MS = { '1d': 24, '7d': 24*7, '30d': 24*30 }[range] * 60 * 60 * 1000;
         const start = new Date(latest.x.getTime() - RANGE_MS);
-        merged = all.filter(pt => pt.x >= start && pt.x <= latest.x);
+        // อัปเดตซีรีส์จริงตามหน้าต่าง fallback
+        i1 = p.i1.filter(pt => pt.x >= start && pt.x <= latest.x);
+        i2 = p.i2.filter(pt => pt.x >= start && pt.x <= latest.x);
+        merged = i1.concat(i2).sort((a,b)=>a.x-b.x);
       }
     }
 
@@ -419,18 +425,18 @@ async function loadData() {
       document.getElementById('waterLevelNode1').innerText = `ระดับน้ำปัจจุบัน: ${level} cm`;
 
       document.getElementById('rssiNode1').innerText   = (latest.rssi_node1 && latest.rssi_node1 !== 0) ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
-      document.getElementById('voltageNode1').innerText = (latest.v_node1 && latest.v_node1 >= 0) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
-      document.getElementById('currentNode1').innerText = (latest.i_node1 && latest.i_node1 >= 0) ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
+      document.getElementById('voltageNode1').innerText = (latest.v_node1 || latest.v_node1 === 0) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
+      document.getElementById('currentNode1').innerText = (latest.i_node1 || latest.i_node1 === 0) ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
       document.getElementById('timeNode1').innerText    = latest.time_node1 || latest.timestamp || 'เวลาวัด: -';
 
       document.getElementById('rssiNode2').innerText   = (latest.rssi_node2 && latest.rssi_node2 !== 0) ? `RSSI: ${latest.rssi_node2}` : 'RSSI: -';
-      document.getElementById('voltageNode2').innerText = (latest.v_node2 && latest.v_node2 >= 0) ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
-      document.getElementById('currentNode2').innerText = (latest.i_node2 && latest.i_node2 >= 0) ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
+      document.getElementById('voltageNode2').innerText = (latest.v_node2 || latest.v_node2 === 0) ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
+      document.getElementById('currentNode2').innerText = (latest.i_node2 || latest.i_node2 === 0) ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
       document.getElementById('timeNode2').innerText    = latest.time_node2 || latest.timestamp || 'เวลาวัด: -';
     }
 
-    drawVoltageGauge('voltGauge1', (latest?.v_node1 >= 0 ? latest.v_node1 : 10), 10, 12.9);
-    drawVoltageGauge('voltGauge2', (latest?.v_node2 >= 0 ? latest.v_node2 : 10), 10, 12.9);
+    drawVoltageGauge('voltGauge1', (latest?.v_node1 ?? 10), 10, 12.9);
+    drawVoltageGauge('voltGauge2', (latest?.v_node2 ?? 10), 10, 12.9);
 
   } catch (error) {
     console.error('Load data error:', error);
