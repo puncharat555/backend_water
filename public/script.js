@@ -687,106 +687,136 @@ window.onload = async () => {
 /* ===== Export helpers ===== */
 
 // ดึงข้อมูลตารางเป็น array (ใช้ตัวแปร allData ที่มีอยู่แล้ว)
-function getTableRowsForExport() {
-  return allData.map(item => ([
-    Number(item.distance ?? '').toFixed(1),
-    (fixedDepth - Number(item.distance ?? 0)).toFixed(1),
-    (item.rssi_node1 && item.rssi_node1 !== 0) ? item.rssi_node1 : '',
-    (item.rssi_node2 && item.rssi_node2 !== 0) ? item.rssi_node2 : '',
-    (item.v_node1 ?? '') && `${item.v_node1} V`,
-    (item.i_node1 ?? '') && `${item.i_node1} mA`,
-    (item.v_node2 ?? '') && `${item.v_node2} V`,
-    (item.i_node2 ?? '') && `${item.i_node2} mA`,
-    item.time_node1 || item.timestamp || '',
-    item.time_node2 || item.timestamp || ''
-  ]));
+async function waitChartsReady() {
+  const charts = [
+    waterLevelChartInstance,
+    oneHourChartInstance,
+    batteryChartInstance,
+    currentChartInstance
+  ].filter(Boolean);
+
+  charts.forEach(ch => {
+    if (!ch) return;
+    ch.options.animation = false;
+    ch.resize();
+    ch.update('none');
+  });
+
+  // รอสองเฟรมให้ layout/scale เสถียร
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 }
 
-// แปลง DOM element เป็นภาพด้วย html2canvas (ใช้กับเกจที่เป็น SVG/HTML)
-async function elementToPng(el, scale = 2) {
+// แปลง element → PNG (พื้นหลังขาว, useCORS, สเกลสูง)
+async function elementToPngFixed(el, scale = 2) {
   if (!el) return null;
-  const canvas = await html2canvas(el, { backgroundColor: null, scale });
+  const canvas = await html2canvas(el, {
+    backgroundColor: '#ffffff',
+    useCORS: true,
+    allowTaint: false,
+    scale
+  });
   return canvas.toDataURL('image/png');
 }
 
-// ส่งออก PDF: เกจน้ำ + 3 กราฟ + สรุปข้อมูลล่าสุด + ตาราง
-// แปลง Chart.js เป็น PNG ที่คมขึ้นและรอเรนเดอร์เสร็จ
-async function chartToPNG(chart) {
+// แปลง Chart.js → PNG (มี fallback เป็น element capture)
+async function chartToPNGFixed(chart) {
   if (!chart) return null;
-  // รอเฟรมถัดไปให้ layout เสถียร
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-  // บังคับอัปเดต/รีไซส์ (กันโดนตัด)
-  chart.resize();
-  chart.update('none');
-  // ใช้ DPR สูงเพื่อความคม
-  const prev = chart.options.devicePixelRatio;
-  chart.options.devicePixelRatio = 2;
-  chart.resize();
-  const dataUrl = chart.toBase64Image('image/png', 1.0);
-  // คืนค่า DPR เดิม
-  chart.options.devicePixelRatio = prev;
-  chart.resize();
-  return dataUrl;
+  try {
+    await waitChartsReady();
+    const prev = chart.options.devicePixelRatio;
+    chart.options.devicePixelRatio = 2;   // คมขึ้น
+    chart.resize();
+    const dataUrl = chart.toBase64Image('image/png', 1.0);
+    chart.options.devicePixelRatio = prev;
+    chart.resize();
+    return dataUrl;
+  } catch (e) {
+    // เผื่อโดน CORS/block → จับภาพจาก DOM แทน
+    const container = chart.canvas?.parentElement || chart.canvas;
+    return elementToPngFixed(container, 2);
+  }
 }
 
-// ===== ส่งออก PDF (แก้ใหม่ กันกราฟขาด) =====
+// วางรูปแบบไหลขึ้นหน้าใหม่อัตโนมัติ
+function addImageWithFlow(doc, imgData, x, y, w, h, margin) {
+  const pageH = doc.internal.pageSize.getHeight();
+  if (y + h + margin > pageH) {
+    doc.addPage();
+    y = margin;
+  }
+  doc.addImage(imgData, 'PNG', x, y, w, h);
+  return y + h + 10; // เว้นบรรทัด
+}
+
+// header เป็น DOM ชั่วคราวเพื่อรองรับฟอนต์ไทย แล้วแคปเป็นรูป
+async function buildHeaderImage() {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'width:1024px;padding:16px 20px;background:#fff;color:#222;font-family:Sarabun,Segoe UI,Tahoma;';
+  wrap.innerHTML = `
+    <div style="font-size:22px;font-weight:700;line-height:1.4;">
+      Water Level Monitoring — รายงานสรุป
+    </div>
+    <div style="font-size:13px;opacity:.8;">
+      วันที่พิมพ์: ${new Intl.DateTimeFormat('th-TH',{ dateStyle:'medium', timeStyle:'short' }).format(new Date())}
+    </div>
+  `;
+  document.body.appendChild(wrap);
+  const png = await elementToPngFixed(wrap, 2);
+  document.body.removeChild(wrap);
+  return png;
+}
+
+// ===== main: ส่งออก PDF (แทนของเดิมชื่อเดียวกัน) =====
 async function exportDashboardPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'a4' });
+
   const margin = 28;
-  const pageW = doc.internal.pageSize.getWidth();
+  const pageW  = doc.internal.pageSize.getWidth();
   let y = margin;
 
-  // หัวรายงาน
-  doc.setFont('Helvetica', 'bold'); doc.setFontSize(20);
-  doc.text('Water Level Monitoring — รายงานสรุป', margin, y);
-  doc.setFont('Helvetica', 'normal'); doc.setFontSize(11);
-  doc.text(
-    `วันที่พิมพ์: ${new Intl.DateTimeFormat('th-TH',{dateStyle:'medium', timeStyle:'short'}).format(new Date())}`,
-    margin, y += 20
-  );
+  // Header
+  const headPng = await buildHeaderImage();
+  if (headPng) y = addImageWithFlow(doc, headPng, margin, y, pageW - margin*2, 60, margin);
 
-  // การ์ดเกจน้ำ (จับภาพด้วย html2canvas เพื่อเก็บตัวหนังสือ/สีครบ)
+  // เกจระดับน้ำ (ทั้งการ์ด) — ถ้าไม่มี .water-gauge-card จะ fallback เป็น #waterGauge
   const waterCard = document.querySelector('.water-gauge-card') || document.getElementById('waterGauge');
   if (waterCard) {
-    const png = await elementToPng(waterCard, 2);
-    if (png) {
-      const w = pageW - margin*2;   // เต็มความกว้าง (ซ้าย→ขวา)
-      const h = 180;
-      doc.addImage(png, 'PNG', margin, y+6, w, h);
-      y += h + 18;
-    }
+    const waterPng = await elementToPngFixed(waterCard, 2);
+    if (waterPng) y = addImageWithFlow(doc, waterPng, margin, y, pageW - margin*2, 180, margin);
   }
 
-  // กราฟ: ใส่ทีละรูป เต็มความกว้าง ป้องกันโดนตัด
+  // กราฟ (ทีละรูป)
   const graphs = [
-    await chartToPNG(waterLevelChartInstance),
-    await chartToPNG(oneHourChartInstance),
-    await chartToPNG(batteryChartInstance),
-    await chartToPNG(currentChartInstance)
+    await chartToPNGFixed(waterLevelChartInstance),
+    await chartToPNGFixed(oneHourChartInstance),
+    await chartToPNGFixed(batteryChartInstance),
+    await chartToPNGFixed(currentChartInstance)
   ].filter(Boolean);
 
   for (const g of graphs) {
-    // เช็กว่าพื้นที่พอไหม ไม่พอขึ้นหน้าใหม่
-    const imgH = 210, gap = 10;
-    if (y + imgH + margin > doc.internal.pageSize.getHeight()) {
-      doc.addPage(); y = margin;
-    }
-    doc.addImage(g, 'PNG', margin, y, pageW - margin*2, imgH);
-    y += imgH + gap;
+    y = addImageWithFlow(doc, g, margin, y, pageW - margin*2, 210, margin);
   }
 
-  // สรุปข้อมูลล่าสุด (สั้นๆ)
+  // สรุปล่าสุด (Text)
   const latest = allData[0];
   if (latest) {
-    if (y + 60 + margin > doc.internal.pageSize.getHeight()) { doc.addPage(); y = margin; }
-    doc.setFont('Helvetica','bold'); doc.setFontSize(12); doc.text('สรุปล่าสุด', margin, y);
-    doc.setFont('Helvetica','normal'); doc.setFontSize(11);
+    const pageH = doc.internal.pageSize.getHeight();
+    if (y + 60 + margin > pageH) { doc.addPage(); y = margin; }
     const level = (fixedDepth - Number(latest.distance ?? 0)).toFixed(1);
-    doc.text(`ระดับน้ำ: ${level} cm | RSSI N1/N2: ${latest.rssi_node1 ?? '-'} / ${latest.rssi_node2 ?? '-'} | `
-            + `V/I N1: ${latest.v_node1 ?? '-'}V / ${latest.i_node1 ?? '-'}mA | `
-            + `V/I N2: ${latest.v_node2 ?? '-'}V / ${latest.i_node2 ?? '-'}mA | `
-            + `เวลา: ${latest.time_node1 || latest.timestamp || '-'}`, margin, y += 16);
+
+    doc.setFont('Helvetica','bold'); doc.setFontSize(12);
+    doc.text('สรุปล่าสุด', margin, y);
+    doc.setFont('Helvetica','normal'); doc.setFontSize(11);
+
+    const line = `ระดับน้ำ: ${level} cm | RSSI N1/N2: ${latest.rssi_node1 ?? '-'} / ${latest.rssi_node2 ?? '-'} | `
+               + `V/I N1: ${latest.v_node1 ?? '-'}V / ${latest.i_node1 ?? '-'}mA | `
+               + `V/I N2: ${latest.v_node2 ?? '-'}V / ${latest.i_node2 ?? '-'}mA | `
+               + `เวลา: ${latest.time_node1 || latest.timestamp || '-'}`;
+
+    // รองรับข้อความยาว — ตัดบรรทัดอัตโนมัติ
+    const wrapped = doc.splitTextToSize(line, pageW - margin*2);
+    doc.text(wrapped, margin, y + 16);
   }
 
   doc.save(`Water_Report_${new Date().toISOString().slice(0,10)}.pdf`);
