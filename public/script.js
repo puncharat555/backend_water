@@ -96,7 +96,7 @@ function drawVoltageGauge(containerId, value, min = 10, max = 12.9) {
   const v = Math.max(min, Math.min(max, Number(value) || min));
   const w = el.clientWidth || 280, h = el.clientHeight || 150;
   const cx = w/2, cy = h-12, r = Math.min(w*0.45, h*0.9);
-  const start = -Math.PI, end = 0; // ครึ่งวง 180°
+  const start = -Math.PI, end = 0;
   const t = (v - min) / (max - min);
   const angle = start + (end - start) * t;
 
@@ -135,7 +135,7 @@ async function fetchHistoricalData(range = '30d') {
   return await res.json();
 }
 
-// ✅ เวอร์ชันแก้: ใช้ timestamp เป็นสำรอง และไม่ push ซ้ำ
+// ใช้ timestamp เป็นสำรอง และไม่ push ซ้ำ
 function parseChartData(rows) {
   const water = [], v1 = [], v2 = [], i1 = [], i2 = [];
   for (const item of rows) {
@@ -174,14 +174,25 @@ function parseChartData(rows) {
 }
 
 /* ---------- Charts ---------- */
+// ย้อนหลัง (1d/7d/30d): ถ้าช่วงว่าง → แสดงหน้าต่างที่ "จบที่ข้อมูลล่าสุด"
 async function createWaterLevelChart(range = '1d') {
   try {
-    const rows = await fetchHistoricalData(range);
-    const { water } = parseChartData(rows);
+    let rows = await fetchHistoricalData(range);
+    let { water } = parseChartData(rows);
 
-    const now = new Date();
-    const xMin = water[0]?.x ?? new Date(now.getTime() - 24*60*60*1000);
-    const xMax = water.at(-1)?.x ?? now;
+    if (water.length === 0) {
+      const rowsWide = await fetchHistoricalData('30d');
+      const allWater = parseChartData(rowsWide).water;
+      const latest = allWater.at(-1);
+      if (latest) {
+        const RANGE_MS = { '1d': 24, '7d': 24*7, '30d': 24*30 }[range] * 60 * 60 * 1000;
+        const start = new Date(latest.x.getTime() - RANGE_MS);
+        water = allWater.filter(p => p.x >= start && p.x <= latest.x);
+      }
+    }
+
+    const xMin = water[0]?.x;
+    const xMax = water.at(-1)?.x;
     const yB = water.length ? yBoundsFromData(water, 0.2) : { min: 0, max: 50 };
 
     const canvas = document.getElementById('waterLevelChart30d');
@@ -200,7 +211,7 @@ async function createWaterLevelChart(range = '1d') {
       }]},
       options: {
         parsing:false,
-        spanGaps:true, // เชื่อมช่องว่างทั้งหมด
+        spanGaps:true,
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts(range, xMin, xMax),
@@ -209,7 +220,7 @@ async function createWaterLevelChart(range = '1d') {
         plugins:{
           legend:{ labels:{ color:'white' } },
           tooltip:{ mode:'index', intersect:false },
-          subtitle:{ display: water.length===0, text:'ไม่มีข้อมูลในช่วงนี้', color:'#ddd' }
+          subtitle:{ display: water.length===0, text:'ยังไม่เคยมีข้อมูลให้แสดง', color:'#ddd' }
         },
         responsive:true, maintainAspectRatio:false
       }
@@ -217,7 +228,7 @@ async function createWaterLevelChart(range = '1d') {
   } catch (err) { console.error('Error creating water chart:', err); }
 }
 
-// 1 ชั่วโมง (อิง “ข้อมูลล่าสุด” ถ้าชั่วโมงปัจจุบันว่าง)
+// 1 ชั่วโมง: อิงข้อมูลล่าสุด ถ้าช่วงปัจจุบันว่าง + กรอง outlier ≤ 50 cm
 async function createOneHourChart() {
   try {
     let rows = await fetchHistoricalData('1h');
@@ -234,19 +245,13 @@ async function createOneHourChart() {
       }
     }
 
-    // ✅ กรอง outlier เฉพาะกราฟ 1 ชั่วโมง
     water = water.filter(p => p.y <= 50);
 
     const hasData = water.length > 0;
     let xMin, xMax;
-
     if (hasData) {
       xMin = water[0].x;
       xMax = water.at(-1).x;
-    } else {
-      const now = new Date();
-      xMin = new Date(now.getTime() - 60*60*1000);
-      xMax = now;
     }
 
     const yB = hasData ? yBoundsFromData(water, 0.08) : { min: 0, max: 50 };
@@ -267,7 +272,7 @@ async function createOneHourChart() {
       }]},
       options: {
         parsing:false,
-        spanGaps: 20*60*1000, // อนุญาตเว้นช่องว่างถึง 20 นาที
+        spanGaps: 20*60*1000,
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts('1h', xMin, xMax),
@@ -276,7 +281,7 @@ async function createOneHourChart() {
         plugins:{
           legend:{ labels:{ color:'white' } },
           tooltip:{ mode:'index', intersect:false },
-          subtitle:{ display: !hasData, text: 'ไม่พบข้อมูล 1 ชั่วโมงล่าสุด — กำลังรอข้อมูลใหม่', color:'#ddd' }
+          subtitle:{ display: !hasData, text: 'ยังไม่เคยมีข้อมูลให้แสดง', color:'#ddd' }
         },
         responsive:true, maintainAspectRatio:false
       }
@@ -289,10 +294,22 @@ async function createBatteryChart(range = '1d') {
     const rows = await fetchHistoricalData(range);
     const { v1, v2 } = parseChartData(rows);
 
-    const merged = (v1.length?v1:[]).concat(v2.length?v2:[]).sort((a,b)=>a.x-b.x);
-    const now = new Date();
-    const xMin = merged[0]?.x ?? new Date(now.getTime() - 24*60*60*1000);
-    const xMax = merged.at(-1)?.x ?? now;
+    let merged = (v1.length?v1:[]).concat(v2.length?v2:[]).sort((a,b)=>a.x-b.x);
+
+    if (merged.length === 0) {
+      const rowsWide = await fetchHistoricalData('30d');
+      const p = parseChartData(rowsWide);
+      const all = (p.v1.length?p.v1:[]).concat(p.v2.length?p.v2:[]).sort((a,b)=>a.x-b.x);
+      const latest = all.at(-1);
+      if (latest) {
+        const RANGE_MS = { '1d': 24, '7d': 24*7, '30d': 24*30 }[range] * 60 * 60 * 1000;
+        const start = new Date(latest.x.getTime() - RANGE_MS);
+        merged = all.filter(pt => pt.x >= start && pt.x <= latest.x);
+      }
+    }
+
+    const xMin = merged[0]?.x;
+    const xMax = merged.at(-1)?.x;
 
     const canvas = document.getElementById('batteryChart');
     setupHiDPICanvas(canvas);
@@ -327,10 +344,22 @@ async function createCurrentChart(range = '1d') {
     const rows = await fetchHistoricalData(range);
     const { i1, i2 } = parseChartData(rows);
 
-    const merged = (i1.length?i1:[]).concat(i2.length?i2:[]).sort((a,b)=>a.x-b.x);
-    const now = new Date();
-    const xMin = merged[0]?.x ?? new Date(now.getTime() - 24*60*60*1000);
-    const xMax = merged.at(-1)?.x ?? now;
+    let merged = (i1.length?i1:[]).concat(i2.length?i2:[]).sort((a,b)=>a.x-b.x);
+
+    if (merged.length === 0) {
+      const rowsWide = await fetchHistoricalData('30d');
+      const p = parseChartData(rowsWide);
+      const all = (p.i1.length?p.i1:[]).concat(p.i2.length?p.i2:[]).sort((a,b)=>a.x-b.x);
+      const latest = all.at(-1);
+      if (latest) {
+        const RANGE_MS = { '1d': 24, '7d': 24*7, '30d': 24*30 }[range] * 60 * 60 * 1000;
+        const start = new Date(latest.x.getTime() - RANGE_MS);
+        merged = all.filter(pt => pt.x >= start && pt.x <= latest.x);
+      }
+    }
+
+    const xMin = merged[0]?.x;
+    const xMax = merged.at(-1)?.x;
     const yB = merged.length ? yBoundsFromData(merged, 0.2) : { min: 0, max: 500 };
 
     const canvas = document.getElementById('currentChart');
@@ -370,14 +399,12 @@ async function loadData() {
     if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
     const data = await res.json();
 
-    // เก็บเฉพาะระยะที่มี (รวม 0)
     allData = (Array.isArray(data) ? data : []).filter(item => (item.distance || item.distance === 0));
 
-    // เรียงใหม่ -> เก่า จากเวลา (ใช้ time_node1/2 หรือ timestamp)
     allData.sort((a, b) => {
       const ta = parseToDate(a.time_node1 ?? a.time_node2 ?? a.timestamp)?.getTime() ?? 0;
       const tb = parseToDate(b.time_node1 ?? b.time_node2 ?? b.timestamp)?.getTime() ?? 0;
-      return tb - ta;
+      return tb - ta; // ใหม่ -> เก่า
     });
     currentIndex = 0;
 
