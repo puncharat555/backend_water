@@ -51,6 +51,9 @@ body {
 
 .node-box {
   background: rgba(255,255,255,0.08);
+  border-radius: 15px;
+  padding: 18px 22px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
 }
 
 .node-box:hover {
@@ -359,8 +362,4 @@ tbody tr:hover {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 15px;
-}
-/* ปิด hover effect สำหรับการ์ดเกจ */
-.node-box.gauge-box:hover {
-  background: rgba(255,255,255,0.08) !important;
 }
