@@ -1,4 +1,159 @@
-<!doctype html>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>Water Level Monitoring</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20190511/ourmid/pngtree-vector-drop-icon-png-image_1029752.jpg">
+</head>
+<body>
+  <h1 class="title">Water Level Monitoring</h1>
+
+  <div class="water-level-display">
+    <div class="water-depth">
+      <p id="waterLevelNode1" class="main-water-level">ระดับน้ำปัจจุบัน: -</p>
+    </div>
+  </div>
+
+  <!-- กล่องโหนด: แยกเป็น 2 กล่อง/โหนด (ข้อมูล | เกจ) -->
+  <div class="container nodes-grid">
+    <!-- Node 1 : ข้อมูล -->
+    <div class="node-box info-box">
+      <h2>Node 1</h2>
+      <p id="rssiNode1">RSSI: -</p>
+      <p id="voltageNode1">แรงดัน: -</p>
+      <p id="currentNode1">กระแส: -</p>
+      <p id="timeNode1">เวลาวัด: -</p>
+    </div>
+    <!-- Node 1 : เกจ -->
+    <div class="node-box gauge-box">
+      <h2>แรงดันแบตเตอรี่ (Node 1)</h2>
+      <div id="voltGauge1" class="gauge"></div>
+      <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
+    </div>
+
+    <!-- Node 2 : ข้อมูล -->
+    <div class="node-box info-box">
+      <h2>Node 2</h2>
+      <p id="rssiNode2">RSSI: -</p>
+      <p id="voltageNode2">แรงดัน: -</p>
+      <p id="currentNode2">กระแส: -</p>
+      <p id="timeNode2">เวลาวัด: -</p>
+    </div>
+    <!-- Node 2 : เกจ -->
+    <div class="node-box gauge-box">
+      <h2>แรงดันแบตเตอรี่ (Node 2)</h2>
+      <div id="voltGauge2" class="gauge"></div>
+      <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
+    </div>
+  </div>
+
+  <div class="charts-container">
+    <div class="chart-box">
+      <h3>กราฟระดับน้ำย้อนหลัง</h3>
+      <div id="timeRangeButtons" style="text-align:center; margin-bottom:15px;">
+        <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
+        <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
+        <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
+      </div>
+      <div class="chart-canvas">
+        <canvas id="waterLevelChart30d"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h3>กราฟระดับน้ำย้อนหลัง 1 ชั่วโมง</h3>
+      <div class="chart-canvas">
+        <canvas id="waterLevelChart1h"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h3>กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2</h3>
+      <div id="batteryTimeRangeButtons" style="text-align:center; margin-bottom:10px;">
+        <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
+        <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
+        <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
+      </div>
+      <div class="chart-canvas">
+        <canvas id="batteryChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h3>กราฟกระแส (Current mA)</h3>
+      <div id="currentTimeRangeButtons" style="text-align:center; margin-bottom:10px;">
+        <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
+        <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
+        <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
+      </div>
+      <div class="chart-canvas">
+        <canvas id="currentChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-box map-box">
+    <h3>ตำแหน่งอุปกรณ์</h3>
+    <div id="map" style="height: 300px; border:1px solid rgba(255,255,255,0.3); border-radius: 10px;"></div>
+  </div>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+  <script>
+    const map = L.map('map').setView([19.030471, 99.884592], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+    const locations = [
+      [19.030471, 99.884592],
+      [19.028255, 99.892867],
+      [19.026849, 99.900480],
+    ];
+    locations.forEach((loc, i) => {
+      L.marker(loc).addTo(map).bindTooltip(
+        ["จุดวัดระดับน้ำ","จุดส่งต่อข้อมูล","จุดรับข้อมูล"][i],
+        { permanent:true, direction:'right', offset:[10,0], className:'my-tooltip' }
+      ).openTooltip();
+    });
+    const grayLine = L.polyline(locations, { color:'gray', weight:5 }).addTo(map);
+    map.fitBounds(grayLine.getBounds());
+    let blueLine, progress = 0;
+    function interpolatePoints(points, t){
+      const total = points.length - 1;
+      const index = Math.floor(t*total);
+      const rest  = t*total - index;
+      if (index >= total) return points[total];
+      const lat = points[index][0] + (points[index+1][0]-points[index][0])*rest;
+      const lng = points[index][1] + (points[index+1][1]-points[index][1])*rest;
+      return [lat,lng];
+    }
+    function updateBlueLine(){
+      if (blueLine) map.removeLayer(blueLine);
+      const pts = []; for (let t=0; t<=progress; t+=0.01) pts.push(interpolatePoints(locations, t));
+      blueLine = L.polyline(pts, { color:'deepskyblue', weight:4 }).addTo(map);
+      progress += 0.005; if (progress > 1) progress = 0;
+    }
+    setInterval(updateBlueLine, 30);
+  </script>
+
+  <div class="table-wrapper">
+    <h3>
+      ประวัติข้อมูล
+      <span class="error-toggle" onclick="toggleErrorBox()" title="คลิกเพื่อแสดงข้อมูลผิดปกติ">❗</span>
+    </h3>
+    <div id="errorBox" class="error-box hidden">
+      <h4>รายการข้อมูลผิดปกติ</h4>
+      <ul id="errorList"></ul>
+    </div>
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>ระดับน้ำดิบ (cm)</th>
+          <th>ระดับน้ำ (cm)</th><!doctype html>
 <html lang="th">
 <head>
   <meta charset="utf-8" />
@@ -159,5 +314,26 @@
   </main>
 
   <script src="./script.js"></script>
+</body>
+</html>
+
+          <th>RSSI Node1</th>
+          <th>RSSI Node2</th>
+          <th>V Node1</th>
+          <th>I Node1</th>
+          <th>V Node2</th>
+          <th>I Node2</th>
+          <th>เวลาวัด Node1</th>
+          <th>เวลาวัด Node2</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div id="moreButtonContainer" style="text-align: center; margin-top: 10px;"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="script.js"></script>
 </body>
 </html>
