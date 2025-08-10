@@ -1,176 +1,163 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <title>Water Level Monitoring</title>
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20190511/ourmid/pngtree-vector-drop-icon-png-image_1029752.jpg">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Water Dashboard</title>
+  <link rel="stylesheet" href="./styles.css" />
+
+  <!-- Chart.js + time adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
 </head>
 <body>
-  <h1 class="title">Water Level Monitoring</h1>
+  <!-- Topbar -->
+  <header class="topbar">
+    <button id="hamburgerBtn" class="hamburger" aria-label="เปิดเมนู" aria-expanded="false">☰</button>
+    <h1>Water Dashboard</h1>
+  </header>
 
-  <div class="water-level-display">
-    <div class="water-depth">
-      <p id="waterLevelNode1" class="main-water-level">ระดับน้ำปัจจุบัน: -</p>
-    </div>
-  </div>
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar" aria-hidden="true">
+    <nav>
+      <a class="nav-item" data-target="section-now">ค่าปัจจุบัน</a>
+      <a class="nav-item" data-target="section-water">กราฟระดับน้ำ</a>
+      <a class="nav-item" data-target="section-battery">กราฟแบตเตอรี่</a>
+      <a class="nav-item" data-target="section-current">กราฟกระแส</a>
+      <a class="nav-item" data-target="section-table">ตารางข้อมูล</a>
+      <a class="nav-item" data-target="section-alerts">แจ้งเตือน</a>
+    </nav>
+  </aside>
+  <div id="backdrop" class="backdrop"></div>
 
-  <!-- กล่องโหนด: แยกเป็น 2 กล่อง/โหนด (ข้อมูล | เกจ) -->
-  <div class="container nodes-grid">
-    <!-- Node 1 : ข้อมูล -->
-    <div class="node-box info-box">
-      <h2>Node 1</h2>
-      <p id="rssiNode1">RSSI: -</p>
-      <p id="voltageNode1">แรงดัน: -</p>
-      <p id="currentNode1">กระแส: -</p>
-      <p id="timeNode1">เวลาวัด: -</p>
-    </div>
-    <!-- Node 1 : เกจ -->
-    <div class="node-box gauge-box">
-      <h2>แรงดันแบตเตอรี่ (Node 1)</h2>
-      <div id="voltGauge1" class="gauge"></div>
-      <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
-    </div>
+  <main class="container">
+    <!-- ปัจจุบัน -->
+    <section id="section-now" class="card">
+      <h2>ค่าล่าสุด</h2>
+      <div class="now-grid">
+        <div class="now-box">
+          <div id="waterTubeGauge" class="water-tube">
+            <div class="label" id="waterTubeLabel">-- cm</div>
+          </div>
+          <div class="kpi">
+            <div id="waterLevelNode1">ระดับน้ำปัจจุบัน: -</div>
+          </div>
+        </div>
 
-    <!-- Node 2 : ข้อมูล -->
-    <div class="node-box info-box">
-      <h2>Node 2</h2>
-      <p id="rssiNode2">RSSI: -</p>
-      <p id="voltageNode2">แรงดัน: -</p>
-      <p id="currentNode2">กระแส: -</p>
-      <p id="timeNode2">เวลาวัด: -</p>
-    </div>
-    <!-- Node 2 : เกจ -->
-    <div class="node-box gauge-box">
-      <h2>แรงดันแบตเตอรี่ (Node 2)</h2>
-      <div id="voltGauge2" class="gauge"></div>
-      <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
-    </div>
-  </div>
+        <div class="now-box">
+          <h3>Node 1</h3>
+          <div class="gauge" id="voltGauge1"></div>
+          <div class="kpi">
+            <div id="rssiNode1">RSSI: -</div>
+            <div id="voltageNode1">แรงดัน: -</div>
+            <div id="currentNode1">กระแส: -</div>
+            <div id="timeNode1">เวลาวัด: -</div>
+          </div>
+        </div>
 
-  <div class="charts-container">
-    <div class="chart-box">
-      <h3>กราฟระดับน้ำย้อนหลัง</h3>
-      <div id="timeRangeButtons" style="text-align:center; margin-bottom:15px;">
-        <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
-        <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
-        <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
+        <div class="now-box">
+          <h3>Node 2</h3>
+          <div class="gauge" id="voltGauge2"></div>
+          <div class="kpi">
+            <div id="rssiNode2">RSSI: -</div>
+            <div id="voltageNode2">แรงดัน: -</div>
+            <div id="currentNode2">กระแส: -</div>
+            <div id="timeNode2">เวลาวัด: -</div>
+          </div>
+        </div>
       </div>
-      <div class="chart-canvas">
+    </section>
+
+    <!-- ระดับน้ำ -->
+    <section id="section-water" class="card">
+      <div class="card-head">
+        <h2>กราฟระดับน้ำย้อนหลัง</h2>
+        <div id="timeRangeButtons" class="range-group">
+          <button class="range-btn" data-range="1d">1 วัน</button>
+          <button class="range-btn" data-range="7d">7 วัน</button>
+          <button class="range-btn" data-range="30d">30 วัน</button>
+        </div>
+      </div>
+      <div class="chart-wrap">
         <canvas id="waterLevelChart30d"></canvas>
       </div>
-    </div>
+    </section>
 
-    <div class="chart-box">
-      <h3>กราฟระดับน้ำย้อนหลัง 1 ชั่วโมง</h3>
-      <div class="chart-canvas">
+    <!-- 1 ชั่วโมงล่าสุด -->
+    <section class="card">
+      <h2>ระดับน้ำ 1 ชั่วโมงล่าสุด</h2>
+      <div class="chart-wrap">
         <canvas id="waterLevelChart1h"></canvas>
       </div>
-    </div>
+    </section>
 
-    <div class="chart-box">
-      <h3>กราฟแรงดันแบตเตอรี่ Node 1 และ Node 2</h3>
-      <div id="batteryTimeRangeButtons" style="text-align:center; margin-bottom:10px;">
-        <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
-        <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
-        <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
+    <!-- แบตเตอรี่ -->
+    <section id="section-battery" class="card">
+      <div class="card-head">
+        <h2>แรงดันแบตเตอรี่</h2>
+        <div id="batteryTimeRangeButtons" class="range-group">
+          <button class="range-btn" data-range="1d">1 วัน</button>
+          <button class="range-btn" data-range="7d">7 วัน</button>
+          <button class="range-btn" data-range="30d">30 วัน</button>
+        </div>
       </div>
-      <div class="chart-canvas">
+      <div class="chart-wrap">
         <canvas id="batteryChart"></canvas>
       </div>
-    </div>
+    </section>
 
-    <div class="chart-box">
-      <h3>กราฟกระแส (Current mA)</h3>
-      <div id="currentTimeRangeButtons" style="text-align:center; margin-bottom:10px;">
-        <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
-        <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
-        <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
+    <!-- กระแส -->
+    <section id="section-current" class="card">
+      <div class="card-head">
+        <h2>กระแส (mA)</h2>
+        <div id="currentTimeRangeButtons" class="range-group">
+          <button class="range-btn" data-range="1d">1 วัน</button>
+          <button class="range-btn" data-range="7d">7 วัน</button>
+          <button class="range-btn" data-range="30d">30 วัน</button>
+        </div>
       </div>
-      <div class="chart-canvas">
+      <div class="chart-wrap">
         <canvas id="currentChart"></canvas>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="chart-box map-box">
-    <h3>ตำแหน่งอุปกรณ์</h3>
-    <div id="map" style="height: 300px; border:1px solid rgba(255,255,255,0.3); border-radius: 10px;"></div>
-  </div>
+    <!-- ตาราง -->
+    <section id="section-table" class="card">
+      <h2>ตารางข้อมูลล่าสุด</h2>
+      <div class="table-wrap">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>Distance (cm)</th>
+              <th>ระดับน้ำ (cm)</th>
+              <th>RSSI N1</th>
+              <th>RSSI N2</th>
+              <th>แรงดัน N1</th>
+              <th>กระแส N1</th>
+              <th>แรงดัน N2</th>
+              <th>กระแส N2</th>
+              <th>เวลา N1</th>
+              <th>เวลา N2</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div id="moreButtonContainer" class="more"></div>
+      </div>
+    </section>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <!-- แจ้งเตือน -->
+    <section id="section-alerts" class="card">
+      <div class="alert-head">
+        <h2>แจ้งเตือน</h2>
+        <button class="toggle" onclick="toggleErrorBox()">แสดง/ซ่อน</button>
+      </div>
+      <div id="errorBox" class="alert-box">
+        <div id="errorList"></div>
+      </div>
+    </section>
+  </main>
 
-  <script>
-    const map = L.map('map').setView([19.030471, 99.884592], 16);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(map);
-    const locations = [
-      [19.030471, 99.884592],
-      [19.028255, 99.892867],
-      [19.026849, 99.900480],
-    ];
-    locations.forEach((loc, i) => {
-      L.marker(loc).addTo(map).bindTooltip(
-        ["จุดวัดระดับน้ำ","จุดส่งต่อข้อมูล","จุดรับข้อมูล"][i],
-        { permanent:true, direction:'right', offset:[10,0], className:'my-tooltip' }
-      ).openTooltip();
-    });
-    const grayLine = L.polyline(locations, { color:'gray', weight:5 }).addTo(map);
-    map.fitBounds(grayLine.getBounds());
-    let blueLine, progress = 0;
-    function interpolatePoints(points, t){
-      const total = points.length - 1;
-      const index = Math.floor(t*total);
-      const rest  = t*total - index;
-      if (index >= total) return points[total];
-      const lat = points[index][0] + (points[index+1][0]-points[index][0])*rest;
-      const lng = points[index][1] + (points[index+1][1]-points[index][1])*rest;
-      return [lat,lng];
-    }
-    function updateBlueLine(){
-      if (blueLine) map.removeLayer(blueLine);
-      const pts = []; for (let t=0; t<=progress; t+=0.01) pts.push(interpolatePoints(locations, t));
-      blueLine = L.polyline(pts, { color:'deepskyblue', weight:4 }).addTo(map);
-      progress += 0.005; if (progress > 1) progress = 0;
-    }
-    setInterval(updateBlueLine, 30);
-  </script>
-
-  <div class="table-wrapper">
-    <h3>
-      ประวัติข้อมูล
-      <span class="error-toggle" onclick="toggleErrorBox()" title="คลิกเพื่อแสดงข้อมูลผิดปกติ">❗</span>
-    </h3>
-    <div id="errorBox" class="error-box hidden">
-      <h4>รายการข้อมูลผิดปกติ</h4>
-      <ul id="errorList"></ul>
-    </div>
-    <table id="dataTable">
-      <thead>
-        <tr>
-          <th>ระดับน้ำดิบ (cm)</th>
-          <th>ระดับน้ำ (cm)</th>
-          <th>RSSI Node1</th>
-          <th>RSSI Node2</th>
-          <th>V Node1</th>
-          <th>I Node1</th>
-          <th>V Node2</th>
-          <th>I Node2</th>
-          <th>เวลาวัด Node1</th>
-          <th>เวลาวัด Node2</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div id="moreButtonContainer" style="text-align: center; margin-top: 10px;"></div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-  <script src="script.js"></script>
+  <script src="./script.js"></script>
 </body>
 </html>
