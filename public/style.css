@@ -195,7 +195,7 @@ tbody tr:hover {
 }
 
 #map {
-  height: clamp(300px, 38vh, 50px);
+  height: clamp(260px, 38vh, 520px);
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
@@ -204,6 +204,7 @@ tbody tr:hover {
   border: none;
   display: block;
 }
+
 
 /* Tooltip */
 .my-tooltip {
@@ -349,4 +350,6 @@ tbody tr:hover {
 /* (ทางเลือก) ลดช่องว่างด้านบนของหัวข้อในการ์ด */
 .water-gauge-card h2 { margin-top: 0; text-align: center; }
 
-.toolbar .range-btn { margin: 0 6px; }
+.table-wrapper { position: relative; z-index: 1; }
+#summaryToggle  { position: relative; z-index: 2; }
+
