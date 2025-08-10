@@ -108,6 +108,53 @@ app.get('/distance', async (req, res) => {
   }
 });
 
+/* ========= Water Tube (horizontal) ========= */
+function drawWaterTube(containerId, value, min = 0, max = fixedDepth) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  // บีบค่าให้อยู่ในช่วง
+  const v = Math.max(min, Math.min(max, Number(value) || 0));
+  const ratio = (v - min) / (max - min);
+
+  // เลือกสีตามช่วงระดับน้ำ
+  let zoneColor;
+  if (v < 40) {
+    zoneColor = '#00e676'; // เขียว
+  } else if (v < 70) {
+    zoneColor = '#ff9800'; // ส้ม
+  } else {
+    zoneColor = '#f44336'; // แดง
+  }
+
+  // SVG หลอด + ของเหลว
+  const svg = `
+    <svg viewBox="0 0 1000 120" preserveAspectRatio="none">
+      <!-- ท่อพื้นหลัง -->
+      <rect x="20" y="30" width="960" height="40" rx="20" ry="20"
+            fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.35)" stroke-width="3"/>
+      <!-- ของเหลว -->
+      <clipPath id="tube">
+        <rect x="20" y="30" width="960" height="40" rx="20" ry="20"/>
+      </clipPath>
+      <rect x="20" y="30" width="${20 + 960*ratio}" height="40" clip-path="url(#tube)"
+            fill="${zoneColor}"/>
+
+      <!-- ขีด Min/Max -->
+      <text x="20"  y="95" class="tube-label" style="font-size: 0.9rem; text-anchor:start;">${min.toFixed(0)} cm</text>
+      <text x="980" y="95" class="tube-label" style="font-size: 0.9rem; text-anchor:end;">${max.toFixed(0)} cm</text>
+
+      <!-- เข็มแสดงค่าปัจจุบัน -->
+      <line x1="${20 + 960*ratio}" y1="18" x2="${20 + 960*ratio}" y2="82"
+            stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="${20 + 960*ratio}" cy="18" r="4" fill="#fff"/>
+
+      <!-- ตัวเลขกลาง -->
+      <text x="${20 + 960*ratio}" y="22" class="tube-label" style="font-size: 1.05rem;">${v.toFixed(1)} cm</text>
+    </svg>`;
+  el.innerHTML = svg;
+}
+
 // ==== Start Server ====
 async function startServer() {
   try {

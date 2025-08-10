@@ -549,6 +549,7 @@ function setupRangeButtons() {
   });
 }
 
+
 /* ===== Sidebar / Hamburger ===== */
 (function initSidebar() {
   const sidebar  = document.getElementById('sidebar');

@@ -94,3 +94,12 @@ tbody tr:hover { background: rgba(255,255,255,0.15); cursor: default; transition
 #moreButtonContainer { text-align: center; margin-top: 10px; }
 #moreButtonContainer button { background: none; border: none; color: white; cursor: pointer; font-size: 1rem; text-decoration: underline; padding: 0; }
 
+/* ===== Water Tube (แนวนอน เต็มแถว) ===== */
+.water-tube-box { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; }
+.water-tube { width: 100%; height: 48px; position: relative; }
+.water-tube svg { width: 100%; height: 100%; display: block; }
+
+/* ป้ายตัวเลขบนหลอด */
+.tube-label {
+  font-weight: 700; font-size: 1rem; fill: #fff; text-anchor: middle;
+}
