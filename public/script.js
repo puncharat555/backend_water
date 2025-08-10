@@ -171,18 +171,17 @@ async function fetchHistoricalData(range = '30d') {
   return data; // ไม่กรองที่นี่
 }
 
+/* ✅ แก้ตรงนี้: ไม่ทิ้งค่าช่วงต้น ใช้ clamp 0–fixedDepth */
 function parseChartData(rows) {
   const water = [], v1 = [], v2 = [], i1 = [], i2 = [];
   for (const item of rows) {
     const ts = parseToDate(item.time_node1 || item.time_node2);
     if (!ts) continue;
 
-    const levelRaw = (item.distance || item.distance === 0)
-      ? Number((fixedDepth - item.distance).toFixed(2)) : NaN;
-
-    // เก็บเฉพาะค่าในช่วงสมเหตุสมผล 0–100 cm (กันค่าหลุด)
-    if (!isNaN(levelRaw) && levelRaw >= 0 && levelRaw <= 100) {
-      water.push({ x: ts, y: levelRaw });
+    if (item.distance || item.distance === 0) {
+      const levelRaw = Number((fixedDepth - item.distance).toFixed(2));
+      const clamped = Math.max(0, Math.min(fixedDepth, levelRaw));
+      if (!isNaN(clamped)) water.push({ x: ts, y: clamped });
     }
 
     if (item.v_node1 > 0) v1.push({ x: ts, y: item.v_node1 });
