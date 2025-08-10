@@ -17,6 +17,10 @@
 </head>
 <body>
   <h1 class="title">Water Level Monitoring</h1>
+    <div class="toolbar" style="text-align:center; margin: 0 0 16px;">
+      <button id="exportPdfBtn" class="range-btn">ส่งออก PDF</button>
+      <button id="exportCsvBtn" class="range-btn">ส่งออก CSV</button>
+    </div>
 
   <!-- ระดับน้ำปัจจุบัน -->
   <div class="water-level-display">
@@ -215,6 +219,10 @@
 
     <div id="moreButtonContainer"></div>
   </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js" defer></script>
 
   <!-- Charts & App Script -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>

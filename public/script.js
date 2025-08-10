@@ -683,6 +683,149 @@ window.onload = async () => {
 
   setupRangeButtons();
 };
+/* ===== Export helpers ===== */
+
+// ดึงข้อมูลตารางเป็น array (ใช้ตัวแปร allData ที่มีอยู่แล้ว)
+function getTableRowsForExport() {
+  return allData.map(item => ([
+    Number(item.distance ?? '').toFixed(1),
+    (fixedDepth - Number(item.distance ?? 0)).toFixed(1),
+    (item.rssi_node1 && item.rssi_node1 !== 0) ? item.rssi_node1 : '',
+    (item.rssi_node2 && item.rssi_node2 !== 0) ? item.rssi_node2 : '',
+    (item.v_node1 ?? '') && `${item.v_node1} V`,
+    (item.i_node1 ?? '') && `${item.i_node1} mA`,
+    (item.v_node2 ?? '') && `${item.v_node2} V`,
+    (item.i_node2 ?? '') && `${item.i_node2} mA`,
+    item.time_node1 || item.timestamp || '',
+    item.time_node2 || item.timestamp || ''
+  ]));
+}
+
+// แปลง DOM element เป็นภาพด้วย html2canvas (ใช้กับเกจที่เป็น SVG/HTML)
+async function elementToPng(el, scale = 2) {
+  if (!el) return null;
+  const canvas = await html2canvas(el, { backgroundColor: null, scale });
+  return canvas.toDataURL('image/png');
+}
+
+// ส่งออก PDF: เกจน้ำ + 3 กราฟ + สรุปข้อมูลล่าสุด + ตาราง
+async function exportDashboardPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'a4' });
+  const margin = 28;
+  let y = margin;
+
+  // หัวรายงาน
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('Water Level Monitoring — รายงานสรุป', margin, y);
+  doc.setFont('Helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text(`วันที่พิมพ์: ${new Intl.DateTimeFormat('th-TH', {
+    dateStyle:'medium', timeStyle:'short'
+  }).format(new Date())}`, margin, y += 18);
+
+  // ภาพเกจระดับน้ำ (จับทั้งการ์ดจะสวยกว่า)
+  const waterCard = document.querySelector('.water-gauge-card') || document.getElementById('waterGauge');
+  const waterPng = await elementToPng(waterCard);
+  if (waterPng) {
+    const w = 360, h = 190;
+    doc.addImage(waterPng, 'PNG', margin, y + 10, w, h);
+  }
+
+  // กราฟ: ใช้ Chart.js base64 (หากมีอินสแตนซ์)
+  const imgs = [];
+  if (waterLevelChartInstance) imgs.push({ title:'Water (ช่วงเลือก)', data: waterLevelChartInstance.toBase64Image() });
+  if (oneHourChartInstance)    imgs.push({ title:'Water 1h',           data: oneHourChartInstance.toBase64Image() });
+  if (batteryChartInstance)    imgs.push({ title:'Battery',            data: batteryChartInstance.toBase64Image() });
+  if (currentChartInstance)    imgs.push({ title:'Current',            data: currentChartInstance.toBase64Image() });
+
+  // จัดกริดรูป 2 คอลัมน์
+  let x = margin + 380, rowH = 180, colW = 360;
+  for (let i=0; i<imgs.length && i<3; i++) { // ใส่ 3 รูปหลักพออ่าน
+    const r = Math.floor(i/2), c = i%2;
+    const px = x + c* (colW + 16);
+    const py = y + 10 + r* (rowH + 16);
+    doc.addImage(imgs[i].data, 'PNG', px, py, colW, rowH);
+  }
+  y += 10 + rowH*2 + 16; // พื้นที่รูป
+
+  // สรุปข้อมูลล่าสุด
+  const latest = allData[0];
+  if (latest) {
+    doc.setFont('Helvetica','bold');
+    doc.setFontSize(12);
+    doc.text('สรุปล่าสุด:', margin, y);
+    doc.setFont('Helvetica','normal');
+    const level = (fixedDepth - Number(latest.distance ?? 0)).toFixed(1);
+    const summary = [
+      `ระดับน้ำ: ${level} cm`,
+      `RSSI N1: ${latest.rssi_node1 ?? '-'}  |  RSSI N2: ${latest.rssi_node2 ?? '-'}`,
+      `V/I N1: ${latest.v_node1 ?? '-'} V / ${latest.i_node1 ?? '-'} mA`,
+      `V/I N2: ${latest.v_node2 ?? '-'} V / ${latest.i_node2 ?? '-'} mA`,
+      `เวลา: ${latest.time_node1 || latest.timestamp || '-'}`
+    ].join('   ');
+    doc.setFontSize(11);
+    doc.text(summary, margin, y += 16);
+  }
+
+  // ตารางข้อมูล (ใช้ autoTable)
+  const headers = [['ดิบ(cm)','ระดับ(cm)','RSSI1','RSSI2','V1','I1','V2','I2','เวลา1','เวลา2']];
+  const rows = getTableRowsForExport();
+
+  doc.autoTable({
+    startY: y + 10,
+    head: headers,
+    body: rows,
+    theme: 'grid',
+    styles: { fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [0, 160, 220] },
+    margin: { left: margin, right: margin },
+    tableWidth: doc.internal.pageSize.getWidth() - margin*2,
+    didDrawPage: (d) => {
+      // เลขหน้า
+      const str = `หน้า ${doc.internal.getNumberOfPages()}`;
+      doc.setFontSize(9);
+      doc.text(str, doc.internal.pageSize.getWidth() - margin, doc.internal.pageSize.getHeight() - 10, { align:'right' });
+    }
+  });
+
+  doc.save(`Water_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+// ส่งออก CSV (เปิด Excel ได้)
+function exportCSV() {
+  const headers = ['distance_raw_cm','level_cm','rssi_node1','rssi_node2','v_node1','i_node1','v_node2','i_node2','time_node1','time_node2'];
+  const rows = getTableRowsForExport();
+  const csv = [headers, ...rows].map(r => r.map(v => {
+    const s = (v ?? '').toString();
+    // escape เครื่องหมายคำพูด/คอมมา/บรรทัดใหม่
+    if (/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
+    return s;
+  }).join(',')).join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Water_Data_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ===== Hook ปุ่ม ===== */
+function setupExportButtons() {
+  const pdfBtn = document.getElementById('exportPdfBtn');
+  const csvBtn = document.getElementById('exportCsvBtn');
+  if (pdfBtn) pdfBtn.addEventListener('click', exportDashboardPDF);
+  if (csvBtn) csvBtn.addEventListener('click', exportCSV);
+}
+
+// เรียกหลัง DOM พร้อมแล้ว (มีอยู่แล้วใน onload → เติมบรรทัดนี้ก็พอ)
+window.addEventListener('load', setupExportButtons);
+
 
 // รีเฟรชทุก 60 วินาที (ข้อมูล Live + กราฟ 1 ชม.)
 setInterval(() => {
