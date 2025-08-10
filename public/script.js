@@ -367,32 +367,42 @@ async function createOneHourChart() {
     if (oneHourChartInstance) oneHourChartInstance.destroy();
 
     oneHourChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        datasets: [{
-          label: 'ระดับน้ำ (cm) 1 ชั่วโมง (อิงข้อมูลล่าสุด)',
-          data: water,
-          borderColor:'#0f0',
-          backgroundColor:'rgba(29,233,29,0.18)',
-          fill:true, tension:0.3, pointRadius:0, cubicInterpolationMode:'monotone'
-        }]
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: 'ระดับน้ำ (cm) 1 ชั่วโมง (อิงข้อมูลล่าสุด)',
+      data: dataValues,
+      borderColor: 'limegreen',
+      backgroundColor: 'rgba(0,255,0,0.2)',
+      fill: true,
+      pointRadius: ctx => {
+        // จุดสุดท้ายใหญ่ขึ้น
+        return ctx.dataIndex === ctx.dataset.data.length - 1 ? 6 : 2;
       },
-      options: {
-        parsing:false,
-        spanGaps: 20*60*1000,
-        layout:{ padding:{ top:0, bottom:0 } },
-        scales:{
-          x: xScaleOpts('1h', xMin, xMax),
-          y: { beginAtZero:false, min:yB.min, max:yB.max, ticks:{ color:'white' }, grid:{ color:'rgba(255,255,255,0.12)' } }
-        },
-        plugins:{
-          legend:{ labels:{ color:'white' } },
-          tooltip:{ mode:'index', intersect:false },
-          subtitle:{ display: !hasData, text: 'ยังไม่เคยมีข้อมูลให้แสดง', color:'#ddd' }
-        },
-        responsive:true, maintainAspectRatio:false
+      pointBackgroundColor: ctx => {
+        // จุดสุดท้ายสีแดง
+        return ctx.dataIndex === ctx.dataset.data.length - 1 ? 'red' : 'limegreen';
+      },
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      tension: 0.2
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: { color: '#fff' }
       }
-    });
+    },
+    scales: {
+      x: { ticks: { color: '#fff' } },
+      y: { ticks: { color: '#fff' } }
+    }
+  }
+});
+
   } catch (err) {
     console.error('Error creating 1h chart (latest-window):', err);
   }
