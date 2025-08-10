@@ -19,19 +19,81 @@ function setupHiDPICanvas(canvas) {
 }
 
 /* ---------- Utils ---------- */
+/* ---------- Utils (อัปเกรด) ---------- */
 function parseToDate(s) {
   if (!s) return null;
   s = String(s).trim();
-  let m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(:\d{2})?)$/);
-  if (m) return new Date(`${m[1]}T${m[2]}`); // local (ไม่ใส่ Z)
-  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{2}:\d{2}(:\d{2})?)$/);
-  if (m) {
-    const [, d, mo, y, t] = m;
-    return new Date(`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}T${t}`);
+
+  // 1) ให้ Date แปลงตรง ๆ ก่อน (ISO/มี-ไม่มี Z/มิลลิวินาที/โซนเวลา)
+  let d = new Date(s);
+  if (!isNaN(d)) return d;
+
+  // 2) 'YYYY-MM-DD HH:mm[:ss]' -> 'YYYY-MM-DDTHH:mm[:ss]'
+  if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(:\d{2})?$/.test(s)) {
+    d = new Date(s.replace(/\s+/, 'T'));
+    if (!isNaN(d)) return d;
   }
-  const d2 = new Date(s);
-  return isNaN(d2) ? null : d2;
+
+  // 3) 'dd/mm/yyyy HH:mm[:ss]'
+  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}:\d{2}(:\d{2})?)$/);
+  if (m) {
+    const [, d1, mo1, y1, t1] = m;
+    d = new Date(`${y1}-${String(mo1).padStart(2,'0')}-${String(d1).padStart(2,'0')}T${t1}`);
+    if (!isNaN(d)) return d;
+  }
+
+  // 4) 'YYYY-MM-DD[ T]HH:mm[:ss][Z]'
+  m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})(:\d{2})?Z?$/);
+  if (m) {
+    d = new Date(`${m[1]}T${m[2]}${m[3] || ':00'}`);
+    if (!isNaN(d)) return d;
+  }
+
+  return null;
 }
+
+// ✅ แปลงเป็นตัวเลขแม้สตริงจะมีหน่วย เช่น "11.39 V", "151.3 mA"
+function num(x) {
+  if (x === null || x === undefined) return NaN;
+  if (typeof x === 'number') return x;
+  if (typeof x === 'string') {
+    const m = x.match(/-?\d+(\.\d+)?/);   // ดึงเลขตัวแรก
+    return m ? parseFloat(m[0]) : NaN;
+  }
+  return Number(x);
+}
+
+/* ---------- Data parser (อัปเกรด) ---------- */
+function parseChartData(rows) {
+  const water = [], v1 = [], v2 = [], i1 = [], i2 = [];
+  for (const item of rows) {
+    const ts = parseToDate(item.time_node1 || item.time_node2);
+    if (!ts) continue;
+
+    // distance อาจเป็นสตริง -> num()
+    const dist = num(item.distance);
+    if (!isNaN(dist)) {
+      const levelRaw = fixedDepth - dist;
+      const clamped  = Math.max(0, Math.min(fixedDepth, Number(levelRaw.toFixed(2))));
+      water.push({ x: ts, y: clamped });
+    }
+
+    const v1v = num(item.v_node1), v2v = num(item.v_node2);
+    const i1v = num(item.i_node1), i2v = num(item.i_node2);
+
+    if (!isNaN(v1v) && v1v > 0) v1.push({ x: ts, y: v1v });
+    if (!isNaN(v2v) && v2v > 0) v2.push({ x: ts, y: v2v });
+    if (!isNaN(i1v) && i1v > 0) i1.push({ x: ts, y: i1v });
+    if (!isNaN(i2v) && i2v > 0) i2.push({ x: ts, y: i2v });
+  }
+
+  // เรียงเวลาให้แน่นอน
+  water.sort((a,b)=>a.x-b.x);
+  v1.sort((a,b)=>a.x-b.x); v2.sort((a,b)=>a.x-b.x);
+  i1.sort((a,b)=>a.x-b.x); i2.sort((a,b)=>a.x-b.x);
+  return { water, v1, v2, i1, i2 };
+}
+
 
 function setActiveRange(containerId, range) {
   const btns = document.querySelectorAll(`#${containerId} .range-btn`);
