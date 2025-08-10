@@ -22,15 +22,33 @@ function setupHiDPICanvas(canvas) {
 function parseToDate(s) {
   if (!s) return null;
   s = String(s).trim();
-  let m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(:\d{2})?)$/);
-  if (m) return new Date(`${m[1]}T${m[2]}`); // local (ไม่ใส่ Z)
-  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{2}:\d{2}(:\d{2})?)$/);
-  if (m) {
-    const [, d, mo, y, t] = m;
-    return new Date(`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}T${t}`);
+
+  // 1) พยายาม parse ตรง ๆ ก่อน (ISO/มีหรือไม่มี Z/millis/timezone)
+  let d = new Date(s);
+  if (!isNaN(d)) return d;
+
+  // 2) 'YYYY-MM-DD HH:mm[:ss]' -> 'YYYY-MM-DDTHH:mm[:ss]'
+  if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(:\d{2})?$/.test(s)) {
+    d = new Date(s.replace(/\s+/, 'T'));
+    if (!isNaN(d)) return d;
   }
-  const d2 = new Date(s);
-  return isNaN(d2) ? null : d2;
+
+  // 3) 'dd/mm/yyyy HH:mm[:ss]'
+  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}:\d{2}(:\d{2})?)$/);
+  if (m) {
+    const [, d1, mo1, y1, t1] = m;
+    d = new Date(`${y1}-${String(mo1).padStart(2,'0')}-${String(d1).padStart(2,'0')}T${t1}`);
+    if (!isNaN(d)) return d;
+  }
+
+  // 4) 'YYYY-MM-DD[ T]HH:mm[:ss][Z]'
+  m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})(:\d{2})?Z?$/);
+  if (m) {
+    d = new Date(`${m[1]}T${m[2]}${m[3] || ':00'}`);
+    if (!isNaN(d)) return d;
+  }
+
+  return null;
 }
 
 function setActiveRange(containerId, range) {
@@ -118,13 +136,13 @@ function drawVoltageGauge(containerId, value, min = 10, max = 12.9) {
   el.innerHTML = svg;
 }
 
-// เกจระดับน้ำปัจจุบัน (โซนเขียว/เหลือง/แดง)
+// เกจระดับน้ำปัจจุบัน
 function drawWaterGauge(containerId, value, cfg = {}) {
   const min = cfg.min ?? 0, max = cfg.max ?? 60;
   const zones = cfg.zones ?? [
-    { to: 30, color: '#2ecc71' }, // ปกติ
-    { to: 40, color: '#f39c12' }, // เสี่ยง
-    { to: 60, color: '#e74c3c' }  // วิกฤต
+    { to: 30, color: '#2ecc71' },
+    { to: 40, color: '#f39c12' },
+    { to: 60, color: '#e74c3c' }
   ];
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -168,10 +186,10 @@ async function fetchHistoricalData(range = '30d') {
   const url = `https://backend-water-rf88.onrender.com/distance?range=${range}&_=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
   const data = await res.json();
-  return data; // ไม่กรองที่นี่
+  return data;
 }
 
-/* ✅ แก้ตรงนี้: ไม่ทิ้งค่าช่วงต้น ใช้ clamp 0–fixedDepth */
+/* ✅ ไม่ทิ้งค่าช่วงต้น: clamp 0–fixedDepth */
 function parseChartData(rows) {
   const water = [], v1 = [], v2 = [], i1 = [], i2 = [];
   for (const item of rows) {
@@ -180,7 +198,7 @@ function parseChartData(rows) {
 
     if (item.distance || item.distance === 0) {
       const levelRaw = Number((fixedDepth - item.distance).toFixed(2));
-      const clamped = Math.max(0, Math.min(fixedDepth, levelRaw));
+      const clamped  = Math.max(0, Math.min(fixedDepth, levelRaw));
       if (!isNaN(clamped)) water.push({ x: ts, y: clamped });
     }
 
@@ -220,7 +238,7 @@ async function createWaterLevelChart(range = '1d') {
       }]},
       options: {
         parsing:false,
-        spanGaps: true, // เชื่อมช่องว่างทั้งหมด
+        spanGaps: true,
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts(range, xMin, xMax),
@@ -258,7 +276,7 @@ async function createOneHourChart() {
     const hasData = water.length > 0;
     let xMin, xMax;
     if (hasData) {
-      xMin = water[0].x;          // ตัดช่องว่างด้านซ้าย
+      xMin = water[0].x;
       xMax = water.at(-1).x;
     } else {
       const now = new Date();
@@ -400,7 +418,8 @@ async function loadData() {
 
     if (latest) {
       const level = (fixedDepth - latest.distance).toFixed(1);
-      document.getElementById('waterLevelNode1').innerText = `ระดับน้ำปัจจุบัน: ${level} cm`;
+      const wlEl = document.getElementById('waterLevelNode1');
+      if (wlEl) wlEl.innerText = `ระดับน้ำปัจจุบัน: ${level} cm`;
 
       document.getElementById('rssiNode1').innerText   = (latest.rssi_node1 && latest.rssi_node1 !== 0) ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
       document.getElementById('voltageNode1').innerText = (latest.v_node1 && latest.v_node1 > 0) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
@@ -416,9 +435,9 @@ async function loadData() {
       drawWaterGauge('waterGauge', Number(level), {
         min: 0, max: 60,
         zones: [
-          { to: 30, color: '#2ecc71' }, // ปกติ
-          { to: 40, color: '#f39c12' }, // เสี่ยง
-          { to: 60, color: '#e74c3c' }  // วิกฤต
+          { to: 30, color: '#2ecc71' },
+          { to: 40, color: '#f39c12' },
+          { to: 60, color: '#e74c3c' }
         ]
       });
     }
@@ -430,10 +449,11 @@ async function loadData() {
   } catch (error) {
     console.error('Load data error:', error);
 
-    ['waterLevelNode1','rssiNode1','voltageNode1','currentNode1','timeNode1','rssiNode2','voltageNode2','currentNode2','timeNode2']
-      .forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '-'; });
+    [
+      'waterLevelNode1','rssiNode1','voltageNode1','currentNode1','timeNode1',
+      'rssiNode2','voltageNode2','currentNode2','timeNode2'
+    ].forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '-'; });
 
-    // Fallback เกจ
     drawVoltageGauge('voltGauge1', 10, 10, 12.9);
     drawVoltageGauge('voltGauge2', 10, 10, 12.9);
     drawWaterGauge('waterGauge', 0, {
