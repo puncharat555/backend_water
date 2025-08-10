@@ -8,7 +8,7 @@
   <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Fonts (Kanit is loaded here but your CSS uses Sarabun/Segoe UI — เลือกใช้ตัวใดตัวหนึ่งใน style.css ได้เลย) -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
 
@@ -16,58 +16,81 @@
   <link rel="icon" type="image/png" href="https://png.pngtree.com/png-vector/20190511/ourmid/pngtree-vector-drop-icon-png-image_1029752.jpg" />
 </head>
 <body>
+
+  <!-- Topbar + Hamburger -->
+  <div class="topbar">
+    <button id="hamburgerBtn" class="hamburger" aria-label="เมนู" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="brand">เมนู</div>
+  </div>
+
+  <!-- Sidebar -->
+  <nav id="sidebar" class="sidebar" aria-hidden="true">
+    <div class="sidebar-header">เมนูนำทาง</div>
+    <a href="#" class="nav-item" data-target="water-section">ระดับน้ำ</a>
+    <a href="#" class="nav-item" data-target="charts-section">กราฟ</a>
+    <a href="#" class="nav-item" data-target="map-section">แผนที่</a>
+    <a href="#" class="nav-item" data-target="table-section">ตาราง</a>
+  </nav>
+  <div id="backdrop" class="backdrop"></div>
+
   <h1 class="title">Water Level Monitoring</h1>
 
-  <!-- ระดับน้ำปัจจุบัน -->
-  <div class="water-level-display">
-    <div class="water-depth">
-      <p id="waterLevelNode1" class="main-water-level">ระดับน้ำปัจจุบัน: -</p>
-    </div>
-  </div>
-  <!-- เกจระดับน้ำ -->
-<div class="water-level-display">
-  <div class="node-box gauge-box water-gauge-card">
-    <h2>ระดับน้ำ (cm)</h2>
-    <div id="waterGauge" class="gauge"></div>
-    <div class="gauge-caption">โซน: 0–40 เขียว • 40–70 ส้ม • 70–120 แดง</div>
-  </div>
-</div>
-
-  <!-- กล่องโหนด: Node 1 & Node 2 (ข้อมูล | เกจ) -->
-  <div class="container nodes-grid">
-    <!-- Node 1 : ข้อมูล -->
-    <div class="node-box info-box">
-      <h2>Node 1</h2>
-      <p id="rssiNode1">RSSI: -</p>
-      <p id="voltageNode1">แรงดัน: -</p>
-      <p id="currentNode1">กระแส: -</p>
-      <p id="timeNode1">เวลาวัด: -</p>
-    </div>
-    <!-- Node 1 : เกจ -->
-    <div class="node-box gauge-box">
-      <h2>แรงดันแบตเตอรี่ (Node 1)</h2>
-      <div id="voltGauge1" class="gauge"></div>
-      <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
+  <!-- ===== ระดับน้ำ/การ์ด/โหนด ===== -->
+  <div id="water-section">
+    <!-- ระดับน้ำปัจจุบัน -->
+    <div class="water-level-display">
+      <div class="water-depth">
+        <p id="waterLevelNode1" class="main-water-level">ระดับน้ำปัจจุบัน: -</p>
+      </div>
     </div>
 
-    <!-- Node 2 : ข้อมูล -->
-    <div class="node-box info-box">
-      <h2>Node 2</h2>
-      <p id="rssiNode2">RSSI: -</p>
-      <p id="voltageNode2">แรงดัน: -</p>
-      <p id="currentNode2">กระแส: -</p>
-      <p id="timeNode2">เวลาวัด: -</p>
+    <!-- เกจระดับน้ำ -->
+    <div class="water-level-display">
+      <div class="node-box gauge-box water-gauge-card">
+        <h2>ระดับน้ำ (cm)</h2>
+        <div id="waterGauge" class="gauge"></div>
+        <div class="gauge-caption">โซน: 0–40 เขียว • 40–70 ส้ม • 70–120 แดง</div>
+      </div>
     </div>
-    <!-- Node 2 : เกจ -->
-    <div class="node-box gauge-box">
-      <h2>แรงดันแบตเตอรี่ (Node 2)</h2>
-      <div id="voltGauge2" class="gauge"></div>
-      <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
+
+    <!-- กล่องโหนด: Node 1 & Node 2 (ข้อมูล | เกจ) -->
+    <div class="container nodes-grid">
+      <!-- Node 1 : ข้อมูล -->
+      <div class="node-box info-box">
+        <h2>Node 1</h2>
+        <p id="rssiNode1">RSSI: -</p>
+        <p id="voltageNode1">แรงดัน: -</p>
+        <p id="currentNode1">กระแส: -</p>
+        <p id="timeNode1">เวลาวัด: -</p>
+      </div>
+      <!-- Node 1 : เกจ -->
+      <div class="node-box gauge-box">
+        <h2>แรงดันแบตเตอรี่ (Node 1)</h2>
+        <div id="voltGauge1" class="gauge"></div>
+        <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
+      </div>
+
+      <!-- Node 2 : ข้อมูล -->
+      <div class="node-box info-box">
+        <h2>Node 2</h2>
+        <p id="rssiNode2">RSSI: -</p>
+        <p id="voltageNode2">แรงดัน: -</p>
+        <p id="currentNode2">กระแส: -</p>
+        <p id="timeNode2">เวลาวัด: -</p>
+      </div>
+      <!-- Node 2 : เกจ -->
+      <div class="node-box gauge-box">
+        <h2>แรงดันแบตเตอรี่ (Node 2)</h2>
+        <div id="voltGauge2" class="gauge"></div>
+        <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
+      </div>
     </div>
   </div>
 
-  <!-- กราฟ -->
-  <div class="charts-container">
+  <!-- ===== กราฟ ===== -->
+  <div id="charts-section" class="charts-container">
     <!-- กราฟระดับน้ำย้อนหลัง -->
     <div class="chart-box">
       <h3>กราฟระดับน้ำย้อนหลัง</h3>
@@ -116,8 +139,8 @@
     </div>
   </div>
 
-  <!-- แผนที่ -->
-  <div class="chart-box map-box">
+  <!-- ===== แผนที่ ===== -->
+  <div id="map-section" class="chart-box map-box">
     <h3>ตำแหน่งอุปกรณ์</h3>
     <div id="map"></div>
   </div>
@@ -160,7 +183,8 @@
 
       function interpolatePoints(points, t) {
         const total = points.length - 1;
-        const index = Math.floor(t * total);
+        a = Math.floor(t * total);
+        const index = a;
         const rest = t * total - index;
         if (index >= total) return points[total];
         const lat = points[index][0] + (points[index + 1][0] - points[index][0]) * rest;
@@ -183,20 +207,19 @@
     });
   </script>
 
-  <!-- ตารางข้อมูล -->
-  <div class="table-wrapper">
-<div class="table-header">
-  <h3>
-    ประวัติข้อมูล
-    <span class="error-toggle" onclick="toggleErrorBox()" title="คลิกเพื่อแสดงข้อมูลผิดปกติ">❗</span>
-  </h3>
-
-  <div id="summaryToggle" class="summary-toggle">
-    <button class="range-btn" data-view="raw">ข้อมูลทั้งหมด</button>
-    <button class="range-btn" data-view="day">สรุปรายวัน</button>
-    <button class="range-btn" data-view="month">สรุปรายเดือน</button>
-  </div>
-</div>
+  <!-- ===== ตารางข้อมูล ===== -->
+  <div id="table-section" class="table-wrapper">
+    <div class="table-header">
+      <h3>
+        ประวัติข้อมูล
+        <span class="error-toggle" onclick="toggleErrorBox()" title="คลิกเพื่อแสดงข้อมูลผิดปกติ">❗</span>
+      </h3>
+      <div id="summaryToggle" class="summary-toggle">
+        <button class="range-btn" data-view="raw">ข้อมูลทั้งหมด</button>
+        <button class="range-btn" data-view="day">สรุปรายวัน</button>
+        <button class="range-btn" data-view="month">สรุปรายเดือน</button>
+      </div>
+    </div>
 
     <div id="errorBox" class="error-box hidden">
       <h4>รายการข้อมูลผิดปกติ</h4>
@@ -220,17 +243,18 @@
       </thead>
       <tbody></tbody>
     </table>
-    
-
-    <div id="moreButtonContainer"></div>
   </div>
-<div class="toolbar" style="text-align:center; margin: 0 0 16px;">
-      <button id="exportPdfBtn" class="range-btn">ส่งออก PDF</button>
-      <button id="exportCsvBtn" class="range-btn">ส่งออก CSV</button>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js" defer></script>
+
+  <!-- ปุ่มส่งออกลอยมุมขวาล่าง -->
+  <div class="toolbar sticky-export">
+    <button id="exportPdfBtn" class="range-btn">ส่งออก PDF</button>
+    <button id="exportCsvBtn" class="range-btn">ส่งออก CSV</button>
+  </div>
+
+  <!-- libs for export -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js" defer></script>
 
   <!-- Charts & App Script -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
