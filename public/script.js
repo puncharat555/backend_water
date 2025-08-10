@@ -22,6 +22,8 @@ function setupHiDPICanvas(canvas) {
 function parseToDate(s) {
   if (!s) return null;
   s = String(s).trim();
+  // รองรับรูปแบบที่มี .sss หรือ .sssZ
+  s = s.replace(/\.\d+Z?$/, '');
   let m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(:\d{2})?)$/);
   if (m) return new Date(`${m[1]}T${m[2]}`); // local (ไม่ใส่ Z)
   m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{2}:\d{2}(:\d{2})?)$/);
@@ -86,79 +88,41 @@ function xScaleOpts(range, xMin, xMax) {
   };
 }
 
-/* ========= SVG Gauges ========= */
-// เกจแรงดันแบต 10–12.9V
+/* ========= SVG Gauge (10–12.9V) ========= */
 function drawVoltageGauge(containerId, value, min = 10, max = 12.9) {
   const el = document.getElementById(containerId);
   if (!el) return;
+
   const v = Math.max(min, Math.min(max, Number(value) || min));
   const w = el.clientWidth || 280, h = el.clientHeight || 150;
   const cx = w/2, cy = h-12, r = Math.min(w*0.45, h*0.9);
-  const start = -Math.PI, end = 0;
-  const toAng = x => start + (end - start) * ((x - min)/(max - min));
+  const start = -Math.PI, end = 0; // ครึ่งวง 180°
+  const t = (v - min) / (max - min);
+  const angle = start + (end - start) * t;
+
   const arc = (sa, ea, rr) => {
     const x1 = cx + rr*Math.cos(sa), y1 = cy + rr*Math.sin(sa);
     const x2 = cx + rr*Math.cos(ea), y2 = cy + rr*Math.sin(ea);
     const large = (ea - sa) % (2*Math.PI) > Math.PI ? 1 : 0;
     return `M ${x1} ${y1} A ${rr} ${rr} 0 ${large} 1 ${x2} ${y2}`;
   };
+
   const z2 = Math.min(max, 11.5), z3 = Math.min(max, 12.3);
+  const toAng = x => start + (end - start) * ((x - min)/(max - min));
+
   const svg = `
     <svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
       <path d="${arc(start, toAng(z2), r)}" stroke="#e74c3c" stroke-width="12" fill="none" opacity="0.85"/>
       <path d="${arc(toAng(z2), toAng(z3), r)}" stroke="#f39c12" stroke-width="12" fill="none" opacity="0.9"/>
       <path d="${arc(toAng(z3), end, r)}" stroke="#2ecc71" stroke-width="12" fill="none" opacity="0.9"/>
-      <line x1="${cx}" y1="${cy}" x2="${cx + (r-6)*Math.cos(toAng(v))}" y2="${cy + (r-6)*Math.sin(toAng(v))}"
-            stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="${cx}" cy="${cy}" r="4" fill="#fff"/>
-      <text x="${cx}" y="${cy - r*0.55}" class="val-text">${v.toFixed(2)} V</text>
-      <text x="${cx - r + 14}" y="${cy - 6}" class="tick-text">${min.toFixed(1)}V</text>
-      <text x="${cx + r - 14}" y="${cy - 6}" class="tick-text" text-anchor="end">${max.toFixed(1)}V</text>
-    </svg>`;
-  el.innerHTML = svg;
-}
 
-// เกจระดับน้ำปัจจุบัน (โซนเขียว/เหลือง/แดง)
-function drawWaterGauge(containerId, value, cfg = {}) {
-  const min = cfg.min ?? 0, max = cfg.max ?? 60;
-  const zones = cfg.zones ?? [
-    { to: 30, color: '#2ecc71' }, // ปกติ
-    { to: 40, color: '#f39c12' }, // เสี่ยง
-    { to: 60, color: '#e74c3c' }  // วิกฤต
-  ];
-  const el = document.getElementById(containerId);
-  if (!el) return;
-
-  const v = Math.max(min, Math.min(max, Number(value) || min));
-  const w = el.clientWidth || 300, h = el.clientHeight || 180;
-  const cx = w/2, cy = h-12, r = Math.min(w*0.45, h*0.9);
-  const start = -Math.PI, end = 0;
-
-  const toAng = x => start + (end - start) * ((x - min) / (max - min));
-  const arc = (sa, ea, rr) => {
-    const x1 = cx + rr*Math.cos(sa), y1 = cy + rr*Math.sin(sa);
-    const x2 = cx + rr*Math.cos(ea), y2 = cy + rr*Math.sin(ea);
-    const large = (ea - sa) % (2*Math.PI) > Math.PI ? 1 : 0;
-    return `M ${x1} ${y1} A ${rr} ${rr} 0 ${large} 1 ${x2} ${y2}`;
-  };
-
-  let prev = min, zonesPath = '';
-  zones.forEach(z => {
-    const sa = toAng(prev), ea = toAng(Math.min(z.to, max));
-    zonesPath += `<path d="${arc(sa, ea, r)}" stroke="${z.color}" stroke-width="12" fill="none" opacity="0.9"/>`;
-    prev = z.to;
-  });
-
-  const angle = toAng(v);
-  const svg = `
-    <svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
-      ${zonesPath}
       <line x1="${cx}" y1="${cy}" x2="${cx + (r-6)*Math.cos(angle)}" y2="${cy + (r-6)*Math.sin(angle)}"
             stroke="#fff" stroke-width="3" stroke-linecap="round"/>
       <circle cx="${cx}" cy="${cy}" r="4" fill="#fff"/>
-      <text x="${cx}" y="${cy - r*0.55}" class="val-text">${v.toFixed(1)} cm</text>
-      <text x="${cx - r + 14}" y="${cy - 6}" class="tick-text">${min} cm</text>
-      <text x="${cx + r - 14}" y="${cy - 6}" class="tick-text" text-anchor="end">${max} cm</text>
+
+      <text x="${cx}" y="${cy - r*0.55}" class="val-text">${v.toFixed(2)} V</text>
+      <text x="${cx - r + 14}" y="${cy - 6}" class="tick-text">${min.toFixed(1)}V</text>
+      <text x="${cx + r - 14}" y="${cy - 6}" class="tick-text">${max.toFixed(1)}V</text>
     </svg>`;
   el.innerHTML = svg;
 }
@@ -167,30 +131,46 @@ function drawWaterGauge(containerId, value, cfg = {}) {
 async function fetchHistoricalData(range = '30d') {
   const url = `https://backend-water-rf88.onrender.com/distance?range=${range}&_=${Date.now()}`;
   const res = await fetch(url, { cache: 'no-store' });
-  const data = await res.json();
-  return data; // ไม่กรองที่นี่
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+  return await res.json();
 }
 
+// ✅ เวอร์ชันแก้: ใช้ timestamp เป็นสำรอง และไม่ push ซ้ำ
 function parseChartData(rows) {
   const water = [], v1 = [], v2 = [], i1 = [], i2 = [];
   for (const item of rows) {
-    const ts = parseToDate(item.time_node1 || item.time_node2);
+    const tsStr = item.time_node1 ?? item.time_node2 ?? item.timestamp;
+    const ts = parseToDate(tsStr);
     if (!ts) continue;
 
-    const levelRaw = (item.distance || item.distance === 0)
-      ? Number((fixedDepth - item.distance).toFixed(2)) : NaN;
-
-    // เก็บเฉพาะค่าในช่วงสมเหตุสมผล 0–100 cm (กันค่าหลุด)
-    if (!isNaN(levelRaw) && levelRaw >= 0 && levelRaw <= 100) {
-      water.push({ x: ts, y: levelRaw });
+    if (item.distance || item.distance === 0) {
+      const level = Number((fixedDepth - item.distance).toFixed(2));
+      if (!Number.isNaN(level) && level >= 0 && level <= 100) {
+        water.push({ x: ts, y: level });
+      }
     }
 
-    if (item.v_node1 > 0) v1.push({ x: ts, y: item.v_node1 });
-    if (item.v_node2 > 0) v2.push({ x: ts, y: item.v_node2 });
-    if (item.i_node1 > 0) i1.push({ x: ts, y: item.i_node1 });
-    if (item.i_node2 > 0) i2.push({ x: ts, y: item.i_node2 });
+    const pushNum = (arr, v) => {
+      const n = Number(v);
+      if (Number.isFinite(n) && n > 0) arr.push({ x: ts, y: n });
+    };
+    pushNum(v1, item.v_node1);
+    pushNum(v2, item.v_node2);
+    pushNum(i1, item.i_node1);
+    pushNum(i2, item.i_node2);
   }
-  return { water, v1, v2, i1, i2 };
+
+  const sort = a => a.sort((p,q)=>p.x-q.x);
+  const dedupe = a => {
+    const seen = new Set();
+    return a.filter(p => { const k=+p.x; if (seen.has(k)) return false; seen.add(k); return true; });
+  };
+
+  return {
+    water: dedupe(sort(water)),
+    v1: sort(v1), v2: sort(v2),
+    i1: sort(i1), i2: sort(i2),
+  };
 }
 
 /* ---------- Charts ---------- */
@@ -198,12 +178,11 @@ async function createWaterLevelChart(range = '1d') {
   try {
     const rows = await fetchHistoricalData(range);
     const { water } = parseChartData(rows);
-    water.sort((a,b)=>a.x-b.x);
 
     const now = new Date();
     const xMin = water[0]?.x ?? new Date(now.getTime() - 24*60*60*1000);
     const xMax = water.at(-1)?.x ?? now;
-    const yB = water.length ? yBoundsFromData(water, 0.20) : { min: 0, max: 50 };
+    const yB = water.length ? yBoundsFromData(water, 0.2) : { min: 0, max: 50 };
 
     const canvas = document.getElementById('waterLevelChart30d');
     setupHiDPICanvas(canvas);
@@ -221,7 +200,7 @@ async function createWaterLevelChart(range = '1d') {
       }]},
       options: {
         parsing:false,
-        spanGaps: true, // เชื่อมช่องว่างทั้งหมด
+        spanGaps:true, // เชื่อมช่องว่างทั้งหมด
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts(range, xMin, xMax),
@@ -238,16 +217,15 @@ async function createWaterLevelChart(range = '1d') {
   } catch (err) { console.error('Error creating water chart:', err); }
 }
 
+// 1 ชั่วโมง (อิง “ข้อมูลล่าสุด” ถ้าชั่วโมงปัจจุบันว่าง)
 async function createOneHourChart() {
   try {
     let rows = await fetchHistoricalData('1h');
     let { water } = parseChartData(rows);
-    water.sort((a,b)=>a.x-b.x);
 
     if (water.length === 0) {
       const rowsWide = await fetchHistoricalData('30d');
-      const parsedWide = parseChartData(rowsWide);
-      const allWater = parsedWide.water.sort((a,b)=>a.x-b.x);
+      const allWater = parseChartData(rowsWide).water;
       const latestTs = allWater.at(-1)?.x;
       if (latestTs) {
         const start = new Date(latestTs.getTime() - 60*60*1000);
@@ -256,16 +234,21 @@ async function createOneHourChart() {
       }
     }
 
+    // ✅ กรอง outlier เฉพาะกราฟ 1 ชั่วโมง
+    water = water.filter(p => p.y <= 50);
+
     const hasData = water.length > 0;
     let xMin, xMax;
+
     if (hasData) {
-      xMin = water[0].x;          // ตัดช่องว่างด้านซ้าย
+      xMin = water[0].x;
       xMax = water.at(-1).x;
     } else {
       const now = new Date();
       xMin = new Date(now.getTime() - 60*60*1000);
       xMax = now;
     }
+
     const yB = hasData ? yBoundsFromData(water, 0.08) : { min: 0, max: 50 };
 
     const canvas = document.getElementById('waterLevelChart1h');
@@ -284,7 +267,7 @@ async function createOneHourChart() {
       }]},
       options: {
         parsing:false,
-        spanGaps: 20*60*1000, // เว้นว่างได้ถึง 20 นาที
+        spanGaps: 20*60*1000, // อนุญาตเว้นช่องว่างถึง 20 นาที
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts('1h', xMin, xMax),
@@ -293,11 +276,7 @@ async function createOneHourChart() {
         plugins:{
           legend:{ labels:{ color:'white' } },
           tooltip:{ mode:'index', intersect:false },
-          subtitle:{
-            display: !hasData,
-            text: 'ไม่พบข้อมูล 1 ชั่วโมงล่าสุด — กำลังรอข้อมูลใหม่',
-            color:'#ddd'
-          }
+          subtitle:{ display: !hasData, text: 'ไม่พบข้อมูล 1 ชั่วโมงล่าสุด — กำลังรอข้อมูลใหม่', color:'#ddd' }
         },
         responsive:true, maintainAspectRatio:false
       }
@@ -309,7 +288,6 @@ async function createBatteryChart(range = '1d') {
   try {
     const rows = await fetchHistoricalData(range);
     const { v1, v2 } = parseChartData(rows);
-    v1.sort((a,b)=>a.x-b.x); v2.sort((a,b)=>a.x-b.x);
 
     const merged = (v1.length?v1:[]).concat(v2.length?v2:[]).sort((a,b)=>a.x-b.x);
     const now = new Date();
@@ -348,7 +326,6 @@ async function createCurrentChart(range = '1d') {
   try {
     const rows = await fetchHistoricalData(range);
     const { i1, i2 } = parseChartData(rows);
-    i1.sort((a,b)=>a.x-b.x); i2.sort((a,b)=>a.x-b.x);
 
     const merged = (i1.length?i1:[]).concat(i2.length?i2:[]).sort((a,b)=>a.x-b.x);
     const now = new Date();
@@ -387,11 +364,21 @@ async function createCurrentChart(range = '1d') {
 /* ---------- Live nodes/table ---------- */
 async function loadData() {
   try {
+    // backend รองรับไม่ใส่ range แล้ว: คืนล่าสุด N แถว
     const url = `https://backend-water-rf88.onrender.com/distance?_=${Date.now()}`;
     const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
     const data = await res.json();
 
-    allData = data.filter(item => item.distance > 0);
+    // เก็บเฉพาะระยะที่มี (รวม 0)
+    allData = (Array.isArray(data) ? data : []).filter(item => (item.distance || item.distance === 0));
+
+    // เรียงใหม่ -> เก่า จากเวลา (ใช้ time_node1/2 หรือ timestamp)
+    allData.sort((a, b) => {
+      const ta = parseToDate(a.time_node1 ?? a.time_node2 ?? a.timestamp)?.getTime() ?? 0;
+      const tb = parseToDate(b.time_node1 ?? b.time_node2 ?? b.timestamp)?.getTime() ?? 0;
+      return tb - ta;
+    });
     currentIndex = 0;
 
     updateTable(true);
@@ -406,25 +393,14 @@ async function loadData() {
       document.getElementById('rssiNode1').innerText   = (latest.rssi_node1 && latest.rssi_node1 !== 0) ? `RSSI: ${latest.rssi_node1}` : 'RSSI: -';
       document.getElementById('voltageNode1').innerText = (latest.v_node1 && latest.v_node1 > 0) ? `แรงดัน: ${latest.v_node1} V` : 'แรงดัน: -';
       document.getElementById('currentNode1').innerText = (latest.i_node1 && latest.i_node1 > 0) ? `กระแส: ${latest.i_node1} mA` : 'กระแส: -';
-      document.getElementById('timeNode1').innerText    = latest.time_node1 || 'เวลาวัด: -';
+      document.getElementById('timeNode1').innerText    = latest.time_node1 || latest.timestamp || 'เวลาวัด: -';
 
       document.getElementById('rssiNode2').innerText   = (latest.rssi_node2 && latest.rssi_node2 !== 0) ? `RSSI: ${latest.rssi_node2}` : 'RSSI: -';
       document.getElementById('voltageNode2').innerText = (latest.v_node2 && latest.v_node2 > 0) ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
       document.getElementById('currentNode2').innerText = (latest.i_node2 && latest.i_node2 > 0) ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
-      document.getElementById('timeNode2').innerText    = latest.time_node2 || 'เวลาวัด: -';
-
-      // เกจ "ระดับน้ำปัจจุบัน"
-      drawWaterGauge('waterGauge', Number(level), {
-        min: 0, max: 60,
-        zones: [
-          { to: 30, color: '#2ecc71' }, // ปกติ
-          { to: 40, color: '#f39c12' }, // เสี่ยง
-          { to: 60, color: '#e74c3c' }  // วิกฤต
-        ]
-      });
+      document.getElementById('timeNode2').innerText    = latest.time_node2 || latest.timestamp || 'เวลาวัด: -';
     }
 
-    // เกจแบตทั้งสอง
     drawVoltageGauge('voltGauge1', (latest?.v_node1 > 0 ? latest.v_node1 : 10), 10, 12.9);
     drawVoltageGauge('voltGauge2', (latest?.v_node2 > 0 ? latest.v_node2 : 10), 10, 12.9);
 
@@ -434,20 +410,13 @@ async function loadData() {
     ['waterLevelNode1','rssiNode1','voltageNode1','currentNode1','timeNode1','rssiNode2','voltageNode2','currentNode2','timeNode2']
       .forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '-'; });
 
-    // Fallback เกจ
     drawVoltageGauge('voltGauge1', 10, 10, 12.9);
     drawVoltageGauge('voltGauge2', 10, 10, 12.9);
-    drawWaterGauge('waterGauge', 0, {
-      min: 0, max: 60,
-      zones: [
-        { to: 30, color: '#2ecc71' },
-        { to: 40, color: '#f39c12' },
-        { to: 60, color: '#e74c3c' }
-      ]
-    });
 
     const tbody = document.querySelector('#dataTable tbody'); if (tbody) tbody.innerHTML = '';
     const more = document.getElementById('moreButtonContainer'); if (more) more.innerHTML = '';
+    const box = document.getElementById('errorList');
+    if (box) box.innerHTML = `<div>Backend ไม่ตอบ: ${String(error.message || error)}</div>`;
   }
 }
 
@@ -466,8 +435,8 @@ function updateTable(clear=false) {
       <td>${(item.i_node1 && item.i_node1 > 0) ? item.i_node1 + ' mA' : '-'}</td>
       <td>${(item.v_node2 && item.v_node2 > 0) ? item.v_node2 + ' V' : '-'}</td>
       <td>${(item.i_node2 && item.i_node2 > 0) ? item.i_node2 + ' mA' : '-'}</td>
-      <td>${item.time_node1 || '-'}</td>
-      <td>${item.time_node2 || '-'}</td>`;
+      <td>${item.time_node1 || item.timestamp || '-'}</td>
+      <td>${item.time_node2 || item.timestamp || '-'}</td>`;
     tbody.appendChild(tr);
   });
   currentIndex += sliceData.length; updateMoreButton();
@@ -497,7 +466,7 @@ function updateErrorList(data) {
   data.forEach(item => {
     if (item.distance < 10) {
       const div = document.createElement('div');
-      div.innerText = `Warning! ระดับน้ำต่ำเกินไป: ${item.distance.toFixed(1)} cm เวลา: ${item.time_node1}`;
+      div.innerText = `Warning! ระดับน้ำต่ำเกินไป: ${item.distance.toFixed(1)} cm เวลา: ${item.time_node1 || item.timestamp}`;
       box.appendChild(div);
     }
   });
