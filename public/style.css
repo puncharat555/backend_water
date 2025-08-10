@@ -471,3 +471,28 @@ tbody tr:hover {
   border-radius:12px;
 }
 .toolbar.sticky-export .range-btn{ margin:0 6px; }
+/* ปุ่มสองอันด้านล่างให้ลอยอยู่บนสุด และรับคลิกแน่ ๆ */
+.bottom-actions{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  align-items:center;
+  margin:16px 0 24px;
+  position:relative;
+  z-index: 999;        /* สูงกว่าส่วนอื่น */
+  pointer-events:auto; /* บังคับรับคลิก */
+}
+.bottom-actions .range-btn{
+  position:relative;
+  z-index:1000;
+}
+
+/* กัน element ในตารางมาทับพื้นที่ปุ่มด้านล่าง */
+.table-wrapper{ position:relative; z-index:1; }
+#moreButtonContainer{ position:relative; z-index:1; }
+
+/* เผื่อเคยเปิดทูลบาร์ลอย แล้วลืมปิด — ให้ไม่ลอย */
+.toolbar.sticky-export{ position:static; right:auto; bottom:auto; background:transparent; }
+
+/* ไม่มี pseudo-element ใด ๆ มาทับด้านล่างของตาราง */
+.table-wrapper::after, .table-wrapper::before{ display:none !important; }
