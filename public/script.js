@@ -144,7 +144,7 @@ function drawVoltageGauge(containerId, value, min = 10, max = 12.9) {
 }
 
 /* ========= SVG Gauge ระดับน้ำ (0–40 G, 40–70 O, 70–120 R) ========= */
-/* ========= SVG Gauge ระดับน้ำ (0–40 G, 40–70 O, 70–120 R) — 0 อยู่ "ขวา" ========= */
+/* ========= Water Gauge แบบเดียวกับเกจแบต (ซ้ายต่ำ→ขวาสูง) ========= */
 function drawWaterArc(containerId, value, min = 0, max = fixedDepth) {
   const el = document.getElementById(containerId);
   if (!el) return;
@@ -152,67 +152,75 @@ function drawWaterArc(containerId, value, min = 0, max = fixedDepth) {
   const clamp = (v, mn, mx) => Math.max(mn, Math.min(mx, v));
   const v = clamp(Number(value) || 0, min, max);
 
-  // ตั้งทิศ: 0° = ขวา, 180° = ซ้าย  →  เดินจากขวาไปซ้าย
-  const startDeg = 0;
-  const endDeg   = 180;
+  // left (ต่ำ) → right (สูง) เหมือนเกจแบต
+  const start = -Math.PI;   // ซ้าย
+  const end   = 0;          // ขวา
 
-  // พื้นที่วาดแบบคงสัดส่วน (กล่อง .gauge คุมขนาดภายนอก)
-  const cx = 250, cy = 220; // center
-  const r  = 180;           // radius
-  const thick = 24;         // ความหนาแถบ
+  // ขนาด (ปล่อยให้ .gauge กำหนดกล่องนอก)
+  const w = el.clientWidth || 280;
+  const h = el.clientHeight || 150;
+  const cx = w / 2;
+  const cy = h - 12;
+  const r  = Math.min(w * 0.45, h * 0.9);
+  const band = Math.max(14, Math.min(26, r * 0.14)); // ความหนาแถบ
 
-  const cm2deg = (cm) => startDeg + (endDeg - startDeg) * (cm - min) / (max - min);
-  const polar = (deg, rad) => {
-    const t = (deg - 90) * Math.PI / 180; // shift ให้อยู่ครึ่งวงบน
-    return [cx + rad * Math.cos(t), cy + rad * Math.sin(t)];
-  };
-  const arcPath = (a0, a1, rOut, rIn) => {
-    const [x0,y0] = polar(a0, rOut), [x1,y1] = polar(a1, rOut);
-    const [x2,y2] = polar(a1, rIn ), [x3,y3] = polar(a0, rIn );
-    const large = Math.abs(a1 - a0) > 180 ? 1 : 0;
+  const toAng = x => start + (end - start) * ((x - min) / (max - min));
+  const arcBand = (a0, a1) => {
+    const ro = r, ri = r - band;
+    const x0 = cx + ro * Math.cos(a0), y0 = cy + ro * Math.sin(a0);
+    const x1 = cx + ro * Math.cos(a1), y1 = cy + ro * Math.sin(a1);
+    const x2 = cx + ri * Math.cos(a1), y2 = cy + ri * Math.sin(a1);
+    const x3 = cx + ri * Math.cos(a0), y3 = cy + ri * Math.sin(a0);
+    const large = Math.abs(a1 - a0) > Math.PI ? 1 : 0;
     return `
       M ${x0} ${y0}
-      A ${rOut} ${rOut} 0 ${large} 1 ${x1} ${y1}
+      A ${ro} ${ro} 0 ${large} 1 ${x1} ${y1}
       L ${x2} ${y2}
-      A ${rIn} ${rIn} 0 ${large} 0 ${x3} ${y3}
+      A ${ri} ${ri} 0 ${large} 0 ${x3} ${y3}
       Z`;
   };
 
-  // ตำแหน่งโซน (ขวา→ซ้าย)
-  const a0   = cm2deg(0);
-  const a40  = cm2deg(40);
-  const a70  = cm2deg(70);
-  const aMax = cm2deg(max);
+  // โซนสี (ซ้าย→ขวา)
+  const a0   = toAng(0);
+  const a40  = toAng(40);
+  const a70  = toAng(70);
+  const aMax = toAng(max);
+  const aVal = toAng(v);
 
-  // เข็ม
-  const aVal = cm2deg(v);
-  const needleLen = r - 12;
-  const [nx, ny] = polar(aVal, needleLen);
-
-  // สี
   const colG = '#2ecc71', colO = '#ffb300', colR = '#e74c3c';
 
-  const svg = `
-  <svg viewBox="0 0 500 240" preserveAspectRatio="xMidYMid meet">
-    <!-- พื้นหลังครึ่งวง -->
-    <path d="${arcPath(a0, aMax, r, r - thick)}"
-          fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>
+  // เข็ม
+  const nx = cx + (r - 8) * Math.cos(aVal);
+  const ny = cy + (r - 8) * Math.sin(aVal);
 
-    <!-- โซนสี: 0–40 เขียว / 40–70 ส้ม / 70–120 แดง (ขวา→ซ้าย) -->
-    <path d="${arcPath(a0,  a40,  r, r - thick)}" fill="${colG}" opacity="0.45"/>
-    <path d="${arcPath(a40, a70,  r, r - thick)}" fill="${colO}" opacity="0.45"/>
-    <path d="${arcPath(a70, aMax, r, r - thick)}" fill="${colR}" opacity="0.45"/>
+  const svg = `
+  <svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
+    <!-- พื้นหลังจาง -->
+    <path d="${arcBand(a0, aMax)}" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+
+    <!-- โซนสีต่อเนื่องเหมือนเกจแบต -->
+    <path d="${arcBand(a0,  a40 )}" fill="${colG}" opacity="0.9"/>
+    <path d="${arcBand(a40, a70 )}" fill="${colO}" opacity="0.9"/>
+    <path d="${arcBand(a70, aMax)}" fill="${colR}" opacity="0.9"/>
+
+    <!-- เส้นแบ่งโซนเล็ก ๆ -->
+    <path d="M ${cx + r*Math.cos(a40)} ${cy + r*Math.sin(a40)}
+             L ${cx + (r-band)*Math.cos(a40)} ${cy + (r-band)*Math.sin(a40)}"
+          stroke="rgba(255,255,255,0.6)" stroke-width="2" />
+    <path d="M ${cx + r*Math.cos(a70)} ${cy + r*Math.sin(a70)}
+             L ${cx + (r-band)*Math.cos(a70)} ${cy + (r-band)*Math.sin(a70)}"
+          stroke="rgba(255,255,255,0.6)" stroke-width="2" />
 
     <!-- เข็ม -->
     <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
     <circle cx="${cx}" cy="${cy}" r="5" fill="#fff"/>
 
-    <!-- ค่ากลาง -->
-    <text x="${cx}" y="${cy - 18}" class="arc-label" style="font-size:18px;">${v.toFixed(1)} cm</text>
+    <!-- ค่า -->
+    <text x="${cx}" y="${cy - r*0.55}" class="val-text" style="font-weight:700;font-size:18px;" text-anchor="middle">${v.toFixed(1)} cm</text>
 
-    <!-- ป้ายปลายขวา = 0, ปลายซ้าย = max -->
-    <text x="${polar(a0, r+12)[0]}"  y="${polar(a0, r+12)[1]}"  class="arc-end" text-anchor="start">0</text>
-    <text x="${polar(aMax, r+12)[0]}" y="${polar(aMax, r+12)[1]}" class="arc-end" text-anchor="end">${max}</text>
+    <!-- ป้ายปลายซ้าย/ขวา -->
+    <text x="${cx + (r+10)*Math.cos(a0)}"  y="${cy + (r+10)*Math.sin(a0)}"  class="tick-text" text-anchor="start">0</text>
+    <text x="${cx + (r+10)*Math.cos(aMax)}" y="${cy + (r+10)*Math.sin(aMax)}" class="tick-text" text-anchor="end">${max}</text>
   </svg>`;
   el.innerHTML = svg;
 }
