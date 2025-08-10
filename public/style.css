@@ -414,7 +414,7 @@ tbody tr:hover {
 /* ===== Topbar & Hamburger ===== */
 .topbar{
   position: sticky; top:0; z-index:1000;
-  height:54px; display:flex; align-items:center; gap:10px;
+  height:54px; display:inline-flex; align-items:center; gap:10px;
   padding:0 12px; margin-bottom:10px;
   background:rgba(0,0,0,0.15); backdrop-filter:blur(6px);
   border-bottom:1px solid rgba(255,255,255,0.15);
