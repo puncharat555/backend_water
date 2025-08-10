@@ -363,3 +363,40 @@ tbody tr:hover {
   gap: 8px;
   margin-bottom: 15px;
 }
+/* แถวหัวตาราง: หัวข้อซ้าย ปุ่มขวา */
+.table-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+
+/* ให้หัวข้อชิดซ้าย ไม่เกิด margin ดันบรรทัด */
+.table-header h3{
+  margin:0;
+  line-height:1.2;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* ปุ่มสรุปเรียงชิดกันกลางแนวตั้ง */
+.summary-toggle{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+/* ไอคอน ❗ ขยับห่างนิดหน่อย */
+.error-toggle{ margin-left:6px; }
+
+/* ปุ่มช่วงเวลาในกราฟให้อยู่กึ่งกลางเป๊ะ (เผื่อกรณีกล่องกราฟ) */
+#timeRangeButtons,
+#batteryTimeRangeButtons,
+#currentTimeRangeButtons{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:15px;
+}

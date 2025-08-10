@@ -189,15 +189,18 @@
 
   <!-- ตารางข้อมูล -->
   <div class="table-wrapper">
-    <h3>
-      ประวัติข้อมูล
-      <span class="error-toggle" onclick="toggleErrorBox()" title="คลิกเพื่อแสดงข้อมูลผิดปกติ">❗</span>
-      <div id="summaryToggle" style="text-align:right; margin:8px 0;">
-        <button class="range-btn" data-view="raw">ข้อมูลทั้งหมด</button>
-        <button class="range-btn" data-view="day">สรุปรายวัน</button>
-        <button class="range-btn" data-view="month">สรุปรายเดือน</button>
-      </div>
-</h3>
+<div class="table-header">
+  <h3>
+    ประวัติข้อมูล
+    <span class="error-toggle" onclick="toggleErrorBox()" title="คลิกเพื่อแสดงข้อมูลผิดปกติ">❗</span>
+  </h3>
+
+  <div id="summaryToggle" class="summary-toggle">
+    <button class="range-btn" data-view="raw">ข้อมูลทั้งหมด</button>
+    <button class="range-btn" data-view="day">สรุปรายวัน</button>
+    <button class="range-btn" data-view="month">สรุปรายเดือน</button>
+  </div>
+</div>
 
     <div id="errorBox" class="error-box hidden">
       <h4>รายการข้อมูลผิดปกติ</h4>
