@@ -548,6 +548,55 @@ function setupRangeButtons() {
     });
   });
 }
+/* ========= Water Tube (0–40 เขียว, 40–70 ส้ม, 70–120 แดง) ========= */
+function drawWaterTube(containerId, value, min = 0, max = fixedDepth) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  const v = Math.max(min, Math.min(max, Number(value) || 0));
+  const ratio = (v - min) / (max - min);
+
+  let liquidColor = '#33d17a';       // green
+  if (v >= 70) liquidColor = '#ff6d00';     // red-ish
+  else if (v >= 40) liquidColor = '#ffb300'; // orange
+
+  const W = 960;
+  const X = (cm) => 20 + (cm / (max - min)) * W;
+
+  const svg = `
+  <svg viewBox="0 0 1000 140" preserveAspectRatio="none">
+    <rect x="20" y="40" width="${W}" height="44" rx="22" ry="22"
+          fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.35)" stroke-width="3"/>
+    <clipPath id="tubeClip">
+      <rect x="20" y="40" width="${W}" height="44" rx="22" ry="22"/>
+    </clipPath>
+
+    <!-- โซนพื้นหลัง -->
+    <rect x="20"     y="40" width="${W*(40/max)}"          height="44" fill="rgba(51,209,122,0.25)" clip-path="url(#tubeClip)"/>
+    <rect x="${X(40)}" y="40" width="${W*((70-40)/max)}"   height="44" fill="rgba(255,179,0,0.25)"  clip-path="url(#tubeClip)"/>
+    <rect x="${X(70)}" y="40" width="${W*((max-70)/max)}"  height="44" fill="rgba(255,109,0,0.25)"  clip-path="url(#tubeClip)"/>
+
+    <!-- ของเหลว -->
+    <rect x="20" y="40" width="${W*ratio}" height="44" clip-path="url(#tubeClip)" fill="${liquidColor}"/>
+
+    <!-- เส้นแบ่งช่วง -->
+    <line x1="${X(40)}" y1="36" x2="${X(40)}" y2="88" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
+    <line x1="${X(70)}" y1="36" x2="${X(70)}" y2="88" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
+
+    <!-- เข็ม/ตัวเลข -->
+    <line x1="${20 + W*ratio}" y1="28" x2="${20 + W*ratio}" y2="96" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="${20 + W*ratio}" cy="28" r="4" fill="#fff"/>
+    <text x="${20 + W*ratio}" y="24" class="tube-label" style="font-size:1.1rem;">${v.toFixed(1)} cm</text>
+
+    <!-- ticks -->
+    <text x="${X(0)}"   y="120" class="tube-tick">0</text>
+    <text x="${X(40)}"  y="120" class="tube-tick">40</text>
+    <text x="${X(70)}"  y="120" class="tube-tick">70</text>
+    <text x="${X(max)}" y="120" class="tube-tick" text-anchor="end">${max}</text>
+  </svg>`;
+  el.innerHTML = svg;
+}
+
 
 
 /* ===== Sidebar / Hamburger ===== */
