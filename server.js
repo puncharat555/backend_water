@@ -5,113 +5,98 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 3000;
-const uri = process.env.MONGO_URI;
+const PORT = process.env.PORT || 3000;
+const MONGO_URI = process.env.MONGO_URI;
 
-const client = new MongoClient(uri, {
+// ==== Mongo Client ====
+const client = new MongoClient(MONGO_URI, {
+  // ถ้าคุณใช้ Mongo Atlas/SSL สามารถคง options นี้ไว้ได้
   tls: true,
   tlsAllowInvalidCertificates: true,
 });
 
+// ==== Middlewares ====
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '/public')));
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.get(['/', '/index'], (req, res) => {
-  res.sendFile(path.join(__dirname, '/public', 'index.html'));
+// log แบบสั้นๆ (ดูว่า route โดนยิงไหม)
+app.use((req, _res, next) => {
+  console.log('> hit', req.method, req.url);
+  next();
 });
 
+// ==== Health check ====
+app.get('/healthz', (_req, res) => res.send('ok'));
+
+// ==== Static page ====
+app.get(['/', '/index'], (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// ==== POST /distance  (บันทึกข้อมูลแบบยืดหยุ่น) ====
 app.post('/distance', async (req, res) => {
-  const {
-    distance,
-    rssi_node1,
-    rssi_node2,
-    v_node1,
-    i_node1,
-    v_node2,
-    i_node2,
-    time_node1,
-    time_node2,
-  } = req.body;
-
-  if (
-    typeof distance !== 'number' ||
-    typeof rssi_node1 !== 'number' ||
-    typeof rssi_node2 !== 'number' ||
-    typeof v_node1 !== 'number' ||
-    typeof i_node1 !== 'number' ||
-    typeof v_node2 !== 'number' ||
-    typeof i_node2 !== 'number' ||
-    typeof time_node1 !== 'string' ||
-    typeof time_node2 !== 'string'
-  ) {
-    return res.status(400).json({ error: 'Invalid data types in request body' });
-  }
-
   try {
+    const b = req.body;
+
+    const doc = {
+      distance: b.distance != null ? Number(b.distance) : NaN,
+      rssi_node1: b.rssi_node1 != null ? Number(b.rssi_node1) : null,
+      rssi_node2: b.rssi_node2 != null ? Number(b.rssi_node2) : null,
+      v_node1:    b.v_node1    != null ? Number(b.v_node1)    : null,
+      i_node1:    b.i_node1    != null ? Number(b.i_node1)    : null,
+      v_node2:    b.v_node2    != null ? Number(b.v_node2)    : null,
+      i_node2:    b.i_node2    != null ? Number(b.i_node2)    : null,
+      time_node1: typeof b.time_node1 === 'string' ? b.time_node1 : null,
+      time_node2: typeof b.time_node2 === 'string' ? b.time_node2 : null,
+      timestamp: new Date(),
+    };
+
+    if (Number.isNaN(doc.distance)) {
+      return res.status(400).json({ error: 'distance is required and must be a number' });
+    }
+
     const db = client.db('esp32_data');
     const collection = db.collection('distances');
-    await collection.insertOne({
-      distance,
-      rssi_node1,
-      rssi_node2,
-      v_node1,
-      i_node1,
-      v_node2,
-      i_node2,
-      time_node1,
-      time_node2,
-      timestamp: new Date(),
-    });
+    await collection.insertOne(doc);
 
-    res.json({
-      message: 'Distance, RSSI, voltage, current and timestamps saved',
-      distance,
-      rssi_node1,
-      rssi_node2,
-      v_node1,
-      i_node1,
-      v_node2,
-      i_node2,
-      time_node1,
-      time_node2,
-    });
+    res.json({ message: 'saved', ...doc });
   } catch (err) {
     console.error('Error saving data:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
+// ==== GET /distance  (ไม่มี range = ดึงล่าสุด N แถว) ====
 app.get('/distance', async (req, res) => {
   try {
     const db = client.db('esp32_data');
     const collection = db.collection('distances');
 
-    const range = req.query.range || '1d'; 
+    const { range } = req.query;
+    const LIMIT_LATEST = 200;
 
-    let fromDate = new Date();
-    switch (range) {
-      case '1h':
-        fromDate.setHours(fromDate.getHours() - 1);
-        break;
-      case '1d':
-        fromDate.setDate(fromDate.getDate() - 1);
-        break;
-      case '7d':
-        fromDate.setDate(fromDate.getDate() - 7);
-        break;
-      case '30d':
-        fromDate.setDate(fromDate.getDate() - 30);
-        break;
-      default:
-        fromDate.setDate(fromDate.getDate() - 1); 
+    let cursor;
+
+    if (!range) {
+      // ไม่มี range: คืนล่าสุด N แถว
+      cursor = collection.find({}).sort({ timestamp: -1 }).limit(LIMIT_LATEST);
+    } else {
+      // มี range: กรองตามเวลา
+      let fromDate = new Date();
+      switch (range) {
+        case '1h':  fromDate.setHours(fromDate.getHours() - 1); break;
+        case '1d':  fromDate.setDate(fromDate.getDate() - 1);   break;
+        case '7d':  fromDate.setDate(fromDate.getDate() - 7);   break;
+        case '30d': fromDate.setDate(fromDate.getDate() - 30);  break;
+        default:    fromDate.setDate(fromDate.getDate() - 1);   break;
+      }
+      cursor = collection.find({ timestamp: { $gte: fromDate } }).sort({ timestamp: -1 });
     }
 
-    const distances = await collection
-      .find({ timestamp: { $gte: fromDate } })
-      .sort({ timestamp: -1 })
-      //.limit(1000)
-      .toArray();
+    const distances = await cursor.toArray();
+
+    // กัน cache
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
@@ -123,17 +108,39 @@ app.get('/distance', async (req, res) => {
   }
 });
 
+// ==== Start Server ====
 async function startServer() {
   try {
     await client.connect();
     console.log('Connected to MongoDB');
 
-    app.listen(port, '0.0.0.0', () => {
-      console.log(`ESP32 Distance API is running on port ${port}`);
+    // สร้าง index เพื่อ query เร็วขึ้น
+    const db = client.db('esp32_data');
+    await db.collection('distances').createIndex({ timestamp: -1 });
+
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`ESP32 Distance API is running on port ${PORT}`);
     });
   } catch (err) {
     console.error('Failed to connect to MongoDB:', err);
+    process.exit(1);
   }
 }
 
 startServer();
+
+// ปิดโปรเซสอย่างนุ่มนวล
+process.on('SIGTERM', async () => {
+  try {
+    await client.close(true);
+  } finally {
+    process.exit(0);
+  }
+});
+process.on('SIGINT', async () => {
+  try {
+    await client.close(true);
+  } finally {
+    process.exit(0);
+  }
+});
