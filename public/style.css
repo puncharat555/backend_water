@@ -353,3 +353,6 @@ tbody tr:hover {
 .table-wrapper { position: relative; z-index: 1; }
 #summaryToggle  { position: relative; z-index: 2; }
 
+.water-gauge-card:hover {
+  background: rgba(255,255,255,0.08) !important;
+}
