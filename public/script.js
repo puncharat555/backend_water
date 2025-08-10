@@ -709,89 +709,222 @@ async function elementToPng(el, scale = 2) {
 }
 
 // ส่งออก PDF: เกจน้ำ + 3 กราฟ + สรุปข้อมูลล่าสุด + ตาราง
+// แปลง Chart.js เป็น PNG ที่คมขึ้นและรอเรนเดอร์เสร็จ
+async function chartToPNG(chart) {
+  if (!chart) return null;
+  // รอเฟรมถัดไปให้ layout เสถียร
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  // บังคับอัปเดต/รีไซส์ (กันโดนตัด)
+  chart.resize();
+  chart.update('none');
+  // ใช้ DPR สูงเพื่อความคม
+  const prev = chart.options.devicePixelRatio;
+  chart.options.devicePixelRatio = 2;
+  chart.resize();
+  const dataUrl = chart.toBase64Image('image/png', 1.0);
+  // คืนค่า DPR เดิม
+  chart.options.devicePixelRatio = prev;
+  chart.resize();
+  return dataUrl;
+}
+
+// ===== ส่งออก PDF (แก้ใหม่ กันกราฟขาด) =====
 async function exportDashboardPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'a4' });
   const margin = 28;
+  const pageW = doc.internal.pageSize.getWidth();
   let y = margin;
 
   // หัวรายงาน
-  doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(18);
+  doc.setFont('Helvetica', 'bold'); doc.setFontSize(20);
   doc.text('Water Level Monitoring — รายงานสรุป', margin, y);
-  doc.setFont('Helvetica', 'normal');
-  doc.setFontSize(11);
-  doc.text(`วันที่พิมพ์: ${new Intl.DateTimeFormat('th-TH', {
-    dateStyle:'medium', timeStyle:'short'
-  }).format(new Date())}`, margin, y += 18);
+  doc.setFont('Helvetica', 'normal'); doc.setFontSize(11);
+  doc.text(
+    `วันที่พิมพ์: ${new Intl.DateTimeFormat('th-TH',{dateStyle:'medium', timeStyle:'short'}).format(new Date())}`,
+    margin, y += 20
+  );
 
-  // ภาพเกจระดับน้ำ (จับทั้งการ์ดจะสวยกว่า)
+  // การ์ดเกจน้ำ (จับภาพด้วย html2canvas เพื่อเก็บตัวหนังสือ/สีครบ)
   const waterCard = document.querySelector('.water-gauge-card') || document.getElementById('waterGauge');
-  const waterPng = await elementToPng(waterCard);
-  if (waterPng) {
-    const w = 360, h = 190;
-    doc.addImage(waterPng, 'PNG', margin, y + 10, w, h);
+  if (waterCard) {
+    const png = await elementToPng(waterCard, 2);
+    if (png) {
+      const w = pageW - margin*2;   // เต็มความกว้าง (ซ้าย→ขวา)
+      const h = 180;
+      doc.addImage(png, 'PNG', margin, y+6, w, h);
+      y += h + 18;
+    }
   }
 
-  // กราฟ: ใช้ Chart.js base64 (หากมีอินสแตนซ์)
-  const imgs = [];
-  if (waterLevelChartInstance) imgs.push({ title:'Water (ช่วงเลือก)', data: waterLevelChartInstance.toBase64Image() });
-  if (oneHourChartInstance)    imgs.push({ title:'Water 1h',           data: oneHourChartInstance.toBase64Image() });
-  if (batteryChartInstance)    imgs.push({ title:'Battery',            data: batteryChartInstance.toBase64Image() });
-  if (currentChartInstance)    imgs.push({ title:'Current',            data: currentChartInstance.toBase64Image() });
+  // กราฟ: ใส่ทีละรูป เต็มความกว้าง ป้องกันโดนตัด
+  const graphs = [
+    await chartToPNG(waterLevelChartInstance),
+    await chartToPNG(oneHourChartInstance),
+    await chartToPNG(batteryChartInstance),
+    await chartToPNG(currentChartInstance)
+  ].filter(Boolean);
 
-  // จัดกริดรูป 2 คอลัมน์
-  let x = margin + 380, rowH = 180, colW = 360;
-  for (let i=0; i<imgs.length && i<3; i++) { // ใส่ 3 รูปหลักพออ่าน
-    const r = Math.floor(i/2), c = i%2;
-    const px = x + c* (colW + 16);
-    const py = y + 10 + r* (rowH + 16);
-    doc.addImage(imgs[i].data, 'PNG', px, py, colW, rowH);
+  for (const g of graphs) {
+    // เช็กว่าพื้นที่พอไหม ไม่พอขึ้นหน้าใหม่
+    const imgH = 210, gap = 10;
+    if (y + imgH + margin > doc.internal.pageSize.getHeight()) {
+      doc.addPage(); y = margin;
+    }
+    doc.addImage(g, 'PNG', margin, y, pageW - margin*2, imgH);
+    y += imgH + gap;
   }
-  y += 10 + rowH*2 + 16; // พื้นที่รูป
 
-  // สรุปข้อมูลล่าสุด
+  // สรุปข้อมูลล่าสุด (สั้นๆ)
   const latest = allData[0];
   if (latest) {
-    doc.setFont('Helvetica','bold');
-    doc.setFontSize(12);
-    doc.text('สรุปล่าสุด:', margin, y);
-    doc.setFont('Helvetica','normal');
+    if (y + 60 + margin > doc.internal.pageSize.getHeight()) { doc.addPage(); y = margin; }
+    doc.setFont('Helvetica','bold'); doc.setFontSize(12); doc.text('สรุปล่าสุด', margin, y);
+    doc.setFont('Helvetica','normal'); doc.setFontSize(11);
     const level = (fixedDepth - Number(latest.distance ?? 0)).toFixed(1);
-    const summary = [
-      `ระดับน้ำ: ${level} cm`,
-      `RSSI N1: ${latest.rssi_node1 ?? '-'}  |  RSSI N2: ${latest.rssi_node2 ?? '-'}`,
-      `V/I N1: ${latest.v_node1 ?? '-'} V / ${latest.i_node1 ?? '-'} mA`,
-      `V/I N2: ${latest.v_node2 ?? '-'} V / ${latest.i_node2 ?? '-'} mA`,
-      `เวลา: ${latest.time_node1 || latest.timestamp || '-'}`
-    ].join('   ');
-    doc.setFontSize(11);
-    doc.text(summary, margin, y += 16);
+    doc.text(`ระดับน้ำ: ${level} cm | RSSI N1/N2: ${latest.rssi_node1 ?? '-'} / ${latest.rssi_node2 ?? '-'} | `
+            + `V/I N1: ${latest.v_node1 ?? '-'}V / ${latest.i_node1 ?? '-'}mA | `
+            + `V/I N2: ${latest.v_node2 ?? '-'}V / ${latest.i_node2 ?? '-'}mA | `
+            + `เวลา: ${latest.time_node1 || latest.timestamp || '-'}`, margin, y += 16);
   }
-
-  // ตารางข้อมูล (ใช้ autoTable)
-  const headers = [['ดิบ(cm)','ระดับ(cm)','RSSI1','RSSI2','V1','I1','V2','I2','เวลา1','เวลา2']];
-  const rows = getTableRowsForExport();
-
-  doc.autoTable({
-    startY: y + 10,
-    head: headers,
-    body: rows,
-    theme: 'grid',
-    styles: { fontSize: 9, cellPadding: 3 },
-    headStyles: { fillColor: [0, 160, 220] },
-    margin: { left: margin, right: margin },
-    tableWidth: doc.internal.pageSize.getWidth() - margin*2,
-    didDrawPage: (d) => {
-      // เลขหน้า
-      const str = `หน้า ${doc.internal.getNumberOfPages()}`;
-      doc.setFontSize(9);
-      doc.text(str, doc.internal.pageSize.getWidth() - margin, doc.internal.pageSize.getHeight() - 10, { align:'right' });
-    }
-  });
 
   doc.save(`Water_Report_${new Date().toISOString().slice(0,10)}.pdf`);
 }
+// รวมข้อมูลเป็นรายวัน/รายเดือน
+function aggregateRows(rows, mode = 'day') {
+  const fmt = (d) => {
+    const dt = parseToDate(d);
+    if (!dt) return null;
+    const y = dt.getFullYear();
+    const m = (dt.getMonth()+1).toString().padStart(2,'0');
+    const dd = dt.getDate().toString().padStart(2,'0');
+    return mode === 'day' ? `${y}-${m}-${dd}` : `${y}-${m}`;
+  };
+
+  const map = new Map();
+  rows.forEach(it => {
+    const key = fmt(it.time_node1 ?? it.time_node2 ?? it.timestamp);
+    if (!key) return;
+    const level = fixedDepth - Number(it.distance ?? NaN);
+    const v1 = Number(it.v_node1 ?? NaN);
+    const v2 = Number(it.v_node2 ?? NaN);
+    const i1 = Number(it.i_node1 ?? NaN);
+    const i2 = Number(it.i_node2 ?? NaN);
+
+    if (!map.has(key)) map.set(key, {
+      key, count:0,
+      levelSum:0, levelMin:+Infinity, levelMax:-Infinity,
+      v1Sum:0, v1Count:0, v2Sum:0, v2Count:0,
+      i1Sum:0, i1Count:0, i2Sum:0, i2Count:0
+    });
+    const acc = map.get(key);
+    acc.count++;
+
+    if (Number.isFinite(level)) {
+      acc.levelSum += level;
+      acc.levelMin = Math.min(acc.levelMin, level);
+      acc.levelMax = Math.max(acc.levelMax, level);
+    }
+    if (Number.isFinite(v1)) { acc.v1Sum += v1; acc.v1Count++; }
+    if (Number.isFinite(v2)) { acc.v2Sum += v2; acc.v2Count++; }
+    if (Number.isFinite(i1)) { acc.i1Sum += i1; acc.i1Count++; }
+    if (Number.isFinite(i2)) { acc.i2Sum += i2; acc.i2Count++; }
+  });
+
+  const arr = [...map.values()].map(a => ({
+    period: a.key,
+    samples: a.count,
+    level_avg: (a.levelSum / Math.max(1,a.count)).toFixed(1),
+    level_min: (a.levelMin === +Infinity ? '-' : a.levelMin.toFixed(1)),
+    level_max: (a.levelMax === -Infinity ? '-' : a.levelMax.toFixed(1)),
+    v1_avg: (a.v1Count? (a.v1Sum/a.v1Count).toFixed(2) : '-'),
+    v2_avg: (a.v2Count? (a.v2Sum/a.v2Count).toFixed(2) : '-'),
+    i1_avg: (a.i1Count? (a.i1Sum/a.i1Count).toFixed(1) : '-'),
+    i2_avg: (a.i2Count? (a.i2Sum/a.i2Count).toFixed(1) : '-'),
+  }));
+
+  // เรียงใหม่→เก่า แล้วตัดแค่ 20 แถว
+  arr.sort((a,b) => (a.period < b.period ? 1 : -1));
+  return arr.slice(0, 20);
+}
+
+// เรนเดอร์ตารางสรุป (แทนที่เนื้อหา tbody)
+function renderSummaryTable(mode = 'day') {
+  const tbody = document.querySelector('#dataTable tbody');
+  const thead = document.querySelector('#dataTable thead tr');
+  if (!tbody || !thead) return;
+
+  // เปลี่ยนหัวตารางให้เหมาะกับสรุป
+  thead.innerHTML = `
+    <th>${mode === 'day' ? 'วันที่' : 'เดือน'}</th>
+    <th>จำนวนตัวอย่าง</th>
+    <th>ระดับน้ำเฉลี่ย (cm)</th>
+    <th>ต่ำสุด</th>
+    <th>สูงสุด</th>
+    <th>V1 เฉลี่ย</th>
+    <th>V2 เฉลี่ย</th>
+    <th>I1 เฉลี่ย</th>
+    <th>I2 เฉลี่ย</th>
+  `;
+
+  const summary = aggregateRows(allData, mode);
+  tbody.innerHTML = '';
+  summary.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.period}</td>
+      <td>${r.samples}</td>
+      <td>${r.level_avg}</td>
+      <td>${r.level_min}</td>
+      <td>${r.level_max}</td>
+      <td>${r.v1_avg}</td>
+      <td>${r.v2_avg}</td>
+      <td>${r.i1_avg}</td>
+      <td>${r.i2_avg}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // ซ่อนปุ่ม "ดูข้อมูลเพิ่มเติม"
+  const more = document.getElementById('moreButtonContainer');
+  if (more) more.innerHTML = '';
+}
+
+// Hook ปุ่มสลับมุมมอง
+function setupSummaryToggle() {
+  const wrap = document.getElementById('summaryToggle');
+  if (!wrap) return;
+  wrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-view]');
+    if (!btn) return;
+    const view = btn.getAttribute('data-view');
+    // สลับ active
+    wrap.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    if (view === 'raw') {
+      // กลับไปตารางดิบ (หัวตารางเดิม + paginate)
+      const thead = document.querySelector('#dataTable thead tr');
+      if (thead) {
+        thead.innerHTML = `
+          <th>ระดับน้ำดิบ (cm)</th>
+          <th>ระดับน้ำ (cm)</th>
+          <th>RSSI Node1</th>
+          <th>RSSI Node2</th>
+          <th>V Node1</th>
+          <th>I Node1</th>
+          <th>V Node2</th>
+          <th>I Node2</th>
+          <th>เวลาวัด Node1</th>
+          <th>เวลาวัด Node2</th>`;
+      }
+      const tbody = document.querySelector('#dataTable tbody');
+      if (tbody) tbody.innerHTML = '';
+      currentIndex = 0; updateTable(true);
+    } else {
+      renderSummaryTable(view); // 'day' หรือ 'month'
+    }
+  });
+}
+
 
 // ส่งออก CSV (เปิด Excel ได้)
 function exportCSV() {
