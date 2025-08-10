@@ -360,3 +360,7 @@ tbody tr:hover {
   gap: 8px;
   margin-bottom: 15px;
 }
+/* ปิด hover effect สำหรับการ์ดเกจ */
+.node-box.gauge-box:hover {
+  background: rgba(255,255,255,0.08) !important;
+}
