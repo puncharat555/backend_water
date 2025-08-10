@@ -15,53 +15,39 @@
       <p id="waterLevelNode1" class="main-water-level">ระดับน้ำปัจจุบัน: -</p>
     </div>
   </div>
-  <!-- ===== หลอดระดับน้ำปัจจุบัน ===== -->
-<!-- ===== ระดับน้ำปัจจุบัน ===== -->
-<div class="container single-col">
-  <div class="node-box gauge-box">
-    <h2>ระดับน้ำปัจจุบัน</h2>
-    <div id="waterGauge" class="gauge"></div>
-    <div class="gauge-caption">
-      โซน: ปกติ 0–30 cm | เสี่ยง 30–40 cm | วิกฤต 40–60 cm
+
+  <!-- กล่องโหนด: แยกเป็น 2 กล่อง/โหนด (ข้อมูล | เกจ) -->
+  <div class="container nodes-grid">
+    <!-- Node 1 : ข้อมูล -->
+    <div class="node-box info-box">
+      <h2>Node 1</h2>
+      <p id="rssiNode1">RSSI: -</p>
+      <p id="voltageNode1">แรงดัน: -</p>
+      <p id="currentNode1">กระแส: -</p>
+      <p id="timeNode1">เวลาวัด: -</p>
+    </div>
+    <!-- Node 1 : เกจ -->
+    <div class="node-box gauge-box">
+      <h2>แรงดันแบตเตอรี่ (Node 1)</h2>
+      <div id="voltGauge1" class="gauge"></div>
+      <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
+    </div>
+
+    <!-- Node 2 : ข้อมูล -->
+    <div class="node-box info-box">
+      <h2>Node 2</h2>
+      <p id="rssiNode2">RSSI: -</p>
+      <p id="voltageNode2">แรงดัน: -</p>
+      <p id="currentNode2">กระแส: -</p>
+      <p id="timeNode2">เวลาวัด: -</p>
+    </div>
+    <!-- Node 2 : เกจ -->
+    <div class="node-box gauge-box">
+      <h2>แรงดันแบตเตอรี่ (Node 2)</h2>
+      <div id="voltGauge2" class="gauge"></div>
+      <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
     </div>
   </div>
-</div>
-
-<!-- ===== Node grid ===== -->
-<div class="container nodes-grid">
-  <!-- Node 1 : ข้อมูล -->
-  <div class="node-box info-box">
-    <h2>Node 1</h2>
-    <p id="rssiNode1">RSSI: -</p>
-    <p id="voltageNode1">แรงดัน: -</p>
-    <p id="currentNode1">กระแส: -</p>
-    <p id="timeNode1">เวลาวัด: -</p>
-  </div>
-
-  <!-- Node 1 : เกจ -->
-  <div class="node-box gauge-box">
-    <h2>แรงดันแบตเตอรี่ (Node 1)</h2>
-    <div id="voltGauge1" class="gauge"></div>
-    <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
-  </div>
-
-  <!-- Node 2 : ข้อมูล -->
-  <div class="node-box info-box">
-    <h2>Node 2</h2>
-    <p id="rssiNode2">RSSI: -</p>
-    <p id="voltageNode2">แรงดัน: -</p>
-    <p id="currentNode2">กระแส: -</p>
-    <p id="timeNode2">เวลาวัด: -</p>
-  </div>
-
-  <!-- Node 2 : เกจ -->
-  <div class="node-box gauge-box">
-    <h2>แรงดันแบตเตอรี่ (Node 2)</h2>
-    <div id="voltGauge2" class="gauge"></div>
-    <div class="gauge-caption">ช่วง 10.0–12.9 V</div>
-  </div>
-</div>
-
 
   <div class="charts-container">
     <div class="chart-box">
