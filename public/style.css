@@ -98,3 +98,65 @@ tbody tr:hover { background: rgba(255,255,255,0.15); cursor: default; transition
 .gauge-caption { opacity: .85; font-size: 0.95rem; margin-top: 6px; color: #e8eff5; }
 svg .val-text { fill:#fff; font-weight:700; text-anchor:middle; font-size:18px; }
 svg .tick-text { fill:#dfe7ee; font-size:12px; }
+/* ==== ปรับ Layout และขนาดเกจ ==== */
+
+/* กล่องเกจบนสุด (ระดับน้ำปัจจุบัน) ให้สูงพอดี */
+.water-level-display {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30px;
+}
+.main-water-level {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  font-size: 2.6rem;
+}
+
+/* เกจบนสุดให้เต็มพื้นที่และเล็กลงนิด */
+.main-water-level .gauge {
+  width: clamp(240px, 60%, 360px);
+  height: auto;
+}
+
+/* โครง Node ให้สูงเท่ากัน และเกจอยู่กึ่งกลาง */
+.container.nodes-grid {
+  align-items: stretch;
+}
+.node-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* กล่องเกจของ Node ให้เท่ากัน */
+.gauge-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+.gauge-box .gauge {
+  width: clamp(200px, 100%, 280px);
+  height: auto;
+}
+
+/* ปรับตารางและกราฟให้ระยะห่างสมดุล */
+.table-wrapper,
+.charts-container {
+  margin-top: 30px;
+}
+
+/* Responsive fix */
+@media (max-width: 1024px) {
+  .main-water-level {
+    min-height: 200px;
+    font-size: 2.2rem;
+  }
+  .gauge-box {
+    min-height: 180px;
+  }
+}
