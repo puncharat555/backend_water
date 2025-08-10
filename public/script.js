@@ -682,6 +682,7 @@ window.onload = async () => {
   setActiveRange('currentTimeRangeButtons', initialRange);
 
   setupRangeButtons();
+  setupSummaryToggle();
 };
 /* ===== Export helpers ===== */
 
