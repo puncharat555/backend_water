@@ -195,9 +195,9 @@ tbody tr:hover {
 }
 
 #map {
-  height: 1200px;
+  height: clamp(300px, 38vh, 50px);
   width: 100%;
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   border-radius: 15px;
   box-shadow: 0 8px 25px rgba(0,0,0,0.4);
