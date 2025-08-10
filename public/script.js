@@ -86,7 +86,39 @@ function xScaleOpts(range, xMin, xMax) {
   };
 }
 
-/* ========= SVG Gauge (10–12.9V) ========= */
+/* ========= SVG Gauges ========= */
+// เกจแรงดันแบต 10–12.9V
+function drawVoltageGauge(containerId, value, min = 10, max = 12.9) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const v = Math.max(min, Math.min(max, Number(value) || min));
+  const w = el.clientWidth || 280, h = el.clientHeight || 150;
+  const cx = w/2, cy = h-12, r = Math.min(w*0.45, h*0.9);
+  const start = -Math.PI, end = 0;
+  const toAng = x => start + (end - start) * ((x - min)/(max - min));
+  const arc = (sa, ea, rr) => {
+    const x1 = cx + rr*Math.cos(sa), y1 = cy + rr*Math.sin(sa);
+    const x2 = cx + rr*Math.cos(ea), y2 = cy + rr*Math.sin(ea);
+    const large = (ea - sa) % (2*Math.PI) > Math.PI ? 1 : 0;
+    return `M ${x1} ${y1} A ${rr} ${rr} 0 ${large} 1 ${x2} ${y2}`;
+  };
+  const z2 = Math.min(max, 11.5), z3 = Math.min(max, 12.3);
+  const svg = `
+    <svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
+      <path d="${arc(start, toAng(z2), r)}" stroke="#e74c3c" stroke-width="12" fill="none" opacity="0.85"/>
+      <path d="${arc(toAng(z2), toAng(z3), r)}" stroke="#f39c12" stroke-width="12" fill="none" opacity="0.9"/>
+      <path d="${arc(toAng(z3), end, r)}" stroke="#2ecc71" stroke-width="12" fill="none" opacity="0.9"/>
+      <line x1="${cx}" y1="${cy}" x2="${cx + (r-6)*Math.cos(toAng(v))}" y2="${cy + (r-6)*Math.sin(toAng(v))}"
+            stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="${cx}" cy="${cy}" r="4" fill="#fff"/>
+      <text x="${cx}" y="${cy - r*0.55}" class="val-text">${v.toFixed(2)} V</text>
+      <text x="${cx - r + 14}" y="${cy - 6}" class="tick-text">${min.toFixed(1)}V</text>
+      <text x="${cx + r - 14}" y="${cy - 6}" class="tick-text" text-anchor="end">${max.toFixed(1)}V</text>
+    </svg>`;
+  el.innerHTML = svg;
+}
+
+// เกจระดับน้ำปัจจุบัน (โซนเขียว/เหลือง/แดง)
 function drawWaterGauge(containerId, value, cfg = {}) {
   const min = cfg.min ?? 0, max = cfg.max ?? 60;
   const zones = cfg.zones ?? [
@@ -110,7 +142,6 @@ function drawWaterGauge(containerId, value, cfg = {}) {
     return `M ${x1} ${y1} A ${rr} ${rr} 0 ${large} 1 ${x2} ${y2}`;
   };
 
-  // วาดแถบสีตามโซน
   let prev = min, zonesPath = '';
   zones.forEach(z => {
     const sa = toAng(prev), ea = toAng(Math.min(z.to, max));
@@ -132,7 +163,6 @@ function drawWaterGauge(containerId, value, cfg = {}) {
   el.innerHTML = svg;
 }
 
-
 /* ---------- Data ---------- */
 async function fetchHistoricalData(range = '30d') {
   const url = `https://backend-water-rf88.onrender.com/distance?range=${range}&_=${Date.now()}`;
@@ -147,17 +177,13 @@ function parseChartData(rows) {
     const ts = parseToDate(item.time_node1 || item.time_node2);
     if (!ts) continue;
 
-    // ยอมรับ distance = 0
     const levelRaw = (item.distance || item.distance === 0)
       ? Number((fixedDepth - item.distance).toFixed(2)) : NaN;
 
-    // กรองค่า outlier — เช่น ระดับน้ำเกิน 50 cm ในกราฟ 1 ชั่วโมงตัดทิ้ง
-    if (!isNaN(levelRaw) && levelRaw >= 0 && levelRaw <= 50) {
+    // เก็บเฉพาะค่าในช่วงสมเหตุสมผล 0–100 cm (กันค่าหลุด)
+    if (!isNaN(levelRaw) && levelRaw >= 0 && levelRaw <= 100) {
       water.push({ x: ts, y: levelRaw });
     }
-
-    const outlier = isNaN(levelRaw) || levelRaw < 0 || levelRaw > 100;
-    if (!outlier) water.push({ x: ts, y: levelRaw });
 
     if (item.v_node1 > 0) v1.push({ x: ts, y: item.v_node1 });
     if (item.v_node2 > 0) v2.push({ x: ts, y: item.v_node2 });
@@ -177,7 +203,7 @@ async function createWaterLevelChart(range = '1d') {
     const now = new Date();
     const xMin = water[0]?.x ?? new Date(now.getTime() - 24*60*60*1000);
     const xMax = water.at(-1)?.x ?? now;
-    const yB = water.length ? yBoundsFromData(water, 0.2) : { min: 0, max: 50 };
+    const yB = water.length ? yBoundsFromData(water, 0.20) : { min: 0, max: 50 };
 
     const canvas = document.getElementById('waterLevelChart30d');
     setupHiDPICanvas(canvas);
@@ -195,8 +221,7 @@ async function createWaterLevelChart(range = '1d') {
       }]},
       options: {
         parsing:false,
-        // >>> แก้ตรงนี้: เชื่อมช่องว่างทั้งหมด (ไม่ให้กราฟขาด)
-        spanGaps: true,
+        spanGaps: true, // เชื่อมช่องว่างทั้งหมด
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts(range, xMin, xMax),
@@ -213,7 +238,6 @@ async function createWaterLevelChart(range = '1d') {
   } catch (err) { console.error('Error creating water chart:', err); }
 }
 
-// 1 ชั่วโมง (อิง “ข้อมูลล่าสุด” ถ้าชั่วโมงปัจจุบันว่าง)
 async function createOneHourChart() {
   try {
     let rows = await fetchHistoricalData('1h');
@@ -233,20 +257,16 @@ async function createOneHourChart() {
     }
 
     const hasData = water.length > 0;
-let xMin, xMax;
-
-if (hasData) {
-  // ตัดช่องว่างด้านซ้าย: เริ่มที่เวลาของจุดแรกจริง ๆ
-  xMin = water[0].x;
-  xMax = water.at(-1).x;
-} else {
-  // ไม่มีข้อมูลเลย: ใช้หน้าต่าง 1 ชม. ตามปกติ
-  const now = new Date();
-  xMin = new Date(now.getTime() - 60*60*1000);
-  xMax = now;
-}
-
-const yB = hasData ? yBoundsFromData(water, 0.08) : { min: 0, max: 50 };
+    let xMin, xMax;
+    if (hasData) {
+      xMin = water[0].x;          // ตัดช่องว่างด้านซ้าย
+      xMax = water.at(-1).x;
+    } else {
+      const now = new Date();
+      xMin = new Date(now.getTime() - 60*60*1000);
+      xMax = now;
+    }
+    const yB = hasData ? yBoundsFromData(water, 0.08) : { min: 0, max: 50 };
 
     const canvas = document.getElementById('waterLevelChart1h');
     setupHiDPICanvas(canvas);
@@ -264,8 +284,7 @@ const yB = hasData ? yBoundsFromData(water, 0.08) : { min: 0, max: 50 };
       }]},
       options: {
         parsing:false,
-        // 1 ชั่วโมง: อนุญาตเว้นช่องว่างได้ถึง 20 นาที (เพื่อไม่ลากเส้นลวง)
-        spanGaps: 20*60*1000,
+        spanGaps: 20*60*1000, // เว้นว่างได้ถึง 20 นาที
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts('1h', xMin, xMax),
@@ -312,7 +331,7 @@ async function createBatteryChart(range = '1d') {
       },
       options: {
         parsing:false,
-        spanGaps:true,   // เชื่อมช่องว่างทั้งหมดสำหรับกราฟแบต
+        spanGaps:true,
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts(range, xMin, xMax),
@@ -352,7 +371,7 @@ async function createCurrentChart(range = '1d') {
       },
       options: {
         parsing:false,
-        spanGaps:true,   // เชื่อมช่องว่างทั้งหมดสำหรับกราฟกระแส
+        spanGaps:true,
         layout:{ padding:{ top:0, bottom:0 } },
         scales:{
           x: xScaleOpts(range, xMin, xMax),
@@ -393,8 +412,19 @@ async function loadData() {
       document.getElementById('voltageNode2').innerText = (latest.v_node2 && latest.v_node2 > 0) ? `แรงดัน: ${latest.v_node2} V` : 'แรงดัน: -';
       document.getElementById('currentNode2').innerText = (latest.i_node2 && latest.i_node2 > 0) ? `กระแส: ${latest.i_node2} mA` : 'กระแส: -';
       document.getElementById('timeNode2').innerText    = latest.time_node2 || 'เวลาวัด: -';
+
+      // เกจ "ระดับน้ำปัจจุบัน"
+      drawWaterGauge('waterGauge', Number(level), {
+        min: 0, max: 60,
+        zones: [
+          { to: 30, color: '#2ecc71' }, // ปกติ
+          { to: 40, color: '#f39c12' }, // เสี่ยง
+          { to: 60, color: '#e74c3c' }  // วิกฤต
+        ]
+      });
     }
 
+    // เกจแบตทั้งสอง
     drawVoltageGauge('voltGauge1', (latest?.v_node1 > 0 ? latest.v_node1 : 10), 10, 12.9);
     drawVoltageGauge('voltGauge2', (latest?.v_node2 > 0 ? latest.v_node2 : 10), 10, 12.9);
 
@@ -404,8 +434,17 @@ async function loadData() {
     ['waterLevelNode1','rssiNode1','voltageNode1','currentNode1','timeNode1','rssiNode2','voltageNode2','currentNode2','timeNode2']
       .forEach(id => { const el = document.getElementById(id); if (el) el.innerText = '-'; });
 
+    // Fallback เกจ
     drawVoltageGauge('voltGauge1', 10, 10, 12.9);
     drawVoltageGauge('voltGauge2', 10, 10, 12.9);
+    drawWaterGauge('waterGauge', 0, {
+      min: 0, max: 60,
+      zones: [
+        { to: 30, color: '#2ecc71' },
+        { to: 40, color: '#f39c12' },
+        { to: 60, color: '#e74c3c' }
+      ]
+    });
 
     const tbody = document.querySelector('#dataTable tbody'); if (tbody) tbody.innerHTML = '';
     const more = document.getElementById('moreButtonContainer'); if (more) more.innerHTML = '';
