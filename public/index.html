@@ -52,7 +52,7 @@
       <div class="node-box gauge-box water-gauge-card">
         <h2>ระดับน้ำ (cm)</h2>
         <div id="waterGauge" class="gauge"></div>
-        <div class="gauge-caption">โซน: 0–40 ปลอดภัย • 40–70 ส้ม • 70–120 แดง</div>
+        <div class="gauge-caption">โซน: 0–40 ปลอดภัย • 40–70 เฝ้าระวัง • 70–120 อันตราย</div>
       </div>
     </div>
 
@@ -95,11 +95,11 @@
     <!-- กราฟระดับน้ำย้อนหลัง -->
     <div class="chart-box">
       <h3>กราฟระดับน้ำย้อนหลัง</h3>
-      <h2>* ระดับอ้างอิงติดตั้ง Sensor = + 5 m</h2>
       <div id="timeRangeButtons">
         <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
         <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
         <button class="range-btn" data-range="30d">ย้อนหลัง 30 วัน</button>
+        <h4>* ระดับอ้างอิงติดตั้ง Sensor = + 5 m</h4>
       </div>
       <div class="chart-canvas">
         <canvas id="waterLevelChart30d"></canvas>
