@@ -825,59 +825,52 @@ async function exportDashboardPDF() {
 /* ===== CSV Export (ใหม่) ===== */
 function exportCSV() {
   try {
-    const table = document.getElementById('dataTable');
-    if (!table) { alert('ไม่พบตารางข้อมูล'); return; }
-
-    // ดึงหัวตารางปัจจุบัน (รองรับโหมด raw/summary)
-    const headers = Array.from(table.querySelectorAll('thead th')).map(th => (th.innerText ?? '').trim());
-
-    // ดึงข้อมูลจาก tbody ที่กำลังแสดงอยู่ (ตามหน้า paginate หรือสรุป)
-    const rows = Array.from(table.querySelectorAll('tbody tr')).map(tr =>
-      Array.from(tr.querySelectorAll('td')).map(td => (td.innerText ?? '').trim())
-    );
-
-    // ถ้ายังไม่มีแถวเลย ลอง fallback เป็นข้อมูลดิบจาก allData
-    if (rows.length === 0 && Array.isArray(allData) && allData.length) {
-      headers.length = 0;
-      headers.push('distance_raw_cm','level_cm','rssi_node1','rssi_node2','v_node1_V','i_node1_mA','v_node2_V','i_node2_mA','time_node1','time_node2');
-      allData.forEach(item => {
-        const level  = (fixedDepth - Number(item.distance ?? 0));
-        rows.push([
-          Number(item.distance ?? '').toFixed(1),
-          Number.isFinite(level) ? level.toFixed(1) : '',
-          (item.rssi_node1 && item.rssi_node1 !== 0) ? String(item.rssi_node1) : '',
-          (item.rssi_node2 && item.rssi_node2 !== 0) ? String(item.rssi_node2) : '',
-          isDef(item.v_node1) ? `${item.v_node1}` : '',
-          isDef(item.i_node1) ? `${item.i_node1}` : '',
-          isDef(item.v_node2) ? `${item.v_node2}` : '',
-          isDef(item.i_node2) ? `${item.i_node2}` : '',
-          item.time_node1 || item.timestamp || '',
-          item.time_node2 || item.timestamp || ''
-        ]);
-      });
+    if (!Array.isArray(allData) || allData.length === 0) {
+      alert('ไม่มีข้อมูลสำหรับส่งออก');
+      return;
     }
 
-    // ฟังก์ชัน escape ค่าที่มีคอมมา/ขึ้นบรรทัดใหม่/เครื่องหมายคำพูด
+    const headers = [
+      'ระดับน้ำดิบ (cm)', 'ระดับน้ำ (cm)',
+      'RSSI Node1', 'RSSI Node2',
+      'V Node1', 'I Node1',
+      'V Node2', 'I Node2',
+      'เวลาวัด Node1', 'เวลาวัด Node2'
+    ];
+
+    const rows = allData.map(item => {
+      const level  = (fixedDepth - Number(item.distance ?? 0));
+      return [
+        Number(item.distance ?? '').toFixed(1),
+        Number.isFinite(level) ? level.toFixed(1) : '',
+        (item.rssi_node1 && item.rssi_node1 !== 0) ? String(item.rssi_node1) : '',
+        (item.rssi_node2 && item.rssi_node2 !== 0) ? String(item.rssi_node2) : '',
+        isDef(item.v_node1) ? `${item.v_node1}` : '',
+        isDef(item.i_node1) ? `${item.i_node1}` : '',
+        isDef(item.v_node2) ? `${item.v_node2}` : '',
+        isDef(item.i_node2) ? `${item.i_node2}` : '',
+        item.time_node1 || item.timestamp || '',
+        item.time_node2 || item.timestamp || ''
+      ];
+    });
+
     const esc = (val) => {
       const s = String(val ?? '');
       if (/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
       return s;
     };
 
-    const lines = [];
-    if (headers.length) lines.push(headers.map(esc).join(','));
+    const lines = [headers.map(esc).join(',')];
     rows.forEach(r => lines.push(r.map(esc).join(',')));
 
-    const csv = '\uFEFF' + lines.join('\n'); // ใส่ BOM สำหรับภาษาไทย
+    const csv = '\uFEFF' + lines.join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement('a');
-    a.href = url;
     const ts = new Date();
-    const fname = `Water_Data_${ts.getFullYear()}-${String(ts.getMonth()+1).padStart(2,'0')}-${String(ts.getDate()).padStart(2,'0')}`+
-                  `_${String(ts.getHours()).padStart(2,'0')}${String(ts.getMinutes()).padStart(2,'0')}.csv`;
-    a.download = fname;
+    a.href = url;
+    a.download = `Water_Data_All_${ts.getFullYear()}-${String(ts.getMonth()+1).padStart(2,'0')}-${String(ts.getDate()).padStart(2,'0')}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -887,6 +880,7 @@ function exportCSV() {
     alert('ส่งออก CSV ไม่สำเร็จ');
   }
 }
+
 
 // รวมข้อมูลเป็นรายวัน/รายเดือน
 function aggregateRows(rows, mode = 'day') {
