@@ -821,6 +821,73 @@ async function exportDashboardPDF() {
 
   doc.save(`Water_Report_${new Date().toISOString().slice(0,10)}.pdf`);
 }
+
+/* ===== CSV Export (ใหม่) ===== */
+function exportCSV() {
+  try {
+    const table = document.getElementById('dataTable');
+    if (!table) { alert('ไม่พบตารางข้อมูล'); return; }
+
+    // ดึงหัวตารางปัจจุบัน (รองรับโหมด raw/summary)
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => (th.innerText ?? '').trim());
+
+    // ดึงข้อมูลจาก tbody ที่กำลังแสดงอยู่ (ตามหน้า paginate หรือสรุป)
+    const rows = Array.from(table.querySelectorAll('tbody tr')).map(tr =>
+      Array.from(tr.querySelectorAll('td')).map(td => (td.innerText ?? '').trim())
+    );
+
+    // ถ้ายังไม่มีแถวเลย ลอง fallback เป็นข้อมูลดิบจาก allData
+    if (rows.length === 0 && Array.isArray(allData) && allData.length) {
+      headers.length = 0;
+      headers.push('distance_raw_cm','level_cm','rssi_node1','rssi_node2','v_node1_V','i_node1_mA','v_node2_V','i_node2_mA','time_node1','time_node2');
+      allData.forEach(item => {
+        const level  = (fixedDepth - Number(item.distance ?? 0));
+        rows.push([
+          Number(item.distance ?? '').toFixed(1),
+          Number.isFinite(level) ? level.toFixed(1) : '',
+          (item.rssi_node1 && item.rssi_node1 !== 0) ? String(item.rssi_node1) : '',
+          (item.rssi_node2 && item.rssi_node2 !== 0) ? String(item.rssi_node2) : '',
+          isDef(item.v_node1) ? `${item.v_node1}` : '',
+          isDef(item.i_node1) ? `${item.i_node1}` : '',
+          isDef(item.v_node2) ? `${item.v_node2}` : '',
+          isDef(item.i_node2) ? `${item.i_node2}` : '',
+          item.time_node1 || item.timestamp || '',
+          item.time_node2 || item.timestamp || ''
+        ]);
+      });
+    }
+
+    // ฟังก์ชัน escape ค่าที่มีคอมมา/ขึ้นบรรทัดใหม่/เครื่องหมายคำพูด
+    const esc = (val) => {
+      const s = String(val ?? '');
+      if (/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+      return s;
+    };
+
+    const lines = [];
+    if (headers.length) lines.push(headers.map(esc).join(','));
+    rows.forEach(r => lines.push(r.map(esc).join(',')));
+
+    const csv = '\uFEFF' + lines.join('\n'); // ใส่ BOM สำหรับภาษาไทย
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    const ts = new Date();
+    const fname = `Water_Data_${ts.getFullYear()}-${String(ts.getMonth()+1).padStart(2,'0')}-${String(ts.getDate()).padStart(2,'0')}`+
+                  `_${String(ts.getHours()).padStart(2,'0')}${String(ts.getMinutes()).padStart(2,'0')}.csv`;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error('CSV export error:', e);
+    alert('ส่งออก CSV ไม่สำเร็จ');
+  }
+}
+
 // รวมข้อมูลเป็นรายวัน/รายเดือน
 function aggregateRows(rows, mode = 'day') {
   const fmt = (d) => {
@@ -962,7 +1029,10 @@ function setupSummaryToggle() {
 /* ===== Hook ปุ่ม ===== */
 function setupExportButtons() {
   const pdfBtn = document.getElementById('exportPdfBtn');
+  const csvBtn = document.getElementById('exportCsvBtn');
+
   if (pdfBtn) pdfBtn.addEventListener('click', exportDashboardPDF);
+  if (csvBtn) csvBtn.addEventListener('click', exportCSV);
 }
 
 // เรียกหลัง DOM พร้อมแล้ว (มีอยู่แล้วใน onload → เติมบรรทัดนี้ก็พอ)

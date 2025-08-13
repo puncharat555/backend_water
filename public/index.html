@@ -33,6 +33,7 @@
     <a href="#" class="nav-item" data-target="map-section">แผนที่ตำแหน่งอุปกรณ์</a>
     <a href="#" class="nav-item" data-target="table-section">ตารางประวัติข้อมูล</a>
     <a href="#" class="nav-item" data-target="export-footer">ส่งรายงานออก PDF</a>
+    <a href="#" class="nav-item" data-action="export-csv">ส่งออก CSV</a>
   </nav>
   <div id="backdrop" class="backdrop"></div>
 
@@ -95,6 +96,7 @@
     <!-- กราฟระดับน้ำย้อนหลัง -->
     <div class="chart-box">
       <h3>กราฟระดับน้ำย้อนหลัง</h3>
+      <h2>* ระดับอ้างอิงติดตั้ง Sensor = + 5 m</h2>
       <div id="timeRangeButtons">
         <button class="range-btn active" data-range="1d">ย้อนหลัง 1 วัน</button>
         <button class="range-btn" data-range="7d">ย้อนหลัง 7 วัน</button>
@@ -249,6 +251,7 @@
   <!-- ปุ่มส่งออกลอยมุมขวาล่าง -->
   <div id="export-footer" class="export-footer">
   <button id="exportPdfBtn" class="range-btn">ส่งรายงานออก PDF</button>
+  <button id="exportCsvBtn" class="range-btn">ส่งออก CSV</button>
   </div>
 
   <!-- libs for export -->
