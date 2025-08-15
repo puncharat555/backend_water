@@ -1339,6 +1339,8 @@ async function exportReportPDF () {
     head, body,
     startY: tableStartY,
     margin: { left: margin, right: margin },
+    startX: margin,
+    tableWidth: 'auto',
     styles: {
       font: FONT,
       fontStyle: 'normal',
