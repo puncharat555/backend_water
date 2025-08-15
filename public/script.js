@@ -1201,21 +1201,42 @@ function setupReportQuickRanges(){
 async function runReportSearch(){
   try{
     if (!Array.isArray(allData) || allData.length===0) await loadData();
-    const s = getInputDate('reportStart'), e = getInputDate('reportEnd');
 
-    // ใช้ allData ทั้งหมด → เรียงเก่า→ใหม่ แล้วกรองตามช่วง
+    const sRaw = getInputDate('reportStart');
+    const eRaw = getInputDate('reportEnd');
+
+    // ถ้าใส่วันสิ้นสุด ให้ปัดไปท้ายวันเสมอ (รวมทั้งวัน)
+    let s = sRaw ? new Date(sRaw) : null;
+    let e = eRaw ? new Date(eRaw) : null;
+    if (e) e.setHours(23, 59, 59, 999);
+
+    // เรียงเก่า→ใหม่ แล้วกรองตามช่วง
     let src = allData.slice().sort((a,b)=>{
       const ta = +parseToDate(a.time_node1 ?? a.time_node2 ?? a.timestamp) || 0;
       const tb = +parseToDate(b.time_node1 ?? b.time_node2 ?? b.timestamp) || 0;
       return ta - tb;
     });
 
-    // เผื่อหน้าเพิ่งบูตแล้วยังไม่มีข้อมูล → ลองดึง 30 วัน
-    if (src.length===0){ const rows = await fetchHistoricalData('30d'); src = Array.isArray(rows)?rows:[]; }
+    // ถ้ายังไม่มีในหน่วยความจำ ลองดึง 30 วัน
+    if (src.length===0){
+      const rows = await fetchHistoricalData('30d');
+      src = Array.isArray(rows) ? rows : [];
+    }
 
-    reportData = filterByRange(src, s, e);
+    const filtered = src.filter(it=>{
+      const ts = parseToDate(it.time_node1 ?? it.time_node2 ?? it.timestamp);
+      if (!ts) return false;
+      const t = +ts;
+      if (s && t < +s) return false;
+      if (e && t > +e) return false;
+      return true;
+    });
+
+    reportData = filtered;
     renderReportTable(reportData);
-    if (!reportData.length) alert('ไม่พบข้อมูลในช่วงเวลาที่เลือก');
+    if (!reportData.length) {
+      alert('ไม่พบข้อมูลในช่วงเวลาที่เลือก (ลองขยับเวลาสิ้นสุดเป็น 23:59)');
+    }
   }catch(err){
     console.error('[Report] search error:', err);
     alert('ค้นหารายงานไม่สำเร็จ');
