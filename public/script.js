@@ -1071,154 +1071,126 @@ function setupRangeButtons() {
     });
   });
 }
-/* ================= Report (ตารางไม่ใช่กราฟ) — CORE ================= */
+/* ================= Report (ตารางไม่ใช่กราฟ) – FULL BLOCK ================= */
 let reportData = [];
 
-function getDateLocalStr(d) {
+/* ---------- Utils ---------- */
+function getDateLocalStr(d){
   if (!(d instanceof Date) || isNaN(+d)) return '';
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  return `${y}-${m}-${day}T${hh}:${mm}`;
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+  const hh=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0');
+  return `${y}-${m}-${dd}T${hh}:${mm}`;
 }
-
-function getInputDate(id) {
+function getInputDate(id){
   const el = document.getElementById(id);
   if (!el || !el.value) return null;
   const dt = new Date(el.value);
   return isNaN(+dt) ? null : dt;
 }
-
-function filterByRange(rows, startDT, endDT) {
+function filterByRange(rows, startDT, endDT){
   const s = startDT ? +startDT : -Infinity;
-  // รวมถึงนาทีสุดท้าย (+59s) ให้ติดข้อมูลที่มีวินาที
-  const e = endDT ? (+endDT + 59*1000) : +Infinity;
-  return rows.filter(it => {
+  const e = endDT ? (+endDT + 59*1000) : +Infinity; // รวมถึงนาทีสุดท้าย
+  return rows.filter(it=>{
     const ts = parseToDate(it.time_node1 ?? it.time_node2 ?? it.timestamp);
     if (!ts) return false;
     const t = +ts;
     return t >= s && t <= e;
   });
 }
-
-function renderReportTable(rows) {
+function renderReportTable(rows){
   const tb = document.querySelector('#reportTable tbody');
   if (!tb) return;
   tb.innerHTML = '';
-  rows.forEach((item, idx) => {
-    const level = fixedDepth - Number(item.distance ?? 0);
+  rows.forEach((it, idx)=>{
+    const level = fixedDepth - Number(it.distance ?? 0);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${idx+1}</td>
-      <td>${Number(item.distance ?? '').toFixed(1)}</td>
+      <td>${Number(it.distance ?? '').toFixed(1)}</td>
       <td>${Number.isFinite(level) ? level.toFixed(1) : ''}</td>
-      <td>${(item.rssi_node1 && item.rssi_node1 !== 0) ? item.rssi_node1 : ''}</td>
-      <td>${(item.rssi_node2 && item.rssi_node2 !== 0) ? item.rssi_node2 : ''}</td>
-      <td>${isDef(item.v_node1) ? item.v_node1 : ''}</td>
-      <td>${isDef(item.i_node1) ? item.i_node1 : ''}</td>
-      <td>${isDef(item.v_node2) ? item.v_node2 : ''}</td>
-      <td>${isDef(item.i_node2) ? item.i_node2 : ''}</td>
-      <td>${item.time_node1 || item.timestamp || ''}</td>
-      <td>${item.time_node2 || item.timestamp || ''}</td>`;
+      <td>${(it.rssi_node1 && it.rssi_node1 !== 0) ? it.rssi_node1 : ''}</td>
+      <td>${(it.rssi_node2 && it.rssi_node2 !== 0) ? it.rssi_node2 : ''}</td>
+      <td>${isDef(it.v_node1) ? it.v_node1 : ''}</td>
+      <td>${isDef(it.i_node1) ? it.i_node1 : ''}</td>
+      <td>${isDef(it.v_node2) ? it.v_node2 : ''}</td>
+      <td>${isDef(it.i_node2) ? it.i_node2 : ''}</td>
+      <td>${it.time_node1 || it.timestamp || ''}</td>
+      <td>${it.time_node2 || it.timestamp || ''}</td>`;
     tb.appendChild(tr);
   });
 }
 
-function setupReportQuickRanges() {
+/* ---------- Quick-range buttons & search ---------- */
+function setupReportQuickRanges(){
   const now = new Date();
-  const startDefault = new Date(now); startDefault.setHours(0,0,0,0);
-  const endDefault = now;
-
   const inS = document.getElementById('reportStart');
   const inE = document.getElementById('reportEnd');
-  if (inS) inS.value = getDateLocalStr(startDefault);
-  if (inE) inE.value = getDateLocalStr(endDefault);
+  if (inS) inS.value = getDateLocalStr(new Date(now.setHours(0,0,0,0)));
+  if (inE) inE.value = getDateLocalStr(new Date());
 
-  document.getElementById('reportQuickToday')?.addEventListener('click', () => {
+  document.getElementById('reportQuickToday')?.setAttribute('type','button');
+  document.getElementById('reportQuickYest')?.setAttribute('type','button');
+  document.getElementById('reportQuick7d')?.setAttribute('type','button');
+  document.getElementById('reportSearchBtn')?.setAttribute('type','button');
+  document.getElementById('reportExportCsv')?.setAttribute('type','button');
+  document.getElementById('reportExportPdf')?.setAttribute('type','button');
+
+  document.getElementById('reportQuickToday')?.addEventListener('click', ()=>{
     const s = new Date(); s.setHours(0,0,0,0);
     const e = new Date();
-    inS.value = getDateLocalStr(s);
-    inE.value = getDateLocalStr(e);
+    inS.value = getDateLocalStr(s); inE.value = getDateLocalStr(e);
   });
-
-  document.getElementById('reportQuickYest')?.addEventListener('click', () => {
+  document.getElementById('reportQuickYest')?.addEventListener('click', ()=>{
     const s = new Date(); s.setDate(s.getDate()-1); s.setHours(0,0,0,0);
     const e = new Date(); e.setDate(e.getDate()-1); e.setHours(23,59,0,0);
-    inS.value = getDateLocalStr(s);
-    inE.value = getDateLocalStr(e);
+    inS.value = getDateLocalStr(s); inE.value = getDateLocalStr(e);
   });
-
-  document.getElementById('reportQuick7d')?.addEventListener('click', () => {
-    const e = new Date();
-    const s = new Date(e.getTime() - 7*24*60*60*1000);
-    inS.value = getDateLocalStr(s);
-    inE.value = getDateLocalStr(e);
+  document.getElementById('reportQuick7d')?.addEventListener('click', ()=>{
+    const e = new Date(); const s = new Date(e.getTime() - 7*24*60*60*1000);
+    inS.value = getDateLocalStr(s); inE.value = getDateLocalStr(e);
   });
 }
+async function runReportSearch(){
+  try{
+    if (!Array.isArray(allData) || allData.length===0) await loadData();
+    const s = getInputDate('reportStart'), e = getInputDate('reportEnd');
 
-async function runReportSearch() {
-  try {
-    console.log('[Report] search clicked');
-    if (!Array.isArray(allData) || allData.length === 0) {
-      console.log('[Report] allData empty → loadData()');
-      await loadData();
-    }
-    const s = getInputDate('reportStart');
-    const e = getInputDate('reportEnd');
-
-    // ใช้ allData ทั้งหมด แล้วกรองด้วยช่วงเวลา
-    let src = allData.slice().sort((a,b) => {
+    let src = allData.slice().sort((a,b)=>{
       const ta = +parseToDate(a.time_node1 ?? a.time_node2 ?? a.timestamp) || 0;
       const tb = +parseToDate(b.time_node1 ?? b.time_node2 ?? b.timestamp) || 0;
       return ta - tb;
     });
-
-    if (src.length === 0) {
-      console.log('[Report] fallback fetch 30d');
-      const rows = await fetchHistoricalData('30d');
-      src = Array.isArray(rows) ? rows : [];
-    }
+    if (src.length===0){ const rows = await fetchHistoricalData('30d'); src = Array.isArray(rows)?rows:[]; }
 
     reportData = filterByRange(src, s, e);
-    console.log('[Report] result rows =', reportData.length);
     renderReportTable(reportData);
-
-    if (!reportData.length) {
-      alert('ไม่พบข้อมูลในช่วงเวลาที่เลือก');
-    }
-  } catch (err) {
-    console.error('[Report] runReportSearch error:', err);
+    if (!reportData.length) alert('ไม่พบข้อมูลในช่วงเวลาที่เลือก');
+  }catch(err){
+    console.error('[Report] search error:', err);
     alert('ค้นหารายงานไม่สำเร็จ');
   }
 }
 
-/* ===== Export (จากตารางรายงาน) ===== */
-function exportReportCSV() {
-  if (!reportData?.length) { alert('ยังไม่มีข้อมูลในตารางรายงาน'); return; }
-  const headers = [
-    '#','ระดับน้ำดิบ (cm)','ระดับน้ำ (cm)','RSSI Node1','RSSI Node2',
-    'V Node1','I Node1','V Node2','I Node2','เวลาวัด Node1','เวลาวัด Node2'
-  ];
-  const rows = reportData.map((it, idx) => {
+/* ---------- CSV (ทุกแถวใน reportData) ---------- */
+function exportReportCSV(){
+  if (!reportData?.length){ alert('ยังไม่มีข้อมูลในตารางรายงาน'); return; }
+  const headers = ['#','ระดับน้ำดิบ (cm)','ระดับน้ำ (cm)','RSSI Node1','RSSI Node2',
+    'V Node1','I Node1','V Node2','I Node2','เวลาวัด Node1','เวลาวัด Node2'];
+  const rows = reportData.map((it,idx)=>{
     const level = fixedDepth - Number(it.distance ?? 0);
     return [
       idx+1,
       Number(it.distance ?? '').toFixed(1),
       Number.isFinite(level) ? level.toFixed(1) : '',
-      (it.rssi_node1 && it.rssi_node1 !== 0) ? it.rssi_node1 : '',
-      (it.rssi_node2 && it.rssi_node2 !== 0) ? it.rssi_node2 : '',
-      isDef(it.v_node1) ? it.v_node1 : '',
-      isDef(it.i_node1) ? it.i_node1 : '',
-      isDef(it.v_node2) ? it.v_node2 : '',
-      isDef(it.i_node2) ? it.i_node2 : '',
-      it.time_node1 || it.timestamp || '',
-      it.time_node2 || it.timestamp || ''
+      (it.rssi_node1&&it.rssi_node1!==0)?it.rssi_node1:'',
+      (it.rssi_node2&&it.rssi_node2!==0)?it.rssi_node2:'',
+      isDef(it.v_node1)?it.v_node1:'', isDef(it.i_node1)?it.i_node1:'',
+      isDef(it.v_node2)?it.v_node2:'', isDef(it.i_node2)?it.i_node2:'',
+      it.time_node1 || it.timestamp || '', it.time_node2 || it.timestamp || ''
     ];
   });
-  const esc = s => { const t = String(s ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g,'""') + '"' : t; };
-  const csv = '\uFEFF' + [headers.map(esc).join(',')].concat(rows.map(r => r.map(esc).join(','))).join('\n');
+  const esc = s=>{ const t=String(s??''); return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t; };
+  const csv = '\uFEFF' + [headers.map(esc).join(',')].concat(rows.map(r=>r.map(esc).join(','))).join('\n');
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'})),
     download: `Water_Report_Table_${new Date().toISOString().slice(0,10)}.csv`
@@ -1226,15 +1198,134 @@ function exportReportCSV() {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
-/* ===== Hook ปุ่มรายงาน ===== */
-function setupReportBox() {
-  console.log('[Report] setupReportBox');
+/* ---------- PDF (ประกาศก่อน setupReportBox เพื่อไม่ให้ undefined) ---------- */
+/* ตั้งค่าหัวรายงาน */
+window.REPORT_BRAND = window.REPORT_BRAND || {
+  logoSrc: 'PATH/LOGO.png', // <— ใส่โลโก้จริงที่โหลดได้
+  orgName: '200/1 ถนนอุตรกิจ ต.เวียง อ.เมือง จ.เชียงราย 57000',
+  title: 'รายงานประวัติการวัดระดับน้ำ',
+  rightDatePrefix: 'วันที่พิมพ์'
+};
+async function buildFormalHeaderImage(widthPx){
+  const host = document.createElement('div');
+  host.style.cssText = `width:${widthPx}px;padding:24px 24px 8px;background:#fff;color:#111;
+    font-family:Sarabun,Segoe UI,Tahoma,sans-serif;line-height:1.45;`;
+  host.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <img src="${window.REPORT_BRAND.logoSrc||''}" style="height:72px;object-fit:contain"/>
+        <div style="font-size:16px;font-weight:600;">${window.REPORT_BRAND.orgName||''}</div>
+      </div>
+      <div style="font-size:12px;opacity:.8;">
+        ${(window.REPORT_BRAND.rightDatePrefix||'วันที่พิมพ์')}: ${
+          new Intl.DateTimeFormat('th-TH',{dateStyle:'full',timeStyle:'short'}).format(new Date())
+        }
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:12px;font-weight:700;font-size:18px;">
+      ${window.REPORT_BRAND.title||'รายงาน'}
+    </div>`;
+  document.body.appendChild(host);
+  const img = await html2canvas(host, { backgroundColor:'#fff', useCORS:true, scale:2 });
+  document.body.removeChild(host);
+  return img.toDataURL('image/png');
+}
+async function buildReportTableImage(rows, startIdx, endIdx, widthPx){
+  const host = document.createElement('div');
+  host.style.cssText = `width:${widthPx}px;background:#fff;color:#111;padding:0 24px 12px;
+    font-family:Sarabun,Segoe UI,Tahoma,sans-serif;`;
+  const hdrBg='#0b1220', hdrCol='#f5f7ff', border='1px solid #d6dbe3';
+  let body=''; for(let i=startIdx;i<endIdx;i++){ const it=rows[i]; const level=fixedDepth-Number(it.distance??0);
+    body += `<tr>
+      <td>${i+1}</td>
+      <td>${Number(it.distance ?? '').toFixed(1)}</td>
+      <td>${Number.isFinite(level) ? level.toFixed(1) : ''}</td>
+      <td>${(it.rssi_node1&&it.rssi_node1!==0)?it.rssi_node1:''}</td>
+      <td>${(it.rssi_node2&&it.rssi_node2!==0)?it.rssi_node2:''}</td>
+      <td>${isDef(it.v_node1)?it.v_node1:''}</td>
+      <td>${isDef(it.i_node1)?it.i_node1:''}</td>
+      <td>${isDef(it.v_node2)?it.v_node2:''}</td>
+      <td>${isDef(it.i_node2)?it.i_node2:''}</td>
+      <td>${it.time_node1 || it.timestamp || ''}</td>
+      <td>${it.time_node2 || it.timestamp || ''}</td></tr>`;
+  }
+  host.innerHTML = `
+    <style>
+      #__tbl__{width:100%;border-collapse:collapse;font-size:12px;}
+      #__tbl__ th,#__tbl__ td{border:${border};padding:6px 8px;vertical-align:top;}
+      #__tbl__ thead th{background:${hdrBg};color:${hdrCol};}
+      #__tbl__ tbody tr:nth-child(even){background:#f6f8fb;}
+    </style>
+    <table id="__tbl__">
+      <thead><tr>
+        <th>#</th><th>ระดับน้ำดิบ (cm)</th><th>ระดับน้ำ (cm)</th>
+        <th>RSSI Node1</th><th>RSSI Node2</th>
+        <th>V Node1</th><th>I Node1</th>
+        <th>V Node2</th><th>I Node2</th>
+        <th>เวลาวัด Node1</th><th>เวลาวัด Node2</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+  document.body.appendChild(host);
+  const img = await html2canvas(host, { backgroundColor:'#fff', useCORS:true, scale:2 });
+  document.body.removeChild(host);
+  return img.toDataURL('image/png');
+}
+function drawSignatureLines(doc, margin, y, pageW){
+  const lineW=210, leftX=margin, rightX=pageW-margin-lineW;
+  doc.setLineWidth(0.7); doc.setDrawColor(150);
+  doc.line(leftX,y,leftX+lineW,y); doc.line(rightX,y,rightX+lineW,y);
+  doc.setFont('Helvetica','normal'); doc.setFontSize(11);
+  doc.text('ผู้จัดทำรายงาน', leftX, y+16); doc.text('ผู้รับรอง', rightX, y+16);
+  doc.setFontSize(10);
+  doc.text('( .................................. )', leftX+10, y+44);
+  doc.text('( .................................. )', rightX+10, y+44);
+  doc.text('ตำแหน่ง..................................', leftX, y+64);
+  doc.text('ตำแหน่ง..................................', rightX, y+64);
+  return y+64+20;
+}
+async function exportReportPDF(){
+  if (!reportData?.length){ alert('ยังไม่มีข้อมูลในตารางรายงาน'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'pt', format:'a4' });
+  const pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight(), margin=36;
+
+  // Header
+  const head = await buildFormalHeaderImage(Math.floor(pageW - margin*2));
+  let y = margin;
+  doc.addImage(head,'PNG',margin,y,pageW-margin*2,110); y += 120;
+
+  // ช่วงเวลา
+  doc.setFont('Helvetica','normal'); doc.setFontSize(11);
+  const s = document.getElementById('reportStart')?.value || '-';
+  const e = document.getElementById('reportEnd')?.value || '-';
+  doc.text(`ช่วงเวลา: ${s} ถึง ${e}`, margin, y); y += 16;
+
+  // ตาราง (แบ่งหน้า)
+  const rowsPerChunk = 18;
+  for(let i=0;i<reportData.length;i+=rowsPerChunk){
+    const tbl = await buildReportTableImage(reportData, i, Math.min(i+rowsPerChunk, reportData.length), Math.floor(pageW-margin*2));
+    const tblH = (pageW - margin*2) * 0.62; // สัดส่วนโดยประมาณ
+    if (y + tblH > pageH - 140){ doc.addPage(); y = margin; }
+    doc.addImage(tbl,'PNG',margin,y,pageW-margin*2,tblH); y += tblH + 14;
+  }
+
+  if (y + 120 > pageH - margin){ doc.addPage(); y = margin; }
+  drawSignatureLines(doc, margin, y+10, pageW);
+  doc.save(`Water_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+/* ---------- Hook ปุ่ม (ประกาศหลัง exportReportPDF เพื่อไม่ undefined) ---------- */
+function setupReportQuickDomTypes(){
+  // กันกรณีปุ่มอยู่ใน <form> จะเผลอ submit
+  ['reportQuickToday','reportQuickYest','reportQuick7d','reportSearchBtn','reportExportCsv','reportExportPdf']
+    .forEach(id=>document.getElementById(id)?.setAttribute('type','button'));
+}
+function setupReportBox(){
+  setupReportQuickDomTypes();
   setupReportQuickRanges();
   document.getElementById('reportSearchBtn')?.addEventListener('click', runReportSearch);
   document.getElementById('reportExportCsv')?.addEventListener('click', exportReportCSV);
-  // ถ้าคุณใช้ exportReportPDF แบบฟอร์ม ให้แน่ใจว่าได้ประกาศฟังก์ชันนั้นก่อนบรรทัดนี้
   document.getElementById('reportExportPdf')?.addEventListener('click', exportReportPDF);
 }
-
-// ผูกตอนโหลดหน้าเสร็จ (อยู่ท้ายไฟล์ได้)
 window.addEventListener('load', setupReportBox);
