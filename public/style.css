@@ -483,106 +483,85 @@ tbody tr:hover {
   font-weight: 700;
 }
 
-/* ====== Report Box (table-only) ====== */
+/* === spacing ให้ไม่ชิดกรอบ === */
+.report-card{ padding: 10px; }                 /* กันเนื้อหาชนขอบการ์ด */
+.report-card .card-header{ padding: 14px 18px; }
+.table-wrap{ padding: 6px 10px 10px; }         /* กันหัวตารางชิดขอบใน */
 
-/* โทนสีหลัก */
-:root{
-  --c-bg-1: #0e3c47;           /* พื้นหลังหน้า */
-  --c-card: rgba(11, 30, 40, .55);
-  --c-card-border: rgba(255,255,255,.10);
-  --c-shadow: 0 14px 38px rgba(0,0,0,.28);
-  --c-head: #0b1220;
-  --c-head-text: #eaf4ff;
-  --c-row-alt: rgba(255,255,255,.03);
-  --c-text: #e8f6ff;
-  --c-text-dim: #b7d3dd;
-  --c-accent: #1fb6ff;
-  --c-success:#20d48a;
-  --c-danger: #ff5b6e;
-}
+#reportTable thead th{ padding: 12px 14px; }
+#reportTable tbody td{ padding: 11px 14px; }
 
-/* ===== Match style with 'ประวัติข้อมูล' card ===== */
-
-/* โทนเดียวกับการ์ดบน */
-.report-card{
-  width: 1300px;               /* ให้กว้างเท่าการ์ดบน (ปรับตามของจริง) */
-  margin: 24px auto 0;
-  background: rgba(255,255,255,0.12) !important;  /* โปร่งใสใกล้เคียงด้านบน */
-  border: 1px solid rgba(255,255,255,0.18) !important;
-  border-radius: 15px !important;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 5px 20px rgba(0,0,0,0.3) !important;
-  color: #fff;;
-}
-
-/* เฮดเดอร์การ์ด: ชื่อซ้าย ปุ่มขวา */
-.report-card .card-header{
-  display:flex; align-items:center; justify-content:space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
-}
-.report-card .card-header h3{
-  margin:0; color:#eaf4ff; font-size:1.06rem; font-weight:800; letter-spacing:.2px;
-  display:flex; align-items:center; gap:8px;
-}
-.report-controls{ display:flex; align-items:center; gap:8px; }
-
-/* อินพุตช่วงเวลาให้เหมือนบน */
-.report-controls input[type="datetime-local"]{
-  appearance:none; background:#062a33;
-  border:1px solid rgba(255,255,255,.14); color:#eaf4ff;
-  padding:7px 10px; border-radius:10px; font-size:.92rem;
-}
-.report-controls input[type="datetime-local"]:focus{
-  border-color:#20c7ff; box-shadow:0 0 0 3px rgba(32,199,255,.25); outline:0;
-}
-
-/* ปุ่มสไตล์เดียวกับบน */
-.btn{ border:none; border-radius:12px; padding:8px 12px; font-weight:800; cursor:pointer; }
-.btn-lite{ background:#0a2b35; color:#eaf4ff; border:1px solid rgba(255,255,255,.14); }
-.btn-primary{ background:#20c7ff; color:#062a33; }
-.btn-success{ background:#1fd48a; color:#063523; }
-.btn-danger{ background:#ff5b6e; color:#340d13; }
-
-/* ตัวตาราง */
-.table-wrap{ max-height: 420px; overflow:auto; }
-#reportTable{
-  width:100%; border-collapse:separate; border-spacing:0;
-  font-size:.94rem; color:#e8f6ff;
-}
-#reportTable thead th{
-  position:sticky; top:0; z-index:1;
-  background: linear-gradient(180deg,#0f2233 0%, #0b1220 100%);
-  color:#eaf4ff; font-weight:800; padding:10px 12px; text-align:left;
-  border-bottom:1px solid rgba(255,255,255,.12);
-}
-#reportTable tbody td{
-  padding:9px 12px; color:#bcd5df; border-bottom:1px dashed rgba(255,255,255,.09);
-}
-#reportTable tbody tr:nth-child(even){ background: rgba(255,255,255,.03); }
-#reportTable tbody tr:hover{ background: rgba(32,199,255,.10); color:#eaf4ff; }
-
-/* จัดแนวตัวเลขขวาเหมือนบน */
+/* คอลัมน์ตัวเลขให้เว้นขวาเล็กน้อย อ่านง่าย */
 #reportTable td:nth-child(1),
 #reportTable td:nth-child(2),
 #reportTable td:nth-child(3),
 #reportTable td:nth-child(6),
 #reportTable td:nth-child(7),
 #reportTable td:nth-child(8),
-#reportTable td:nth-child(9){ text-align:right; }
+#reportTable td:nth-child(9){ padding-right: 18px; }
 
-/* โน้ตใต้ตาราง */
-.report-note{ padding:8px 16px 14px; color:#bcd5df; font-size:.9rem; opacity:.85; }
-
-/* สกอร์ลบาร์เข้าธีม */
-.table-wrap::-webkit-scrollbar{ height:10px; width:10px; }
-.table-wrap::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.25); border-radius:10px; }
-.table-wrap::-webkit-scrollbar-track{ background: rgba(255,255,255,.08); border-radius:10px; }
-
-/* ยืดหยุ่นจอเล็ก */
-@media (max-width: 1200px){ .report-card{ width: 94%; } }
-@media (max-width: 720px){
-  .report-card .card-header{ flex-direction:column; align-items:flex-start; gap:10px; }
-  .report-controls{ width:100%; flex-wrap:wrap; }
+/* === กรอบใสแบบ glass และเงาเนียน === */
+.report-card{
+  background: rgba(255,255,255,.11);
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 16px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.16);
 }
+
+/* หัวตารางโทนอ่อนเข้าการ์ดบน */
+#reportTable thead th{
+  background: linear-gradient(180deg, rgba(255,255,255,.28) 0%, rgba(255,255,255,.22) 100%);
+  color:#fff;
+  border-bottom: 2px solid rgba(255,255,255,.35);
+}
+
+/* แถวสลับ/โฮเวอร์ */
+#reportTable tbody tr:nth-child(even){ background: rgba(255,255,255,.05); }
+#reportTable tbody tr:hover{ background: rgba(0,192,255,.12); }
+
+/* === ปุ่มให้เข้าธีม + ระยะห่างกำลังดี === */
+.report-controls{ gap:10px; flex-wrap:wrap; }
+
+.btn{
+  border:none; border-radius:12px;
+  padding: 9px 14px; font-weight:800; cursor:pointer;
+  transition: filter .15s ease, transform .05s ease, box-shadow .15s ease;
+}
+.btn:active{ transform: translateY(1px); }
+
+.btn-lite{
+  background: rgba(255,255,255,.16);
+  color:#fff; border:1px solid rgba(255,255,255,.28);
+}
+.btn-lite:hover{ filter: brightness(1.08); box-shadow: 0 0 0 3px rgba(255,255,255,.15) inset; }
+
+.btn-primary{ background:#18c3ff; color:#05222d; }
+.btn-primary:hover{ filter:brightness(1.05); }
+
+.btn-success{ background:#1fd48a; color:#083527; }
+.btn-success:hover{ filter:brightness(1.05); }
+
+.btn-danger{ background:#ff5b6e; color:#300f14; }
+.btn-danger:hover{ filter:brightness(1.05); }
+
+/* ปุ่มชิป (วันนี้/เมื่อวาน/7วัน) ให้เป็นแคปซูล */
+.btn-chip{
+  background: rgba(0,0,0,.25);
+  color:#e8f6ff; border:1px solid rgba(255,255,255,.2);
+  border-radius: 999px; padding: 8px 12px;
+}
+.btn-chip.active,
+.btn-chip:hover{ background: rgba(24,195,255,.28); border-color:#18c3ff; color:#18c3ff; }
+
+/* ปุ่มค้นหา/CSV/PDF แยกระยะเล็กน้อย */
+#reportSearchBtn{ margin-left: 4px; }
+#reportExportCsv, #reportExportPdf{ margin-left: 6px; }
+
+/* ป้าย CSV/PDF เข้าธีม */
+#reportExportCsv{ background:#18d36f; color:#05331e; }
+#reportExportPdf{ background:#ff5b6e; color:#300f14; }
+#reportExportCsv:hover, #reportExportPdf:hover{ filter:brightness(1.05); }
