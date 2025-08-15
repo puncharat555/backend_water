@@ -1077,8 +1077,9 @@ function setupRangeButtons() {
 /* ---------- Font loader (Thai: Sarabun) ---------- */
 /* เปลี่ยน path ให้ตรงกับโปรเจกต์คุณ */
 const THAI_FONT_PATHS = {
-  regular: '/assets/fonts/Sarabun-Regular.ttf',
-  bold:    '/assets/fonts/Sarabun-Bold.ttf',
+regular: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/sarabun/Sarabun-Regular.ttf',
+bold:    'https://cdn.jsdelivr.net/gh/google/fonts/ofl/sarabun/Sarabun-Bold.ttf',
+
 };
 
 // cache base64 ไว้ (โหลดครั้งเดียว)
