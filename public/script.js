@@ -1077,8 +1077,12 @@ function setupRangeButtons() {
 /* ---------- Font loader (Thai: Sarabun) ---------- */
 /* เปลี่ยน path ให้ตรงกับโปรเจกต์คุณ */
 const THAI_FONT_PATHS = {
-regular: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/sarabun/Sarabun-Regular.ttf',
-bold:    'https://cdn.jsdelivr.net/gh/google/fonts/ofl/sarabun/Sarabun-Bold.ttf',
+regular: 'https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Regular.ttf',
+  bold:    'https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Bold.ttf',
+
+  // สำรอง NotoSansThai
+  fallbackRegular: 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansthai/NotoSansThai-Regular.ttf',
+  fallbackBold:    'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansthai/NotoSansThai-Bold.ttf',
 
 };
 
