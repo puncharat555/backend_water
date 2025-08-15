@@ -483,29 +483,148 @@ tbody tr:hover {
   font-weight: 700;
 }
 
-/* ถ้ามีอันนี้อยู่ ให้ลบทิ้ง เพื่อไม่ให้ลอยทับ */
-.toolbar.sticky-export{ display:none; }
-/* ===== Report Box ===== */
-.report-card { margin-top: 16px; }
-.report-card .card-header {
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  flex-wrap:wrap;
-}
-.report-card h3 { margin:0; font-size:1.05rem; }
-.report-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.report-controls label { opacity:.85; }
-.report-controls input[type="datetime-local"] {
-  background:#0f172a; border:1px solid rgba(255,255,255,.15);
-  color:#fff; padding:6px 8px; border-radius:6px;
-}
-.report-controls .btn { padding:6px 10px; border-radius:6px; cursor:pointer; }
-.btn-lite{ background:#21324a; border:1px solid rgba(255,255,255,.12); color:#e6f1ff; }
-.btn-primary{ background:#0ea5e9; border:none; color:#001018; font-weight:600; }
-.btn-success{ background:#22c55e; border:none; color:#01210d; font-weight:600; }
-.btn-danger{ background:#ef4444; border:none; color:#2b0b0b; font-weight:600; }
+/* ====== Report Box (table-only) ====== */
 
-#reportTable { width:100%; border-collapse:collapse; }
-#reportTable th, #reportTable td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.08); }
-#reportTable thead th { position:sticky; top:0; background:#0b1220; z-index:1; }
-.table-wrap { max-height:360px; overflow:auto; border:1px solid rgba(255,255,255,.08); border-radius:8px; }
-.report-note { opacity:.7; font-size:.9rem; margin-top:8px; }
+/* โทนสีหลัก */
+:root{
+  --c-bg-1: #0e3c47;           /* พื้นหลังหน้า */
+  --c-card: rgba(11, 30, 40, .55);
+  --c-card-border: rgba(255,255,255,.10);
+  --c-shadow: 0 14px 38px rgba(0,0,0,.28);
+  --c-head: #0b1220;
+  --c-head-text: #eaf4ff;
+  --c-row-alt: rgba(255,255,255,.03);
+  --c-text: #e8f6ff;
+  --c-text-dim: #b7d3dd;
+  --c-accent: #1fb6ff;
+  --c-success:#20d48a;
+  --c-danger: #ff5b6e;
+}
+
+/* การ์ดรายงาน */
+.report-card{
+  margin-top: 28px;
+  background: var(--c-card);
+  border: 1px solid var(--c-card-border);
+  border-radius: 14px;
+  box-shadow: var(--c-shadow);
+  backdrop-filter: blur(6px);
+  overflow: hidden;
+}
+
+/* ส่วนหัว + แถบควบคุม */
+.report-card .card-header{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:14px; padding:14px 16px 10px 16px;
+  border-bottom: 1px solid var(--c-card-border);
+}
+.report-card h3{
+  margin:0; font-weight:700; font-size:1.05rem; letter-spacing:.2px; color:var(--c-text);
+  display:flex; align-items:center; gap:8px;
+}
+.report-controls{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+
+/* input เวลา */
+.report-controls input[type="datetime-local"]{
+  appearance:none;
+  background:#062a33;
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--c-text);
+  padding:7px 10px;
+  border-radius:8px;
+  font-size:.92rem;
+  outline:none;
+  transition: border .15s ease, box-shadow .15s ease;
+}
+.report-controls input[type="datetime-local"]:focus{
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(31,182,255,.25);
+}
+
+/* ปุ่ม */
+.btn{ 
+  border:none; border-radius:9px; padding:8px 12px; font-weight:700; cursor:pointer;
+  user-select:none; letter-spacing:.2px; font-size:.9rem;
+  transform: translateZ(0);
+}
+.btn:active{ transform: translateY(1px); }
+.btn-lite{ background:#0a2b35; color:var(--c-text); border:1px solid rgba(255,255,255,.12); }
+.btn-primary{ background: var(--c-accent); color:#02202a; }
+.btn-success{ background: var(--c-success); color:#032216; }
+.btn-danger{ background: var(--c-danger); color:#2b0b0b; }
+
+/* ปุ่มกดค้นหา/CSV/PDF แยกระยะ */
+#reportSearchBtn{ margin-left:2px; }
+#reportExportCsv, #reportExportPdf{ margin-left:2px; }
+
+/* กล่องตาราง (มีหัวติด) */
+.table-wrap{
+  max-height: 420px;            /* ปรับสูง-ต่ำได้ */
+  overflow:auto;
+  border-top: 1px solid var(--c-card-border);
+}
+
+/* สไตล์ตาราง */
+#reportTable{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  color: var(--c-text);
+  font-size:.94rem;
+}
+#reportTable thead th{
+  position: sticky; top: 0; z-index: 1;
+  background: linear-gradient(180deg, #0f2233 0%, var(--c-head) 100%);
+  color: var(--c-head-text);
+  text-align:left;
+  font-weight:800;
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  white-space: nowrap;
+}
+#reportTable tbody td{
+  padding:9px 12px;
+  border-bottom: 1px dashed rgba(255,255,255,.08);
+  color: var(--c-text-dim);
+}
+#reportTable tbody tr:nth-child(even){ background: var(--c-row-alt); }
+#reportTable tbody tr:hover{
+  background: rgba(31,182,255,.10);
+  color: var(--c-text);
+}
+
+/* จัดแนวคอลัมน์ตัวเลขให้อ่านง่าย */
+#reportTable td:nth-child(1),
+#reportTable td:nth-child(2),
+#reportTable td:nth-child(3),
+#reportTable td:nth-child(6),
+#reportTable td:nth-child(7),
+#reportTable td:nth-child(8),
+#reportTable td:nth-child(9){ text-align:right; }
+
+/* หมายเหตุใต้ตาราง */
+.report-note{
+  padding:8px 14px 14px; color: var(--c-text-dim); font-size:.9rem; opacity:.8;
+}
+
+/* สกอร์ลบาร์ให้เข้าธีม */
+.table-wrap::-webkit-scrollbar{ height:10px; width:10px; }
+.table-wrap::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.22); border-radius:10px; }
+.table-wrap::-webkit-scrollbar-track{ background: rgba(255,255,255,.08); border-radius:10px; }
+
+/* ปุ่มเล็กลงบนจอแคบ */
+@media (max-width: 1024px){
+  .report-controls{ gap:6px; }
+  .btn{ padding:7px 10px; font-size:.85rem; }
+  .report-card .card-header{ padding:12px; }
+  #reportTable{ font-size:.90rem; }
+}
+
+/* จอมือถือ: แถวหัวแยกเป็น 2 บรรทัด */
+@media (max-width: 640px){
+  .report-card .card-header{ flex-direction:column; align-items:flex-start; gap:10px; }
+  .report-controls{ width:100%; }
+  .report-controls input[type="datetime-local"]{ flex:1; min-width:140px; }
+}
