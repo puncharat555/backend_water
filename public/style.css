@@ -502,87 +502,85 @@ tbody tr:hover {
 }
 
 /* การ์ดรายงาน */
-/* ===== Match style with 'ประวัติข้อมูล' card ===== */
+/* === Glass card: ทำให้ report-card ดูเหมือนการ์ด "ประวัติข้อมูล" และมีขอบใส ๆ === */
 
-/* โทนเดียวกับการ์ดบน */
+/* ความกว้างการ์ด (ตั้งค่าเดียวใช้ทั้งบน/ล่างได้) */
+:root { --card-width: 1120px; }  /* ปรับเลขนี้ให้เท่าการ์ดบนจริง ๆ */
+
 .report-card{
-  width: 1080px;               /* ให้กว้างเท่าการ์ดบน (ปรับตามของจริง) */
-  margin: 24px auto 0;
-  background: rgba(11, 30, 40, .55);
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 16px;
-  box-shadow: 0 18px 40px rgba(0,0,0,.28);
+  width: var(--card-width) !important;
+  margin: 22px auto 0 !important;
+  position: relative;
+  background: rgba(255,255,255,0.07) !important;
+  border: 1px solid rgba(255,255,255,0.18) !important; /* ขอบใส */
+  border-radius: 18px !important;
   backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 18px 40px rgba(0,0,0,.28),           /* เงาหลัก */
+    inset 0 1px 0 rgba(255,255,255,.16);   /* ไฮไลต์ขอบใน */
   overflow: hidden;
 }
 
-/* เฮดเดอร์การ์ด: ชื่อซ้าย ปุ่มขวา */
+/* เส้นขอบใส ๆ ไล่โทน (เงาบางรอบกรอบ) */
+.report-card::after{
+  content:"";
+  position:absolute; inset:0;
+  border-radius: inherit;
+  pointer-events:none;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.22) inset,
+              0 0 24px rgba(255,255,255,.10) inset;
+}
+
+/* header ของการ์ดให้พอดีกับบน */
 .report-card .card-header{
-  display:flex; align-items:center; justify-content:space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
+  padding: 14px 18px !important;
+  border-bottom: 1px solid rgba(255,255,255,.12) !important;
 }
 .report-card .card-header h3{
-  margin:0; color:#eaf4ff; font-size:1.06rem; font-weight:800; letter-spacing:.2px;
-  display:flex; align-items:center; gap:8px;
-}
-.report-controls{ display:flex; align-items:center; gap:8px; }
-
-/* อินพุตช่วงเวลาให้เหมือนบน */
-.report-controls input[type="datetime-local"]{
-  appearance:none; background:#062a33;
-  border:1px solid rgba(255,255,255,.14); color:#eaf4ff;
-  padding:7px 10px; border-radius:10px; font-size:.92rem;
-}
-.report-controls input[type="datetime-local"]:focus{
-  border-color:#20c7ff; box-shadow:0 0 0 3px rgba(32,199,255,.25); outline:0;
+  font-size: 1.08rem !important;
+  letter-spacing: .2px;
+  color: #eaf4ff;
 }
 
-/* ปุ่มสไตล์เดียวกับบน */
-.btn{ border:none; border-radius:12px; padding:8px 12px; font-weight:800; cursor:pointer; }
-.btn-lite{ background:#0a2b35; color:#eaf4ff; border:1px solid rgba(255,255,255,.14); }
-.btn-primary{ background:#20c7ff; color:#062a33; }
-.btn-success{ background:#1fd48a; color:#063523; }
-.btn-danger{ background:#ff5b6e; color:#340d13; }
-
-/* ตัวตาราง */
-.table-wrap{ max-height: 420px; overflow:auto; }
-#reportTable{
-  width:100%; border-collapse:separate; border-spacing:0;
-  font-size:.94rem; color:#e8f6ff;
+/* กล่องตารางข้างในให้มีช่องไฟเท่าการ์ดบน */
+.table-wrap{
+  max-height: 420px;
+  overflow: auto;
+  padding: 0 2px;                /* กันหัวตารางชิดขอบเกินไป */
+  background: transparent;
 }
+
+/* หัวตารางและแถวให้เข้าธีม */
 #reportTable thead th{
-  position:sticky; top:0; z-index:1;
-  background: linear-gradient(180deg,#0f2233 0%, #0b1220 100%);
-  color:#eaf4ff; font-weight:800; padding:10px 12px; text-align:left;
-  border-bottom:1px solid rgba(255,255,255,.12);
+  background: linear-gradient(180deg,#103045 0%, #0b1220 100%) !important;
+  color:#eaf4ff !important;
+  padding: 10px 12px !important;
+  border-bottom: 1px solid rgba(255,255,255,.12) !important;
 }
 #reportTable tbody td{
-  padding:9px 12px; color:#bcd5df; border-bottom:1px dashed rgba(255,255,255,.09);
+  padding: 9px 12px !important;
+  color:#cfe3ec !important;
+  border-bottom: 1px dashed rgba(255,255,255,.09) !important;
 }
 #reportTable tbody tr:nth-child(even){ background: rgba(255,255,255,.03); }
-#reportTable tbody tr:hover{ background: rgba(32,199,255,.10); color:#eaf4ff; }
+#reportTable tbody tr:hover{
+  background: rgba(31,182,255,.10);
+  color:#eaf4ff;
+}
 
-/* จัดแนวตัวเลขขวาเหมือนบน */
-#reportTable td:nth-child(1),
-#reportTable td:nth-child(2),
-#reportTable td:nth-child(3),
-#reportTable td:nth-child(6),
-#reportTable td:nth-child(7),
-#reportTable td:nth-child(8),
-#reportTable td:nth-child(9){ text-align:right; }
+/* ปุ่มช่วงเวลา/ค้นหา/CSV/PDF ให้ทรงเดียวกับการ์ดบน */
+.report-controls .btn,
+.report-controls .btn-lite,
+.report-controls .btn-primary,
+.report-controls .btn-success,
+.report-controls .btn-danger{
+  border-radius: 12px !important;
+  padding: 8px 12px !important;
+  font-weight: 800 !important;
+}
 
-/* โน้ตใต้ตาราง */
-.report-note{ padding:8px 16px 14px; color:#bcd5df; font-size:.9rem; opacity:.85; }
-
-/* สกอร์ลบาร์เข้าธีม */
-.table-wrap::-webkit-scrollbar{ height:10px; width:10px; }
-.table-wrap::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.25); border-radius:10px; }
-.table-wrap::-webkit-scrollbar-track{ background: rgba(255,255,255,.08); border-radius:10px; }
-
-/* ยืดหยุ่นจอเล็ก */
-@media (max-width: 1200px){ .report-card{ width: 94%; } }
-@media (max-width: 720px){
-  .report-card .card-header{ flex-direction:column; align-items:flex-start; gap:10px; }
-  .report-controls{ width:100%; flex-wrap:wrap; }
+/* รองรับจอเล็ก: ให้กว้างอัตโนมัติเท่าการ์ดบน */
+@media (max-width: 1200px){
+  :root{ --card-width: 94vw; }
 }
