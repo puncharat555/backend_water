@@ -1284,6 +1284,53 @@ function drawSignatureLines(doc, margin, y, pageW){
   doc.text('ตำแหน่ง..................................', rightX, y+64);
   return y+64+20;
 }
+// -------------------- 1) ฟังก์ชันช่วยโหลดฟอนต์ไทย --------------------
+async function ensureThaiFont() {
+  if (window.__thaiFontReady) return;
+  const { jsPDF } = window.jspdf;
+
+  async function ttfToBase64(url) {
+    const res = await fetch(url, { cache: 'force-cache' });
+    const buf = await res.arrayBuffer();
+    let binary = '';
+    const bytes = new Uint8Array(buf);
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  // ⬅️ เปลี่ยน path ให้ตรงกับที่คุณเก็บฟอนต์จริง
+  const regUrl  = '/assets/fonts/Sarabun-Regular.ttf';
+  const boldUrl = '/assets/fonts/Sarabun-Bold.ttf';
+
+  const [regB64, boldB64] = await Promise.all([
+    ttfToBase64(regUrl), ttfToBase64(boldUrl)
+  ]);
+
+  const doc = new jsPDF();
+  doc.addFileToVFS('Sarabun-Regular.ttf', regB64);
+  doc.addFileToVFS('Sarabun-Bold.ttf',    boldB64);
+  doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+  doc.addFont('Sarabun-Bold.ttf',    'Sarabun', 'bold');
+
+  window.__thaiFontReady = true;
+}
+
+// -------------------- 2) ฟังก์ชันออก PDF --------------------
+async function exportReportPDF() {
+  if (!reportData?.length) { alert('ยังไม่มีข้อมูลในตารางรายงาน'); return; }
+
+  // ⬅️ เรียกใช้ ensureThaiFont() ก่อนเสมอ
+  await ensureThaiFont();
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'pt', format:'a4' });
+
+  // ... โค้ดออก PDF ที่เหลือ ...
+}
+
 async function exportReportPDF() {
   if (!reportData?.length) { alert('ยังไม่มีข้อมูลในตารางรายงาน'); return; }
 
