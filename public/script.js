@@ -1071,10 +1071,53 @@ function setupRangeButtons() {
     });
   });
 }
-/* ================= Report (ตารางไม่ใช่กราฟ) – FULL BLOCK ================= */
-let reportData = [];
+/* ================== REPORT BLOCK — paste at end of script.js ================== */
+/* ใช้คงที่/ฟังก์ชันที่มีอยู่แล้ว: fixedDepth, parseToDate, isDef, allData, loadData */
 
-/* ---------- Utils ---------- */
+/* ---------- Font loader (Thai: Sarabun) ---------- */
+/* เปลี่ยน path ให้ตรงกับโปรเจกต์คุณ */
+const THAI_FONT_PATHS = {
+  regular: '/assets/fonts/Sarabun-Regular.ttf',
+  bold:    '/assets/fonts/Sarabun-Bold.ttf',
+};
+
+// cache base64 ไว้ (โหลดครั้งเดียว)
+async function loadSarabunTTF() {
+  if (window.__sarabunB64) return window.__sarabunB64;
+
+  async function ttfToBase64(url) {
+    const res = await fetch(url, { cache: 'force-cache' });
+    const buf = await res.arrayBuffer();
+    let binary = '';
+    const bytes = new Uint8Array(buf);
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  const [regB64, boldB64] = await Promise.all([
+    ttfToBase64(THAI_FONT_PATHS.regular),
+    ttfToBase64(THAI_FONT_PATHS.bold)
+  ]);
+
+  window.__sarabunB64 = { regular: regB64, bold: boldB64 };
+  return window.__sarabunB64;
+}
+
+// add ฟอนต์เข้า "เอกสาร doc" ที่จะพิมพ์
+async function ensureThaiFont(doc) {
+  const b64 = await loadSarabunTTF();
+  doc.addFileToVFS('Sarabun-Regular.ttf', b64.regular);
+  doc.addFileToVFS('Sarabun-Bold.ttf',    b64.bold);
+  doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+  doc.addFont('Sarabun-Bold.ttf',    'Sarabun', 'bold');
+}
+
+/* ---------- Report state & utils ---------- */
+let reportData = []; // แถวที่กรองได้สำหรับตารางรายงาน
+
 function getDateLocalStr(d){
   if (!(d instanceof Date) || isNaN(+d)) return '';
   const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
@@ -1120,20 +1163,19 @@ function renderReportTable(rows){
   });
 }
 
-/* ---------- Quick-range buttons & search ---------- */
+/* ---------- Quick ranges & search ---------- */
 function setupReportQuickRanges(){
-  const now = new Date();
   const inS = document.getElementById('reportStart');
   const inE = document.getElementById('reportEnd');
-  if (inS) inS.value = getDateLocalStr(new Date(now.setHours(0,0,0,0)));
+
+  const now = new Date();
+  const s0 = new Date(now); s0.setHours(0,0,0,0);
+  if (inS) inS.value = getDateLocalStr(s0);
   if (inE) inE.value = getDateLocalStr(new Date());
 
-  document.getElementById('reportQuickToday')?.setAttribute('type','button');
-  document.getElementById('reportQuickYest')?.setAttribute('type','button');
-  document.getElementById('reportQuick7d')?.setAttribute('type','button');
-  document.getElementById('reportSearchBtn')?.setAttribute('type','button');
-  document.getElementById('reportExportCsv')?.setAttribute('type','button');
-  document.getElementById('reportExportPdf')?.setAttribute('type','button');
+  // กันปุ่มเป็น submit
+  ['reportQuickToday','reportQuickYest','reportQuick7d','reportSearchBtn','reportExportCsv','reportExportPdf']
+    .forEach(id=>document.getElementById(id)?.setAttribute('type','button'));
 
   document.getElementById('reportQuickToday')?.addEventListener('click', ()=>{
     const s = new Date(); s.setHours(0,0,0,0);
@@ -1150,16 +1192,20 @@ function setupReportQuickRanges(){
     inS.value = getDateLocalStr(s); inE.value = getDateLocalStr(e);
   });
 }
+
 async function runReportSearch(){
   try{
     if (!Array.isArray(allData) || allData.length===0) await loadData();
     const s = getInputDate('reportStart'), e = getInputDate('reportEnd');
 
+    // ใช้ allData ทั้งหมด → เรียงเก่า→ใหม่ แล้วกรองตามช่วง
     let src = allData.slice().sort((a,b)=>{
       const ta = +parseToDate(a.time_node1 ?? a.time_node2 ?? a.timestamp) || 0;
       const tb = +parseToDate(b.time_node1 ?? b.time_node2 ?? b.timestamp) || 0;
       return ta - tb;
     });
+
+    // เผื่อหน้าเพิ่งบูตแล้วยังไม่มีข้อมูล → ลองดึง 30 วัน
     if (src.length===0){ const rows = await fetchHistoricalData('30d'); src = Array.isArray(rows)?rows:[]; }
 
     reportData = filterByRange(src, s, e);
@@ -1171,7 +1217,7 @@ async function runReportSearch(){
   }
 }
 
-/* ---------- CSV (ทุกแถวใน reportData) ---------- */
+/* ---------- Export CSV (ทุกแถวใน reportData) ---------- */
 function exportReportCSV(){
   if (!reportData?.length){ alert('ยังไม่มีข้อมูลในตารางรายงาน'); return; }
   const headers = ['#','ระดับน้ำดิบ (cm)','ระดับน้ำ (cm)','RSSI Node1','RSSI Node2',
@@ -1198,174 +1244,25 @@ function exportReportCSV(){
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
-/* ---------- PDF (ประกาศก่อน setupReportBox เพื่อไม่ให้ undefined) ---------- */
-/* ตั้งค่าหัวรายงาน */
-window.REPORT_BRAND = window.REPORT_BRAND || {
-  logoSrc: 'PATH/LOGO.png', // <— ใส่โลโก้จริงที่โหลดได้
-  orgName: '200/1 ถนนอุตรกิจ ต.เวียง อ.เมือง จ.เชียงราย 57000',
-  title: 'รายงานประวัติการวัดระดับน้ำ',
-  rightDatePrefix: 'วันที่พิมพ์'
-};
-async function buildFormalHeaderImage(widthPx){
-  const host = document.createElement('div');
-  host.style.cssText = `width:${widthPx}px;padding:24px 24px 8px;background:#fff;color:#111;
-    font-family:Sarabun,Segoe UI,Tahoma,sans-serif;line-height:1.45;`;
-  host.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-      <div style="display:flex;align-items:center;gap:16px;">
-        <img src="${window.REPORT_BRAND.logoSrc||''}" style="height:72px;object-fit:contain"/>
-        <div style="font-size:16px;font-weight:600;">${window.REPORT_BRAND.orgName||''}</div>
-      </div>
-      <div style="font-size:12px;opacity:.8;">
-        ${(window.REPORT_BRAND.rightDatePrefix||'วันที่พิมพ์')}: ${
-          new Intl.DateTimeFormat('th-TH',{dateStyle:'full',timeStyle:'short'}).format(new Date())
-        }
-      </div>
-    </div>
-    <div style="text-align:center;margin-top:12px;font-weight:700;font-size:18px;">
-      ${window.REPORT_BRAND.title||'รายงาน'}
-    </div>`;
-  document.body.appendChild(host);
-  const img = await html2canvas(host, { backgroundColor:'#fff', useCORS:true, scale:2 });
-  document.body.removeChild(host);
-  return img.toDataURL('image/png');
-}
-async function buildReportTableImage(rows, startIdx, endIdx, widthPx){
-  const host = document.createElement('div');
-  host.style.cssText = `width:${widthPx}px;background:#fff;color:#111;padding:0 24px 12px;
-    font-family:Sarabun,Segoe UI,Tahoma,sans-serif;`;
-  const hdrBg='#0b1220', hdrCol='#f5f7ff', border='1px solid #d6dbe3';
-  let body=''; for(let i=startIdx;i<endIdx;i++){ const it=rows[i]; const level=fixedDepth-Number(it.distance??0);
-    body += `<tr>
-      <td>${i+1}</td>
-      <td>${Number(it.distance ?? '').toFixed(1)}</td>
-      <td>${Number.isFinite(level) ? level.toFixed(1) : ''}</td>
-      <td>${(it.rssi_node1&&it.rssi_node1!==0)?it.rssi_node1:''}</td>
-      <td>${(it.rssi_node2&&it.rssi_node2!==0)?it.rssi_node2:''}</td>
-      <td>${isDef(it.v_node1)?it.v_node1:''}</td>
-      <td>${isDef(it.i_node1)?it.i_node1:''}</td>
-      <td>${isDef(it.v_node2)?it.v_node2:''}</td>
-      <td>${isDef(it.i_node2)?it.i_node2:''}</td>
-      <td>${it.time_node1 || it.timestamp || ''}</td>
-      <td>${it.time_node2 || it.timestamp || ''}</td></tr>`;
-  }
-  host.innerHTML = `
-    <style>
-      #__tbl__{width:100%;border-collapse:collapse;font-size:12px;}
-      #__tbl__ th,#__tbl__ td{border:${border};padding:6px 8px;vertical-align:top;}
-      #__tbl__ thead th{background:${hdrBg};color:${hdrCol};}
-      #__tbl__ tbody tr:nth-child(even){background:#f6f8fb;}
-    </style>
-    <table id="__tbl__">
-      <thead><tr>
-        <th>#</th><th>ระดับน้ำดิบ (cm)</th><th>ระดับน้ำ (cm)</th>
-        <th>RSSI Node1</th><th>RSSI Node2</th>
-        <th>V Node1</th><th>I Node1</th>
-        <th>V Node2</th><th>I Node2</th>
-        <th>เวลาวัด Node1</th><th>เวลาวัด Node2</th>
-      </tr></thead>
-      <tbody>${body}</tbody>
-    </table>`;
-  document.body.appendChild(host);
-  const img = await html2canvas(host, { backgroundColor:'#fff', useCORS:true, scale:2 });
-  document.body.removeChild(host);
-  return img.toDataURL('image/png');
-}
-function drawSignatureLines(doc, margin, y, pageW){
-  const lineW=210, leftX=margin, rightX=pageW-margin-lineW;
-  doc.setLineWidth(0.7); doc.setDrawColor(150);
-  doc.line(leftX,y,leftX+lineW,y); doc.line(rightX,y,rightX+lineW,y);
-  doc.setFont('Helvetica','normal'); doc.setFontSize(11);
-  doc.text('ผู้จัดทำรายงาน', leftX, y+16); doc.text('ผู้รับรอง', rightX, y+16);
-  doc.setFontSize(10);
-  doc.text('( .................................. )', leftX+10, y+44);
-  doc.text('( .................................. )', rightX+10, y+44);
-  doc.text('ตำแหน่ง..................................', leftX, y+64);
-  doc.text('ตำแหน่ง..................................', rightX, y+64);
-  return y+64+20;
-}
-// -------------------- 1) ฟังก์ชันช่วยโหลดฟอนต์ไทย --------------------
-async function ensureThaiFont() {
-  if (window.__thaiFontReady) return;
-  const { jsPDF } = window.jspdf;
-
-  async function ttfToBase64(url) {
-    const res = await fetch(url, { cache: 'force-cache' });
-    const buf = await res.arrayBuffer();
-    let binary = '';
-    const bytes = new Uint8Array(buf);
-    const chunk = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunk) {
-      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-    }
-    return btoa(binary);
-  }
-
-  // ⬅️ เปลี่ยน path ให้ตรงกับที่คุณเก็บฟอนต์จริง
-  const regUrl  = '/assets/fonts/Sarabun-Regular.ttf';
-  const boldUrl = '/assets/fonts/Sarabun-Bold.ttf';
-
-  const [regB64, boldB64] = await Promise.all([
-    ttfToBase64(regUrl), ttfToBase64(boldUrl)
-  ]);
-
-  const doc = new jsPDF();
-  doc.addFileToVFS('Sarabun-Regular.ttf', regB64);
-  doc.addFileToVFS('Sarabun-Bold.ttf',    boldB64);
-  doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
-  doc.addFont('Sarabun-Bold.ttf',    'Sarabun', 'bold');
-
-  window.__thaiFontReady = true;
-}
-
-async function ensureThaiFont() {
-  if (window.__thaiFontReady) return;
-  const { jsPDF } = window.jspdf;
-
-  async function ttfToBase64(url) {
-    const res = await fetch(url, { cache: 'force-cache' });
-    const buf = await res.arrayBuffer();
-    let binary = '';
-    const bytes = new Uint8Array(buf);
-    const chunk = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunk) {
-      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-    }
-    return btoa(binary);
-  }
-
-  // ⬅️ เปลี่ยน path ให้ตรงกับที่คุณเก็บฟอนต์จริง
-  const regUrl  = '/assets/fonts/Sarabun-Regular.ttf';
-  const boldUrl = '/assets/fonts/Sarabun-Bold.ttf';
-
-  const [regB64, boldB64] = await Promise.all([
-    ttfToBase64(regUrl), ttfToBase64(boldUrl)
-  ]);
-
-  const doc = new jsPDF();
-  doc.addFileToVFS('Sarabun-Regular.ttf', regB64);
-  doc.addFileToVFS('Sarabun-Bold.ttf',    boldB64);
-  doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
-  doc.addFont('Sarabun-Bold.ttf',    'Sarabun', 'bold');
-
-  window.__thaiFontReady = true;
-}
-
+/* ---------- Export PDF (vector, Thai font) ---------- */
 async function exportReportPDF() {
   if (!reportData?.length) { alert('ยังไม่มีข้อมูลในตารางรายงาน'); return; }
 
-  await ensureThaiFont(); // ⬅️ โหลด/ลงทะเบียนฟอนต์ไทยให้พร้อมก่อนสร้างเอกสาร
-
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'pt', format:'a4' });
+
+  // ฝังฟอนต์ไทยในเอกสารนี้ก่อนพิมพ์
+  await ensureThaiFont(doc);
+
   const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
   const margin = 36;
 
-  // ใช้ฟอนต์ไทยตลอดไฟล์
-  doc.setFont('Sarabun', 'bold');  doc.setFontSize(14);
-  doc.text(window.REPORT_BRAND?.title || 'รายงานประวัติการวัดระดับน้ำ', pageW/2, margin, { align:'center' });
+  // หัวรายงาน
+  doc.setFont('Sarabun','bold');  doc.setFontSize(14);
+  doc.text((window.REPORT_BRAND?.title || 'รายงานประวัติการวัดระดับน้ำ'), pageW/2, margin, { align:'center' });
 
-  doc.setFont('Sarabun', 'normal'); doc.setFontSize(11);
+  doc.setFont('Sarabun','normal'); doc.setFontSize(11);
   const org = window.REPORT_BRAND?.orgName || '';
   if (org) doc.text(org, pageW/2, margin + 18, { align:'center' });
 
@@ -1377,12 +1274,11 @@ async function exportReportPDF() {
   const e = document.getElementById('reportEnd')?.value || '-';
   doc.text(`ช่วงเวลา: ${s} ถึง ${e}`, margin, margin + 36);
 
-  // ===== ตารางแบบเวคเตอร์ ด้วยฟอนต์ไทย =====
+  // เตรียมข้อมูลตาราง
   const head = [[
     '#','ระดับน้ำดิบ (cm)','ระดับน้ำ (cm)','RSSI Node1','RSSI Node2',
     'V Node1','I Node1','V Node2','I Node2','เวลาวัด Node1','เวลาวัด Node2'
   ]];
-
   const body = reportData.map((it, idx) => {
     const level = fixedDepth - Number(it.distance ?? 0);
     return [
@@ -1400,12 +1296,13 @@ async function exportReportPDF() {
     ];
   });
 
+  // วาดตารางแบบเวคเตอร์ (คมชัด/แบ่งหน้าอัตโนมัติ)
   doc.autoTable({
     head, body,
     startY: margin + 52,
     margin: { left: margin, right: margin },
     styles: {
-      font: 'Sarabun',          // ⬅️ ใช้ฟอนต์ไทย
+      font: 'Sarabun',
       fontStyle: 'normal',
       fontSize: 10,
       textColor: [20, 23, 31],
@@ -1428,9 +1325,10 @@ async function exportReportPDF() {
       7:{cellWidth:64,halign:'right'}, 8:{cellWidth:64,halign:'right'},
       9:{cellWidth:110,halign:'left'}, 10:{cellWidth:110,halign:'left'}
     },
-    didDrawPage: () => {
+    didDrawPage: (data) => {
       doc.setFont('Sarabun','normal'); doc.setFontSize(9);
-      doc.text(`หน้า ${doc.internal.getNumberOfPages()}`, pageW - margin, doc.internal.pageSize.getHeight() - 10, { align:'right' });
+      const str = `หน้า ${doc.internal.getNumberOfPages()}`;
+      doc.text(str, pageW - margin, doc.internal.pageSize.getHeight() - 10, { align:'right' });
     },
     willDrawCell: (data) => {
       if (data.section === 'body') {
@@ -1440,14 +1338,16 @@ async function exportReportPDF() {
     }
   });
 
-  // พื้นที่เซ็นชื่อ
+  // พื้นที่เซ็นชื่อ (หน้าสุดท้าย)
   const finalY = doc.lastAutoTable.finalY || (margin + 52);
   let y = finalY + 24;
-  const pageH = doc.internal.pageSize.getHeight();
   if (y + 90 > pageH - margin) { doc.addPage(); y = margin; }
   const lineW = 220, leftX = margin, rightX = pageW - margin - lineW;
+
   doc.setDrawColor(150); doc.setLineWidth(0.7);
-  doc.line(leftX,y,leftX+lineW,y); doc.line(rightX,y,rightX+lineW,y);
+  doc.line(leftX, y, leftX + lineW, y);
+  doc.line(rightX, y, rightX + lineW, y);
+
   doc.setFont('Sarabun','normal'); doc.setFontSize(11);
   doc.text('ผู้จัดทำรายงาน', leftX, y + 16);
   doc.text('ผู้รับรอง',       rightX, y + 16);
@@ -1460,19 +1360,13 @@ async function exportReportPDF() {
   doc.save(`Water_Report_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
-
-
-/* ---------- Hook ปุ่ม (ประกาศหลัง exportReportPDF เพื่อไม่ undefined) ---------- */
-function setupReportQuickDomTypes(){
-  // กันกรณีปุ่มอยู่ใน <form> จะเผลอ submit
-  ['reportQuickToday','reportQuickYest','reportQuick7d','reportSearchBtn','reportExportCsv','reportExportPdf']
-    .forEach(id=>document.getElementById(id)?.setAttribute('type','button'));
-}
+/* ---------- Hook ปุ่มของกล่องรายงาน ---------- */
 function setupReportBox(){
-  setupReportQuickDomTypes();
   setupReportQuickRanges();
   document.getElementById('reportSearchBtn')?.addEventListener('click', runReportSearch);
   document.getElementById('reportExportCsv')?.addEventListener('click', exportReportCSV);
   document.getElementById('reportExportPdf')?.addEventListener('click', exportReportPDF);
 }
 window.addEventListener('load', setupReportBox);
+
+/* ================== END REPORT BLOCK ================== */
