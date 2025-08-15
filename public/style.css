@@ -505,7 +505,7 @@ tbody tr:hover {
 
 /* โทนเดียวกับการ์ดบน */
 .report-card{
-  width: 1080px;               /* ให้กว้างเท่าการ์ดบน (ปรับตามของจริง) */
+  width: 1300px;               /* ให้กว้างเท่าการ์ดบน (ปรับตามของจริง) */
   margin: 24px auto 0;
   background: rgba(11, 30, 40, .55);
   border: 1px solid rgba(255,255,255,.10);
