@@ -1284,36 +1284,133 @@ function drawSignatureLines(doc, margin, y, pageW){
   doc.text('ตำแหน่ง..................................', rightX, y+64);
   return y+64+20;
 }
-async function exportReportPDF(){
-  if (!reportData?.length){ alert('ยังไม่มีข้อมูลในตารางรายงาน'); return; }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'portrait', unit:'pt', format:'a4' });
-  const pageW = doc.internal.pageSize.getWidth(), pageH = doc.internal.pageSize.getHeight(), margin=36;
-
-  // Header
-  const head = await buildFormalHeaderImage(Math.floor(pageW - margin*2));
-  let y = margin;
-  doc.addImage(head,'PNG',margin,y,pageW-margin*2,110); y += 120;
-
-  // ช่วงเวลา
-  doc.setFont('Helvetica','normal'); doc.setFontSize(11);
-  const s = document.getElementById('reportStart')?.value || '-';
-  const e = document.getElementById('reportEnd')?.value || '-';
-  doc.text(`ช่วงเวลา: ${s} ถึง ${e}`, margin, y); y += 16;
-
-  // ตาราง (แบ่งหน้า)
-  const rowsPerChunk = 18;
-  for(let i=0;i<reportData.length;i+=rowsPerChunk){
-    const tbl = await buildReportTableImage(reportData, i, Math.min(i+rowsPerChunk, reportData.length), Math.floor(pageW-margin*2));
-    const tblH = (pageW - margin*2) * 0.62; // สัดส่วนโดยประมาณ
-    if (y + tblH > pageH - 140){ doc.addPage(); y = margin; }
-    doc.addImage(tbl,'PNG',margin,y,pageW-margin*2,tblH); y += tblH + 14;
+async function exportReportPDF() {
+  if (!reportData?.length) {
+    alert('ยังไม่มีข้อมูลในตารางรายงาน');
+    return;
   }
 
-  if (y + 120 > pageH - margin){ doc.addPage(); y = margin; }
-  drawSignatureLines(doc, margin, y+10, pageW);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'pt', format:'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 36;
+
+  // ===== Header (ตัวหนังสือคมชัด; ใส่โลโก้ได้ถ้ามี) =====
+  doc.setFont('Helvetica','bold'); doc.setFontSize(14);
+  doc.text(window.REPORT_BRAND?.title || 'รายงานประวัติการวัดระดับน้ำ', pageW/2, margin, { align:'center' });
+
+  doc.setFont('Helvetica','normal'); doc.setFontSize(11);
+  const org = window.REPORT_BRAND?.orgName || '';
+  if (org) doc.text(org, pageW/2, margin + 18, { align:'center' });
+
+  const rightDatePrefix = window.REPORT_BRAND?.rightDatePrefix || 'วันที่พิมพ์';
+  const printedAt = new Intl.DateTimeFormat('th-TH', { dateStyle:'full', timeStyle:'short' }).format(new Date());
+  doc.text(`${rightDatePrefix}: ${printedAt}`, pageW - margin, margin, { align:'right' });
+
+  // ช่วงเวลาที่เลือก
+  const s = document.getElementById('reportStart')?.value || '-';
+  const e = document.getElementById('reportEnd')?.value || '-';
+  doc.text(`ช่วงเวลา: ${s} ถึง ${e}`, margin, margin + 36);
+
+  // ===== สร้างข้อมูลตาราง =====
+  const head = [[
+    '#','ระดับน้ำดิบ (cm)','ระดับน้ำ (cm)','RSSI Node1','RSSI Node2',
+    'V Node1','I Node1','V Node2','I Node2','เวลาวัด Node1','เวลาวัด Node2'
+  ]];
+
+  const body = reportData.map((it, idx) => {
+    const level = fixedDepth - Number(it.distance ?? 0);
+    return [
+      idx + 1,
+      Number(it.distance ?? '').toFixed(1),
+      Number.isFinite(level) ? level.toFixed(1) : '',
+      (it.rssi_node1 && it.rssi_node1 !== 0) ? it.rssi_node1 : '',
+      (it.rssi_node2 && it.rssi_node2 !== 0) ? it.rssi_node2 : '',
+      isDef(it.v_node1) ? it.v_node1 : '',
+      isDef(it.i_node1) ? it.i_node1 : '',
+      isDef(it.v_node2) ? it.v_node2 : '',
+      isDef(it.i_node2) ? it.i_node2 : '',
+      it.time_node1 || it.timestamp || '',
+      it.time_node2 || it.timestamp || ''
+    ];
+  });
+
+  // ===== วาดตารางแบบเวคเตอร์ (คมชัด/แบ่งหน้าอัตโนมัติ) =====
+  doc.autoTable({
+    head,
+    body,
+    startY: margin + 52,
+    margin: { left: margin, right: margin },
+    styles: {
+      font: 'helvetica',
+      fontSize: 10,
+      textColor: [20, 23, 31],
+      lineColor: [210, 215, 222],
+      lineWidth: 0.6,
+      halign: 'center',
+      cellPadding: { top: 4, right: 3, bottom: 4, left: 3 }
+    },
+    headStyles: {
+      fillColor: [11, 18, 32],
+      textColor: [245, 247, 255],
+      fontStyle: 'bold'
+    },
+    alternateRowStyles: { fillColor: [246, 248, 251] },
+    columnStyles: {
+      0: { cellWidth: 26 },
+      1: { cellWidth: 74, halign: 'right' },
+      2: { cellWidth: 74, halign: 'right' },
+      3: { cellWidth: 70 },
+      4: { cellWidth: 70 },
+      5: { cellWidth: 64, halign: 'right' },
+      6: { cellWidth: 64, halign: 'right' },
+      7: { cellWidth: 64, halign: 'right' },
+      8: { cellWidth: 64, halign: 'right' },
+      9: { cellWidth: 110, halign: 'left' },
+      10:{ cellWidth: 110, halign: 'left' }
+    },
+    didDrawPage: (data) => {
+      // หมายเลขหน้า
+      const str = `หน้า ${doc.internal.getNumberOfPages()}`;
+      doc.setFontSize(9);
+      doc.text(str, pageW - margin, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
+    },
+    willDrawCell: (data) => {
+      // กันตัวเลขติดชิดขอบมากไป
+      if (data.section === 'body') {
+        if ([1,2,5,6,7,8].includes(data.column.index)) data.cell.styles.halign = 'right';
+        if ([9,10].includes(data.column.index)) data.cell.styles.halign = 'left';
+      }
+    }
+  });
+
+  // ===== พื้นที่เซ็นชื่อ (หน้าสุดท้าย) =====
+  const finalY = doc.lastAutoTable.finalY || (margin + 52);
+  let y = finalY + 24;
+  const pageH = doc.internal.pageSize.getHeight();
+  if (y + 90 > pageH - margin) { doc.addPage(); y = margin; }
+
+  const lineW = 220;
+  const leftX = margin;
+  const rightX = pageW - margin - lineW;
+
+  doc.setDrawColor(150); doc.setLineWidth(0.7);
+  doc.line(leftX, y, leftX + lineW, y);
+  doc.line(rightX, y, rightX + lineW, y);
+
+  doc.setFont('Helvetica','normal'); doc.setFontSize(11);
+  doc.text('ผู้จัดทำรายงาน', leftX, y + 16);
+  doc.text('ผู้รับรอง', rightX, y + 16);
+  doc.setFontSize(10);
+  doc.text('( .................................. )', leftX + 10, y + 44);
+  doc.text('( .................................. )', rightX + 10, y + 44);
+  doc.text('ตำแหน่ง..................................', leftX, y + 64);
+  doc.text('ตำแหน่ง..................................', rightX, y + 64);
+
+  // ===== เซฟไฟล์ =====
   doc.save(`Water_Report_${new Date().toISOString().slice(0,10)}.pdf`);
 }
+
 
 /* ---------- Hook ปุ่ม (ประกาศหลัง exportReportPDF เพื่อไม่ undefined) ---------- */
 function setupReportQuickDomTypes(){
