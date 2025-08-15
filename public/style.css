@@ -502,85 +502,129 @@ tbody tr:hover {
 }
 
 /* การ์ดรายงาน */
-/* === Glass card: ทำให้ report-card ดูเหมือนการ์ด "ประวัติข้อมูล" และมีขอบใส ๆ === */
-
-/* ความกว้างการ์ด (ตั้งค่าเดียวใช้ทั้งบน/ล่างได้) */
-:root { --card-width: 1120px; }  /* ปรับเลขนี้ให้เท่าการ์ดบนจริง ๆ */
-
 .report-card{
-  width: var(--card-width) !important;
-  margin: 22px auto 0 !important;
-  position: relative;
-  background: rgba(255,255,255,0.07) !important;
-  border: 1px solid rgba(255,255,255,0.18) !important; /* ขอบใส */
-  border-radius: 18px !important;
+  margin-top: 28px;
+  background: var(--c-card);
+  border: 1px solid var(--c-card-border);
+  border-radius: 14px;
+  box-shadow: var(--c-shadow);
   backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow:
-    0 18px 40px rgba(0,0,0,.28),           /* เงาหลัก */
-    inset 0 1px 0 rgba(255,255,255,.16);   /* ไฮไลต์ขอบใน */
   overflow: hidden;
 }
 
-/* เส้นขอบใส ๆ ไล่โทน (เงาบางรอบกรอบ) */
-.report-card::after{
-  content:"";
-  position:absolute; inset:0;
-  border-radius: inherit;
-  pointer-events:none;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.22) inset,
-              0 0 24px rgba(255,255,255,.10) inset;
-}
-
-/* header ของการ์ดให้พอดีกับบน */
+/* ส่วนหัว + แถบควบคุม */
 .report-card .card-header{
-  padding: 14px 18px !important;
-  border-bottom: 1px solid rgba(255,255,255,.12) !important;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:14px; padding:14px 16px 10px 16px;
+  border-bottom: 1px solid var(--c-card-border);
 }
-.report-card .card-header h3{
-  font-size: 1.08rem !important;
-  letter-spacing: .2px;
-  color: #eaf4ff;
+.report-card h3{
+  margin:0; font-weight:700; font-size:1.05rem; letter-spacing:.2px; color:var(--c-text);
+  display:flex; align-items:center; gap:8px;
+}
+.report-controls{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
 }
 
-/* กล่องตารางข้างในให้มีช่องไฟเท่าการ์ดบน */
+/* input เวลา */
+.report-controls input[type="datetime-local"]{
+  appearance:none;
+  background:#062a33;
+  border:1px solid rgba(255,255,255,.12);
+  color:var(--c-text);
+  padding:7px 10px;
+  border-radius:8px;
+  font-size:.92rem;
+  outline:none;
+  transition: border .15s ease, box-shadow .15s ease;
+}
+.report-controls input[type="datetime-local"]:focus{
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(31,182,255,.25);
+}
+
+/* ปุ่ม */
+.btn{ 
+  border:none; border-radius:9px; padding:8px 12px; font-weight:700; cursor:pointer;
+  user-select:none; letter-spacing:.2px; font-size:.9rem;
+  transform: translateZ(0);
+}
+.btn:active{ transform: translateY(1px); }
+.btn-lite{ background:#0a2b35; color:var(--c-text); border:1px solid rgba(255,255,255,.12); }
+.btn-primary{ background: var(--c-accent); color:#02202a; }
+.btn-success{ background: var(--c-success); color:#032216; }
+.btn-danger{ background: var(--c-danger); color:#2b0b0b; }
+
+/* ปุ่มกดค้นหา/CSV/PDF แยกระยะ */
+#reportSearchBtn{ margin-left:2px; }
+#reportExportCsv, #reportExportPdf{ margin-left:2px; }
+
+/* กล่องตาราง (มีหัวติด) */
 .table-wrap{
-  max-height: 420px;
-  overflow: auto;
-  padding: 0 2px;                /* กันหัวตารางชิดขอบเกินไป */
-  background: transparent;
+  max-height: 420px;            /* ปรับสูง-ต่ำได้ */
+  overflow:auto;
+  border-top: 1px solid var(--c-card-border);
 }
 
-/* หัวตารางและแถวให้เข้าธีม */
+/* สไตล์ตาราง */
+#reportTable{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  color: var(--c-text);
+  font-size:.94rem;
+}
 #reportTable thead th{
-  background: linear-gradient(180deg,#103045 0%, #0b1220 100%) !important;
-  color:#eaf4ff !important;
-  padding: 10px 12px !important;
-  border-bottom: 1px solid rgba(255,255,255,.12) !important;
+  position: sticky; top: 0; z-index: 1;
+  background: linear-gradient(180deg, #0f2233 0%, var(--c-head) 100%);
+  color: var(--c-head-text);
+  text-align:left;
+  font-weight:800;
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  white-space: nowrap;
 }
 #reportTable tbody td{
-  padding: 9px 12px !important;
-  color:#cfe3ec !important;
-  border-bottom: 1px dashed rgba(255,255,255,.09) !important;
+  padding:9px 12px;
+  border-bottom: 1px dashed rgba(255,255,255,.08);
+  color: var(--c-text-dim);
 }
-#reportTable tbody tr:nth-child(even){ background: rgba(255,255,255,.03); }
+#reportTable tbody tr:nth-child(even){ background: var(--c-row-alt); }
 #reportTable tbody tr:hover{
   background: rgba(31,182,255,.10);
-  color:#eaf4ff;
+  color: var(--c-text);
 }
 
-/* ปุ่มช่วงเวลา/ค้นหา/CSV/PDF ให้ทรงเดียวกับการ์ดบน */
-.report-controls .btn,
-.report-controls .btn-lite,
-.report-controls .btn-primary,
-.report-controls .btn-success,
-.report-controls .btn-danger{
-  border-radius: 12px !important;
-  padding: 8px 12px !important;
-  font-weight: 800 !important;
+/* จัดแนวคอลัมน์ตัวเลขให้อ่านง่าย */
+#reportTable td:nth-child(1),
+#reportTable td:nth-child(2),
+#reportTable td:nth-child(3),
+#reportTable td:nth-child(6),
+#reportTable td:nth-child(7),
+#reportTable td:nth-child(8),
+#reportTable td:nth-child(9){ text-align:right; }
+
+/* หมายเหตุใต้ตาราง */
+.report-note{
+  padding:8px 14px 14px; color: var(--c-text-dim); font-size:.9rem; opacity:.8;
 }
 
-/* รองรับจอเล็ก: ให้กว้างอัตโนมัติเท่าการ์ดบน */
-@media (max-width: 1200px){
-  :root{ --card-width: 94vw; }
+/* สกอร์ลบาร์ให้เข้าธีม */
+.table-wrap::-webkit-scrollbar{ height:10px; width:10px; }
+.table-wrap::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.22); border-radius:10px; }
+.table-wrap::-webkit-scrollbar-track{ background: rgba(255,255,255,.08); border-radius:10px; }
+
+/* ปุ่มเล็กลงบนจอแคบ */
+@media (max-width: 1024px){
+  .report-controls{ gap:6px; }
+  .btn{ padding:7px 10px; font-size:.85rem; }
+  .report-card .card-header{ padding:12px; }
+  #reportTable{ font-size:.90rem; }
+}
+
+/* จอมือถือ: แถวหัวแยกเป็น 2 บรรทัด */
+@media (max-width: 640px){
+  .report-card .card-header{ flex-direction:column; align-items:flex-start; gap:10px; }
+  .report-controls{ width:100%; }
+  .report-controls input[type="datetime-local"]{ flex:1; min-width:140px; }
 }
