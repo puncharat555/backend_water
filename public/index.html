@@ -249,10 +249,49 @@
     <div id="moreButtonContainer" style="text-align:center; margin-top:10px;"></div>
   </div>
   <!-- ปุ่มส่งออกลอยมุมขวาล่าง -->
-  <div id="export-footer" class="export-footer">
-  <button id="exportPdfBtn" class="range-btn">ส่งรายงานออก PDF</button>
-  <button id="exportCsvBtn" class="range-btn">ส่งออก CSV</button>
+ <!-- ===== Report Box (ไม่ใช่กราฟ) ===== -->
+<section id="reportSection" class="card report-card" aria-label="Report Export">
+  <div class="card-header">
+    <h3>ออกรายงานข้อมูล (ตาราง)</h3>
+    <div class="report-controls">
+      <label>ตั้งแต่</label>
+      <input id="reportStart" type="datetime-local">
+      <label>ถึง</label>
+      <input id="reportEnd" type="datetime-local">
+
+      <button id="reportQuickToday" class="btn btn-lite">วันนี้</button>
+      <button id="reportQuickYest" class="btn btn-lite">เมื่อวาน</button>
+      <button id="reportQuick7d"   class="btn btn-lite">7 วัน</button>
+
+      <button id="reportSearchBtn" class="btn btn-primary">ค้นหา</button>
+      <button id="reportExportCsv" class="btn btn-success">CSV</button>
+      <button id="reportExportPdf" class="btn btn-danger">PDF</button>
+    </div>
   </div>
+
+  <div class="table-wrap" id="reportWrap">
+    <table id="reportTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>ระดับน้ำดิบ (cm)</th>
+          <th>ระดับน้ำ (cm)</th>
+          <th>RSSI Node1</th>
+          <th>RSSI Node2</th>
+          <th>V Node1</th>
+          <th>I Node1</th>
+          <th>V Node2</th>
+          <th>I Node2</th>
+          <th>เวลาวัด Node1</th>
+          <th>เวลาวัด Node2</th>
+        </tr>
+      </thead>
+      <tbody><!-- render ด้วย JS --></tbody>
+    </table>
+  </div>
+  <div class="report-note">* ผลลัพธ์ในตารางนี้จะเป็น “ข้อมูลจริงทั้งหมดในช่วงที่เลือก”</div>
+</section>
+
   
   
 

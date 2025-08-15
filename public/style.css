@@ -485,3 +485,27 @@ tbody tr:hover {
 
 /* ถ้ามีอันนี้อยู่ ให้ลบทิ้ง เพื่อไม่ให้ลอยทับ */
 .toolbar.sticky-export{ display:none; }
+/* ===== Report Box ===== */
+.report-card { margin-top: 16px; }
+.report-card .card-header {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  flex-wrap:wrap;
+}
+.report-card h3 { margin:0; font-size:1.05rem; }
+.report-controls { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.report-controls label { opacity:.85; }
+.report-controls input[type="datetime-local"] {
+  background:#0f172a; border:1px solid rgba(255,255,255,.15);
+  color:#fff; padding:6px 8px; border-radius:6px;
+}
+.report-controls .btn { padding:6px 10px; border-radius:6px; cursor:pointer; }
+.btn-lite{ background:#21324a; border:1px solid rgba(255,255,255,.12); color:#e6f1ff; }
+.btn-primary{ background:#0ea5e9; border:none; color:#001018; font-weight:600; }
+.btn-success{ background:#22c55e; border:none; color:#01210d; font-weight:600; }
+.btn-danger{ background:#ef4444; border:none; color:#2b0b0b; font-weight:600; }
+
+#reportTable { width:100%; border-collapse:collapse; }
+#reportTable th, #reportTable td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.08); }
+#reportTable thead th { position:sticky; top:0; background:#0b1220; z-index:1; }
+.table-wrap { max-height:360px; overflow:auto; border:1px solid rgba(255,255,255,.08); border-radius:8px; }
+.report-note { opacity:.7; font-size:.9rem; margin-top:8px; }
