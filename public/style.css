@@ -1,21 +1,27 @@
-/* -------------------------------------------------------
+/* =======================================================
    Variables
-------------------------------------------------------- */
+======================================================= */
 :root{
   --safe-top: env(safe-area-inset-top, 0px);
   --topbar-h: 54px;
   --topbar-gap: 12px;
+  --sidebar-top: calc(var(--safe-top) + var(--topbar-gap) + var(--topbar-h) + 8px);
 
-  --card-bg: rgba(255,255,255,0.12);
-  --card-bg-soft: rgba(255,255,255,0.08);
+  --wrap-w: 1280px;      /* ความกว้างกรอบคงที่ */
+  --side-pad: 12px;      /* กันขอบซ้าย/ขวาบนจอเล็ก */
+  --section-gap: 22px;   /* ช่องไฟมาตรฐานระหว่างการ์ด/เซคชัน */
+
+  --card-bg: rgba(255,255,255,.12);
+  --card-bg-soft: rgba(255,255,255,.08);
   --glass-blur: 6px;
+
   --text: #fff;
   --text-dim: #ddd;
 }
 
-/* -------------------------------------------------------
+/* =======================================================
    Base & Typography
-------------------------------------------------------- */
+======================================================= */
 *{ font-family: 'Sarabun', sans-serif; box-sizing: border-box; }
 body{
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -31,14 +37,22 @@ body{
   font-size: clamp(32px, 4.5vw, 56px);
 }
 
-/* -------------------------------------------------------
+/* พื้นหลังท้องฟ้าให้ลอยหลังสุดและคลิกทะลุ */
+.sky{
+  position: fixed; inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* =======================================================
    Topbar / Sidebar / Backdrop
-------------------------------------------------------- */
+======================================================= */
 .topbar{
-  position: fixed !important;
+  position: fixed;
   top: calc(var(--safe-top) + var(--topbar-gap));
   left: 12px;
   z-index: 1400;
+
   height: var(--topbar-h);
   display: inline-flex; align-items: center; gap: 10px;
   padding: 0 12px; margin: 0;
@@ -47,93 +61,137 @@ body{
   border-radius: 12px;
   backdrop-filter: blur(var(--glass-blur));
 }
-.topbar .brand{ color: #fff; font-weight: 700; letter-spacing: .3px; user-select: none; }
+.topbar .brand{ color:#fff; font-weight:700; letter-spacing:.3px; user-select:none; }
 
 .hamburger{
-  display: inline-flex; flex-direction: column; justify-content: center; gap: 4px;
-  width: 38px; height: 38px; padding: 6px; border-radius: 10px;
-  border: 1.5px solid rgba(255,255,255,.5); background: rgba(255,255,255,.14);
-  cursor: pointer;
+  display:inline-flex; flex-direction:column; justify-content:center; gap:4px;
+  width:38px; height:38px; padding:6px; border-radius:10px;
+  border:1.5px solid rgba(255,255,255,.5); background:rgba(255,255,255,.14);
+  cursor:pointer;
 }
 .hamburger span{ display:block; height:2px; width:100%; background:#fff; border-radius:2px; }
-.hamburger:hover{ filter: brightness(1.05); }
+.hamburger:hover{ filter:brightness(1.05); }
 
+/* Sidebar ลอยและเลื่อนตามจอ เริ่มใต้ Topbar */
 .sidebar{
-  position: fixed; inset: 0 auto 0 0; width: 270px;
-  transform: translateX(-100%); transition: transform .25s ease;
-  background: rgba(32,44,54,.96); color: #eef;
-  padding: 14px 14px 20px; z-index: 2000;
+  position: fixed;
+  left: 12px;
+  top: var(--sidebar-top);
+  bottom: 16px;
+  width: 270px;
+
+  max-height: calc(100vh - var(--sidebar-top) - 16px);
+  overflow: auto;
+  transform: translateX(-110%);
+  transition: transform .25s ease;
+
+  background: rgba(32,44,54,.96);
+  color: #eef;
+  padding: 14px;
+  border-radius: 12px;
+  z-index: 2000;
   box-shadow: 4px 0 20px rgba(0,0,0,.4);
 }
 .sidebar.open{ transform: translateX(0); }
-.sidebar-header{ font-weight: 700; margin: 6px 4px 12px; opacity: .95; }
+.sidebar-header{ font-weight:700; margin:6px 4px 12px; opacity:.95; }
 .sidebar .nav-item{
   display:block; padding:10px 12px; margin:6px 0; border-radius:10px;
   text-decoration:none; color:#e9f6ff;
-  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
 }
 .sidebar .nav-item:hover{
-  background: rgba(0,192,255,.18); border-color: rgba(0,192,255,.55); color:#dff7ff;
+  background:rgba(0,192,255,.18); border-color:rgba(0,192,255,.55); color:#dff7ff;
 }
-/* (ป้องกันเคยเผลอวาง .topbar ใน .sidebar) */
+/* ป้องกันกรณีมี .topbar ภายใน .sidebar โดยไม่ตั้งใจ */
 .sidebar .topbar{ position: static; top:auto; left:auto; right:auto; }
 
+/* ฉากหลังคลุมจอ */
 .backdrop{
-  position: fixed; inset: 0; background: rgba(0,0,0,.35);
-  opacity: 0; pointer-events: none; transition: opacity .2s ease; z-index: 1900;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.35);
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s ease;
+  z-index: 1900;
 }
 .backdrop.show{ opacity: 1; pointer-events: all; }
 
-/* -------------------------------------------------------
-   Sections spacing (กันชน topbar แต่ไม่หนา)
-------------------------------------------------------- */
+/* =======================================================
+   Layout width 1280
+======================================================= */
+.page-wrap{
+  max-width: var(--wrap-w);
+  width: 100%;
+  margin: 0 auto;
+  padding-inline: var(--side-pad);
+}
+
+/* ให้ทุกการ์ด/เซคชันยึดกรอบเดียวกัน */
+.container.nodes-grid,
+.charts-container,
+.chart-box.map-box,
+.table-wrapper,
+.report-card{
+  max-width: var(--wrap-w);
+  margin-inline: auto;
+}
+
+/* เว้นช่องไฟมาตรฐาน */
+.container.nodes-grid,
+.chart-box,
+.table-wrapper,
+.report-card{
+  margin-top: var(--section-gap);
+}
+
+/* กัน Topbar บัง anchor เวลา scroll ไปยัง id */
 #water-section,
 #charts-section,
 #map-section,
 #table-section,
 #reportSection{
-  /*padding-top: 0 !important;*/
   scroll-margin-top: calc(var(--topbar-h) + var(--topbar-gap) + var(--safe-top));
 }
+/* ให้บล็อกแรกไม่ชน Topbar */
 #water-section{ margin-top: calc(var(--topbar-h) + var(--topbar-gap)); }
 
-/* -------------------------------------------------------
-   Water level block / Gauges
-------------------------------------------------------- */
+/* =======================================================
+   Water Level / Node cards / Gauges
+======================================================= */
 .water-level-display{
   display:flex; justify-content:center;
   margin: 8px 0 14px !important;
 }
 .main-water-level{
-  margin: 6px 0 !important;
-  min-width: 240px; text-align: center; font-weight: 700;
-  color: var(--text);
+  margin:6px 0 !important;
+  min-width:240px; text-align:center; font-weight:700;
+  color:var(--text);
   font-size: clamp(22px, 3.5vw, 40px);
 }
 
 .container.nodes-grid{
-  max-width: 1300px; margin: 0 auto 20px;
-  display: grid; grid-template-columns: repeat(2,1fr); gap: 12px;
-  background: var(--card-bg); border-radius: 20px;
-  padding: 20px; backdrop-filter: blur(5px);
-  box-shadow: 0 5px 18px rgba(0,0,0,.3);
+  display:grid; grid-template-columns:repeat(2,1fr); gap:12px;
+  background:var(--card-bg); border-radius:20px;
+  padding:20px; backdrop-filter: blur(5px);
+  box-shadow:0 5px 18px rgba(0,0,0,.3);
 }
 .node-box{
-  background: var(--card-bg-soft); border-radius: 15px;
-  padding: 18px 22px; box-shadow: 0 4px 14px rgba(0,0,0,.15);
+  background:var(--card-bg-soft); border-radius:15px;
+  padding:18px 22px; box-shadow:0 4px 14px rgba(0,0,0,.15);
 }
 .node-box h2{
-  margin: 0 0 12px; font-weight: 700; color: #fff;
-  text-shadow: 0 1px 3px rgba(0,0,0,.7);
+  margin:0 0 12px; font-weight:700; color:#fff;
+  text-shadow:0 1px 3px rgba(0,0,0,.7);
 }
-.node-box p{ margin: 6px 0; font-size: 1.1rem; color: var(--text-dim); letter-spacing: .03em; }
+.node-box p{ margin:6px 0; font-size:1.1rem; color:var(--text-dim); letter-spacing:.03em; }
 .info-box{ display:flex; flex-direction:column; justify-content:center; }
 .gauge-box{ display:flex; flex-direction:column; align-items:center; justify-content:center; }
 
-.gauge{ width: 280px; height: 150px; }
+/* Gauges */
+.gauge{ width:280px; height:150px; }
 .gauge .val-text{ font-weight:700; font-size:1.15rem; fill:#fff; text-anchor:middle; }
 .gauge .tick-text{ font-size:.85rem; fill:#ddd; text-anchor:middle; }
 .gauge-caption{ margin-top:6px; color:#ddd; font-size:.9rem; }
+
 #waterGauge svg{ width:100%; height:auto; display:block; }
 #waterGauge .arc-label{ fill:#fff; font-weight:700; text-anchor:middle; }
 #waterGauge .arc-end{ fill:#ddd; font-size:12px; }
@@ -141,58 +199,72 @@ body{
 .water-gauge-card{ width:100%; max-width:520px; padding:18px 22px; }
 .water-gauge-card h2{ margin-top:0; text-align:center; }
 
-/* -------------------------------------------------------
+/* =======================================================
    Charts & Map
-------------------------------------------------------- */
+======================================================= */
 .charts-container{
-  display:grid; grid-template-columns:repeat(2,1fr); grid-template-rows:repeat(2,auto);
-  gap:20px; max-width:1300px; margin:0 auto 40px;
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap:20px;
+  row-gap: var(--section-gap);
+  margin:0 auto 40px;
 }
 .chart-box{
-  width:100%; background: var(--card-bg);
-  border-radius:15px; padding:12px 20px 20px; /* บีบ padding-top ให้บางลง */
-  box-shadow:0 4px 20px rgba(0,0,0,.3); color:#fff;
+  width:100%;
+  background:var(--card-bg);
+  border-radius:15px;
+  padding:12px 20px 20px;   /* บีบด้านบนให้บางลง */
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+  color:#fff;
 }
 .chart-box h3{ margin:0 0 12px; text-align:center; line-height:1.2; }
 
 .chart-canvas{ position:relative; width:100%; height:360px; }
 .chart-canvas>canvas{ width:100% !important; height:100% !important; display:block; }
 
-.chart-box.map-box{ padding-top:10px !important; }
+#map-section{ margin:16px 0 var(--section-gap); }
+.chart-box.map-box{ padding-top:16px !important; }
+.chart-box.map-box h3{ margin:2px 0 12px !important; }
+
 #map{
   height: clamp(260px, 38vh, 520px);
-  width: 100%; border-radius: 15px; margin-top: 6px !important;
-  box-shadow: 0 8px 25px rgba(0,0,0,.4); border:none; display:block;
+  width: 100%;
+  border-radius: 15px;
+  margin-top: 6px !important;
+  box-shadow: 0 8px 25px rgba(0,0,0,.4);
+  border: none;
+  display: block;
 }
 
-/* -------------------------------------------------------
+/* =======================================================
    Table
-------------------------------------------------------- */
+======================================================= */
 .table-wrapper{
-  max-width:1260px; margin:0 auto 50px;
   background: rgba(255,255,255,.1);
-  padding:12px 20px 20px !important; /* บีบด้านบน */
-  border-radius:15px; backdrop-filter: blur(4px);
-  box-shadow:0 5px 20px rgba(0,0,0,.3); color:#fff; overflow-x:auto;
+  padding:12px 20px 20px !important;
+  border-radius:15px;
+  backdrop-filter: blur(4px);
+  box-shadow:0 5px 20px rgba(0,0,0,.3);
+  color:#fff;
+  overflow-x:auto;
 }
-.table-header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.table-header{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; margin-bottom:10px;
+}
 .table-header h3{ margin:0; line-height:1.2; display:flex; align-items:center; gap:8px; }
-
-#timeRangeButtons,
-#batteryTimeRangeButtons,
-#currentTimeRangeButtons{
-  display:flex; justify-content:center; gap:8px; margin-bottom:15px;
-}
 
 table{ width:100%; border-collapse:collapse; color:#f0f0f0; font-size:.95rem; min-width:700px; }
 thead th{
   background: linear-gradient(180deg, rgba(255,255,255,.28) 0%, rgba(255,255,255,.22) 100%);
-  padding:12px 15px; text-align:left; font-weight:600; border-bottom:2px solid rgba(255,255,255,.35);
+  padding:12px 15px; text-align:left; font-weight:600;
+  border-bottom:2px solid rgba(255,255,255,.35);
 }
 tbody td{ padding:10px 15px; border-top:1px solid rgba(255,255,255,.1); }
 tbody tr:nth-child(even){ background: rgba(255,255,255,.05); }
 tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease; }
 
+/* Error box */
 .error-toggle{ cursor:pointer; color:#ff4d4d; margin-left:10px; font-size:18px; }
 .error-box{
   color:#313030; background:rgba(255,0,0,.15); border:1px solid rgba(255,0,0,.5);
@@ -202,9 +274,10 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
 .error-box.hidden{ display:none; }
 .error-box h4{ margin-top:0; color:#cc0000; }
 
-/* -------------------------------------------------------
+/* =======================================================
    Buttons
-------------------------------------------------------- */
+======================================================= */
+/* ปุ่มพื้นฐาน (ใช้ในส่วนอื่น ๆ เช่น summary toggle) */
 .range-btn{
   background: rgba(255,255,255,.15); color:#fff;
   border:1.5px solid rgba(255,255,255,.4);
@@ -214,16 +287,47 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
 .range-btn:hover{ background: rgba(0,192,255,.3); border-color:#00c0ff; color:#00c0ff; font-weight:700; }
 .range-btn.active{ background: rgba(255,255,255,.5); border-color:#fff; font-weight:700; }
 
-.btn{ border:none; border-radius:12px; padding:9px 14px; font-weight:800; cursor:pointer;
-      transition: filter .15s ease, transform .05s ease, box-shadow .15s ease; }
+/* ทำปุ่มช่วงเวลาใน "กราฟ" ให้เป็นชิปสวย ๆ (ไม่กระทบปุ่มส่วนอื่น) */
+#timeRangeButtons,
+#batteryTimeRangeButtons,
+#currentTimeRangeButtons{
+  display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin:8px 0 12px;
+}
+.chart-box .range-btn{
+  appearance:none;
+  display:inline-flex; align-items:center; justify-content:center;
+  height:36px; padding:0 14px; min-width:110px;
+  border-radius:999px;
+  background: rgba(255,255,255,.12);
+  border:1.5px solid rgba(255,255,255,.35);
+  color:#fff; font-weight:700; font-size:.95rem; line-height:1;
+  box-shadow:none; transform:none; width:auto;
+}
+.chart-box .range-btn:hover{
+  background: rgba(24,195,255,.20);
+  border-color:#18c3ff; color:#18c3ff;
+}
+.chart-box .range-btn.active{
+  background: rgba(24,195,255,.32);
+  border-color:#18c3ff; color:#00161e;
+}
+
+/* ปุ่มทั่วไป */
+.btn{
+  border:none; border-radius:12px;
+  padding:9px 14px; font-weight:800; cursor:pointer;
+  transition: filter .15s ease, transform .05s ease, box-shadow .15s ease;
+}
 .btn:active{ transform: translateY(1px); }
 .btn-lite{ background: rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.28); }
 .btn-lite:hover{ filter: brightness(1.08); box-shadow: 0 0 0 3px rgba(255,255,255,.15) inset; }
 .btn-primary{ background:#18c3ff; color:#05222d; } .btn-primary:hover{ filter:brightness(1.05); }
 .btn-success{ background:#1fd48a; color:#083527; } .btn-success:hover{ filter:brightness(1.05); }
 .btn-danger{ background:#ff5b6e; color:#300f14; } .btn-danger:hover{ filter:brightness(1.05); }
+
 .btn-chip{
-  background: rgba(0,0,0,.25); color:#e8f6ff; border:1px solid rgba(255,255,255,.2);
+  background: rgba(0,0,0,.25);
+  color:#e8f6ff; border:1px solid rgba(255,255,255,.2);
   border-radius:999px; padding:8px 12px;
 }
 .btn-chip.active, .btn-chip:hover{ background: rgba(24,195,255,.28); border-color:#18c3ff; color:#18c3ff; }
@@ -234,9 +338,9 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
 #reportExportPdf{ background:#ff5b6e; color:#300f14; }
 #reportExportCsv:hover, #reportExportPdf:hover{ filter:brightness(1.05); }
 
-/* -------------------------------------------------------
+/* =======================================================
    Report card
-------------------------------------------------------- */
+======================================================= */
 .report-card{
   width:100%; max-width:1280px; margin:24px auto 0;
   background: rgba(255,255,255,.11);
@@ -247,13 +351,14 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
 .report-card .card-header{ padding:14px 18px; }
 .table-wrap{ padding:6px 10px 10px; }
 
-/* -------------------------------------------------------
+/* =======================================================
    Misc
-------------------------------------------------------- */
+======================================================= */
 #moreButtonContainer{ text-align:center; margin-top:10px; }
 #moreButtonContainer button{
   background:none; border:none; color:#fff; cursor:pointer; font-size:1rem; text-decoration:underline; padding:0;
 }
+
 .toolbar.sticky-export{
   position:fixed; right:24px; bottom:24px; z-index:1200;
   background: rgba(0,0,0,.25); backdrop-filter: blur(var(--glass-blur));
@@ -261,11 +366,14 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
 }
 .toolbar.sticky-export .range-btn{ margin:0 6px; }
 
-/* -------------------------------------------------------
+/* =======================================================
    Media queries
-------------------------------------------------------- */
+======================================================= */
 @media (max-width: 1024px){
   .chart-canvas{ height:300px; }
+}
+@media (max-width: 900px){
+  .charts-container{ grid-template-columns: 1fr; }
 }
 @media (max-width: 650px){
   .container.nodes-grid{ grid-template-columns:1fr; }
@@ -276,170 +384,3 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
   .report-controls{ flex-direction:column; align-items:stretch; }
   .report-controls label, .report-controls input, .report-controls button{ width:100%; }
 }
-/* ===== Fixed content width 1280 ===== */
-:root{
-  --wrap-w: 1280px;
-  --side-pad: 12px;        /* กันชิดขอบจอมือถือ */
-}
-
-/* กล่องหลักครอบทุกคอนเทนต์ */
-.page-wrap{
-  max-width: var(--wrap-w);
-  width: 100%;
-  margin: 0 auto;
-  padding-inline: var(--side-pad);
-}
-
-/* ให้ทุก section/การ์ด ใช้ความกว้างกรอบเดียวกัน */
-.container.nodes-grid,
-.charts-container,
-.chart-box.map-box,
-.table-wrapper,
-.report-card{
-  max-width: var(--wrap-w);
-  margin-inline: auto;
-}
-
-/* กล่องกราฟแต่ละใบ/ตาราง/รายงาน ไม่ยืดเกินกรอบ */
-.chart-box,
-.table-wrapper,
-.report-card{ width: 100%; }
-
-/* แผนที่กินเต็มกรอบ 1280 */
-#map{
-  width: 100%;
-  max-width: 100%;
-}
-
-/* ถ้าอยากลด max-width เดิมบางที่ให้ตรงกัน */
-.container.nodes-grid{ max-width: var(--wrap-w) !important; }
-.charts-container{ max-width: var(--wrap-w) !important; }
-
-/* (ทางเลือก) ให้กริดกราฟปรับตามความกว้าง 1280 */
-.charts-container{
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-@media (max-width: 900px){
-  .charts-container{ grid-template-columns: 1fr; }
-}
-
-/* เว้นระยะภายนอกของกล่องแผนที่ไม่ให้ชนขอบส่วนก่อนหน้า */
-#map-section{
-  margin-top: 16px;                /* เพิ่มช่องว่างด้านบนของ section นี้ */
-}
-
-/* เว้นระยะภายในด้านบนของการ์ดแผนที่ให้หนาขึ้นนิดหน่อย */
-.chart-box.map-box{
-  padding-top: 16px !important;    /* เดิม 10px เลยดูติดขอบ */
-}
-
-/* หัวข้อการ์ดไม่ต้องมี margin บนเยอะ */
-.chart-box.map-box h3{
-  margin: 2px 0 12px !important;   /* บนบางลง ล่างพอดี */
-}
-/* ระยะห่างมาตรฐานระหว่างกล่อง/การ์ด */
-:root{
-  --section-gap: 22px;       /* ปรับได้ตามชอบ 16–28px กำลังสวย */
-}
-
-/* การ์ดทุกประเภทให้มีช่องไฟด้านบน */
-.chart-box,
-.table-wrapper,
-.report-card,
-.container.nodes-grid{
-  margin-top: var(--section-gap);
-}
-
-/* แผนที่ให้มีช่องไฟด้านล่างเพิ่ม เพื่อไม่ชิดตาราง */
-#map-section{
-  margin-bottom: var(--section-gap);
-}
-
-/* ถ้าใช้กริดรวมกราฟ ให้เว้นแถวในกริดด้วย */
-.charts-container{
-  row-gap: var(--section-gap);
-}
-:root{
-  --safe-top: env(safe-area-inset-top, 0px);
-  --topbar-h: 54px;         /* ความสูง topbar */
-  --topbar-gap: 12px;       /* ระยะจากขอบบน */
-  --sidebar-pad: 12px;
-  /* ตำแหน่งบนสุดของ sidebar = บนจอ + ช่องว่าง + สูงของ topbar */
-  --sidebar-top: calc(var(--safe-top) + var(--topbar-gap) + var(--topbar-h) + 8px);
-}
-
-/* แทนที่กฎ .sidebar เดิมที่มี inset:0 ... */
-.sidebar{
-  position: fixed;
-  left: 12px;
-  top: var(--sidebar-top);          /* เริ่มใต้ topbar */
-  bottom: 16px;                     /* เว้นขอบล่างนิด */
-  width: 270px;
-  max-height: calc(100vh - var(--sidebar-top) - 16px);
-  overflow: auto;                   /* เมนูยาวให้เลื่อนในกล่อง */
-  transform: translateX(-110%);
-  transition: transform .25s ease;
-  background: rgba(32,44,54,.96);
-  color: #eef;
-  padding: 14px;
-  border-radius: 12px;
-  z-index: 2000;
-  box-shadow: 4px 0 20px rgba(0,0,0,.4);
-}
-.sidebar.open{ transform: translateX(0); }
-
-/* ให้ backdrop คลุมทั้งจอและอยู่ใต้ sidebar */
-.backdrop{
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.35);
-  opacity: 0; pointer-events: none;
-  transition: opacity .2s ease;
-  z-index: 1900;
-}
-.backdrop.show{ opacity: 1; pointer-events: all; }
-:root{
-  --safe-top: env(safe-area-inset-top, 0px);
-  --topbar-h: 54px;
-  --topbar-gap: 12px;
-  --sidebar-top: calc(var(--safe-top) + var(--topbar-gap) + var(--topbar-h) + 8px);
-}
-
-/* พื้นหลังจริง ๆ */
-.sky{
-  position: fixed; inset: 0;
-  z-index: 0;
-  pointer-events: none;   /* ให้คลิกทะลุได้ */
-}
-
-/* แถบเมนูลอยตาม viewport */
-.topbar{
-  position: fixed;
-  top: calc(var(--safe-top) + var(--topbar-gap));
-  left: 12px;
-  z-index: 1400;
-}
-
-/* Sidebar ลอยและ scroll ตามจอ */
-.sidebar{
-  position: fixed;
-  left: 12px;
-  top: var(--sidebar-top);
-  bottom: 16px;
-  width: 270px;
-  max-height: calc(100vh - var(--sidebar-top) - 16px);
-  overflow: auto;
-  transform: translateX(-110%);
-  transition: transform .25s ease;
-  z-index: 2000;
-}
-.sidebar.open{ transform: translateX(0); }
-
-.backdrop{
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.35);
-  opacity: 0; pointer-events: none;
-  transition: opacity .2s ease;
-  z-index: 1900;
-}
-.backdrop.show{ opacity: 1; pointer-events: all; }
