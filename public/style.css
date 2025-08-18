@@ -163,12 +163,12 @@ tbody tr:hover {
 /* ===== Charts ===== */
 .charts-container {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, auto);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
   max-width: 1300px;
   margin: 0 auto 40px;
 }
+
 
 .chart-box {
   width: 100%;
@@ -294,15 +294,11 @@ tbody tr:hover {
 }
 
 @media (max-width: 1024px) {
-  .chart-canvas {
-    height: 300px;
-  }
+  .charts-container { grid-template-columns: 1fr; }
 }
 
+
 @media (max-width: 650px) {
-  .container.nodes-grid {
-    grid-template-columns: 1fr;
-  }
   .chart-canvas {
     height: 240px;
   }
@@ -357,6 +353,7 @@ tbody tr:hover {
 }
 /* จัดปุ่มช่วงเวลาให้อยู่ตรงกลางในกราฟ */
 #timeRangeButtons,
+#batteryTimeRangeButtons,
 #currentTimeRangeButtons {
   display: flex;
   justify-content: center;
@@ -586,4 +583,9 @@ tbody tr:hover {
   .report-controls button {
     width: 100%;
   }
+  @media (max-width: 650px) {
+  .chart-box { padding: 14px; }
+  .chart-canvas { height: 260px; }
+  #map { height: 300px; }
+}
 }
