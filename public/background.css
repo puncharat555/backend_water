@@ -83,6 +83,6 @@ html, body { background:#0e2329; }  /* โทนกลางคืน */
 .node-box, .chart-box, .table-wrapper, .report-card{
   background: rgba(255,255,255,.10);
   border: 1px solid rgba(255,255,255,.12);
-  backdrop-filter: blur(6px);
+  /*backdrop-filter: blur(6px);*/
   color:#fff;
 }
