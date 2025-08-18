@@ -641,3 +641,17 @@ tbody tr:hover {
 
 /* ให้ฉากหลังคลิกปิด sidebar บังเหนือคอนเทนต์ */
 .backdrop{ z-index: 1900; }
+/* เอา padding-top ออก แล้วให้เลื่อนมาไม่ชนท็อปบาร์ด้วย scroll-margin-top */
+#water-section,
+#charts-section,
+#map-section,
+#table-section,
+#reportSection{
+  padding-top: 0 !important;
+  scroll-margin-top: calc(var(--topbar-h) + var(--topbar-gap) + var(--safe-top));
+}
+
+/* กันหัวข้อแรกไปชนท็อปบาร์ (เลือกอย่างใดอย่างหนึ่ง) */
+#water-section { margin-top: calc(var(--topbar-h) + var(--topbar-gap)); }
+/* หรือถ้าอยากขยับเฉพาะหัวเรื่อง */
+.title { margin-top: calc(var(--topbar-h) + var(--topbar-gap)); }
