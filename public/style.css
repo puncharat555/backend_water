@@ -398,3 +398,48 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
   z-index: 1900;
 }
 .backdrop.show{ opacity: 1; pointer-events: all; }
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --topbar-h: 54px;
+  --topbar-gap: 12px;
+  --sidebar-top: calc(var(--safe-top) + var(--topbar-gap) + var(--topbar-h) + 8px);
+}
+
+/* พื้นหลังจริง ๆ */
+.sky{
+  position: fixed; inset: 0;
+  z-index: 0;
+  pointer-events: none;   /* ให้คลิกทะลุได้ */
+}
+
+/* แถบเมนูลอยตาม viewport */
+.topbar{
+  position: fixed;
+  top: calc(var(--safe-top) + var(--topbar-gap));
+  left: 12px;
+  z-index: 1400;
+}
+
+/* Sidebar ลอยและ scroll ตามจอ */
+.sidebar{
+  position: fixed;
+  left: 12px;
+  top: var(--sidebar-top);
+  bottom: 16px;
+  width: 270px;
+  max-height: calc(100vh - var(--sidebar-top) - 16px);
+  overflow: auto;
+  transform: translateX(-110%);
+  transition: transform .25s ease;
+  z-index: 2000;
+}
+.sidebar.open{ transform: translateX(0); }
+
+.backdrop{
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.35);
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s ease;
+  z-index: 1900;
+}
+.backdrop.show{ opacity: 1; pointer-events: all; }
