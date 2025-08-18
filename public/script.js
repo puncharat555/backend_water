@@ -1037,7 +1037,7 @@ window.addEventListener('load', setupExportButtons);
 setInterval(() => {
   loadData();
   createOneHourChart();
-}, 600);
+}, 60000);
 
 /* ===== Range Buttons ===== */
 function setupRangeButtons() {
@@ -1071,22 +1071,15 @@ function setupRangeButtons() {
     });
   });
 }
-/* ================== REPORT BLOCK — paste at end of script.js ================== */
-/* ใช้คงที่/ฟังก์ชันที่มีอยู่แล้ว: fixedDepth, parseToDate, isDef, allData, loadData */
 
-/* ---------- Font loader (Thai: Sarabun) ---------- */
-/* เปลี่ยน path ให้ตรงกับโปรเจกต์คุณ */
 const THAI_FONT_PATHS = {
 regular: 'https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Regular.ttf',
   bold:    'https://raw.githubusercontent.com/google/fonts/main/ofl/sarabun/Sarabun-Bold.ttf',
-
-  // สำรอง NotoSansThai
   fallbackRegular: 'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansthai/NotoSansThai-Regular.ttf',
   fallbackBold:    'https://raw.githubusercontent.com/google/fonts/main/ofl/notosansthai/NotoSansThai-Bold.ttf',
 
 };
 
-// cache base64 ไว้ (โหลดครั้งเดียว)
 async function loadSarabunTTF() {
   if (window.__sarabunB64) return window.__sarabunB64;
 
@@ -1121,7 +1114,7 @@ async function ensureThaiFont(doc) {
 }
 
 /* ---------- Report state & utils ---------- */
-let reportData = []; // แถวที่กรองได้สำหรับตารางรายงาน
+let reportData = [];
 
 function getDateLocalStr(d){
   if (!(d instanceof Date) || isNaN(+d)) return '';
@@ -1137,7 +1130,7 @@ function getInputDate(id){
 }
 function filterByRange(rows, startDT, endDT){
   const s = startDT ? +startDT : -Infinity;
-  const e = endDT ? (+endDT + 59*1000) : +Infinity; // รวมถึงนาทีสุดท้าย
+  const e = endDT ? (+endDT + 59*1000) : +Infinity; 
   return rows.filter(it=>{
     const ts = parseToDate(it.time_node1 ?? it.time_node2 ?? it.timestamp);
     if (!ts) return false;
@@ -1280,7 +1273,6 @@ async function exportReportPDF () {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
 
-  // ---- ฟอนต์ไทย (ถ้ามี ensureThaiFont ให้ใช้; ถ้าไม่มีจะ fallback Helvetica) ----
   let FONT = 'Helvetica';
   if (typeof ensureThaiFont === 'function') {
     try {
