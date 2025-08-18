@@ -324,3 +324,17 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
   .charts-container{ grid-template-columns: 1fr; }
 }
 
+/* เว้นระยะภายนอกของกล่องแผนที่ไม่ให้ชนขอบส่วนก่อนหน้า */
+#map-section{
+  margin-top: 16px;                /* เพิ่มช่องว่างด้านบนของ section นี้ */
+}
+
+/* เว้นระยะภายในด้านบนของการ์ดแผนที่ให้หนาขึ้นนิดหน่อย */
+.chart-box.map-box{
+  padding-top: 16px !important;    /* เดิม 10px เลยดูติดขอบ */
+}
+
+/* หัวข้อการ์ดไม่ต้องมี margin บนเยอะ */
+.chart-box.map-box h3{
+  margin: 2px 0 12px !important;   /* บนบางลง ล่างพอดี */
+}
