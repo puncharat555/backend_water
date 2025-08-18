@@ -70,3 +70,23 @@ background-size:220px 220px,360px 360px,520px 520px;background-position:-40px -2
 
 /* ให้คอนเทนต์อยู่เหนือแสง */
 .sky > *:not(.sun):not(.moon){ position:relative; z-index:1; }
+/* ให้ดวงอาทิตย์/ดวงจันทร์เป็นพื้นหลัง ไม่ติดจอ */
+:root{
+  --orb-y: clamp(60px, 12vh, 120px);  /* ระยะจากขอบบนของหน้า ปรับได้ */
+  --orb-x: 50%;                       /* กลางแนวนอน (อยากขยับซ้าย/ขวา เปลี่ยนเป็น 35% / 70%) */
+}
+
+.sun, .moon{
+  position: absolute !important;          /* ← เปลี่ยนจาก fixed กลับเป็น absolute */
+  top: var(--orb-y) !important;
+  left: var(--orb-x) !important;
+  transform: translate(-50%, 0) !important;
+  z-index: 0;                              /* อยู่หลังการ์ด/หัวข้อ */
+  pointer-events: none;
+}
+
+/* ให้คอนเทนต์ทับอยู่เหนือพื้นหลังแน่นอน */
+.sky > *:not(.sun):not(.moon){
+  position: relative;
+  z-index: 1;
+}
