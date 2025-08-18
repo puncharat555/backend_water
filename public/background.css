@@ -1,0 +1,28 @@
+/* พื้นหลังเต็มจอ */
+#background {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: -1;
+  transition: background 2s ease;
+}
+
+/* เช้า */
+.bg-morning {
+  background: linear-gradient(to bottom, #87cefa, #e0f7ff); /* ฟ้าใส + ขาวนวล */
+}
+
+/* กลางวัน */
+.bg-day {
+  background: linear-gradient(to bottom, #4ca1af, #ccefff); /* ฟ้าเข้ม */
+}
+
+/* เย็น */
+.bg-evening {
+  background: linear-gradient(to bottom, #f39c12, #2c3e50); /* ส้มอมคราม */
+}
+
+/* กลางคืน */
+.bg-night {
+  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364); /* ครึ้มเข้ม */
+}
