@@ -338,3 +338,25 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
 .chart-box.map-box h3{
   margin: 2px 0 12px !important;   /* บนบางลง ล่างพอดี */
 }
+/* ระยะห่างมาตรฐานระหว่างกล่อง/การ์ด */
+:root{
+  --section-gap: 22px;       /* ปรับได้ตามชอบ 16–28px กำลังสวย */
+}
+
+/* การ์ดทุกประเภทให้มีช่องไฟด้านบน */
+.chart-box,
+.table-wrapper,
+.report-card,
+.container.nodes-grid{
+  margin-top: var(--section-gap);
+}
+
+/* แผนที่ให้มีช่องไฟด้านล่างเพิ่ม เพื่อไม่ชิดตาราง */
+#map-section{
+  margin-bottom: var(--section-gap);
+}
+
+/* ถ้าใช้กริดรวมกราฟ ให้เว้นแถวในกริดด้วย */
+.charts-container{
+  row-gap: var(--section-gap);
+}
