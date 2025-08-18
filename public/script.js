@@ -1037,7 +1037,7 @@ window.addEventListener('load', setupExportButtons);
 setInterval(() => {
   loadData();
   createOneHourChart();
-}, 60000);
+}, 600);
 
 /* ===== Range Buttons ===== */
 function setupRangeButtons() {

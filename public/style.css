@@ -501,8 +501,9 @@ tbody tr:hover {
 #reportTable td:nth-child(9){ padding-right: 18px; }
 
 /* === กรอบใสแบบ glass และเงาเนียน === */
-.report-card{
-  width: 1300px;         
+.report-card {
+  width: 100%;          
+  max-width: 1300px;      
   margin: 24px auto 0;
   background: rgba(255,255,255,.11);
   border: 1px solid rgba(255,255,255,.22);
@@ -513,7 +514,6 @@ tbody tr:hover {
     0 14px 34px rgba(0,0,0,.28),
     inset 0 1px 0 rgba(255,255,255,.16);
 }
-
 /* หัวตารางโทนอ่อนเข้าการ์ดบน */
 #reportTable thead th{
   background: linear-gradient(180deg, rgba(255,255,255,.28) 0%, rgba(255,255,255,.22) 100%);
@@ -526,7 +526,12 @@ tbody tr:hover {
 #reportTable tbody tr:hover{ background: rgba(0,192,255,.12); }
 
 /* === ปุ่มให้เข้าธีม + ระยะห่างกำลังดี === */
-.report-controls{ gap:10px; flex-wrap:wrap; }
+.report-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
 
 .btn{
   border:none; border-radius:12px;
@@ -567,3 +572,18 @@ tbody tr:hover {
 #reportExportCsv{ background:#18d36f; color:#05331e; }
 #reportExportPdf{ background:#ff5b6e; color:#300f14; }
 #reportExportCsv:hover, #reportExportPdf:hover{ filter:brightness(1.05); }
+@media (max-width: 600px) {
+  .report-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .report-controls label {
+    width: 100%;
+  }
+  .report-controls input {
+    width: 100%;
+  }
+  .report-controls button {
+    width: 100%;
+  }
+}
