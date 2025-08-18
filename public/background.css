@@ -69,3 +69,20 @@ background-size:220px 220px,360px 360px,520px 520px;background-position:-40px -2
 
 /* ให้คอนเทนต์อยู่เหนือแสง */
 .sky > *:not(.sun):not(.moon){ position:relative; z-index:1; }
+/* ให้พื้นหลังเริ่มต้นของหน้าเป็นสีเดียวกับท้องฟ้า */
+html, body { background:#0e2329; }  /* โทนกลางคืน */
+
+/* เอาเอฟเฟกต์ mask/fade ของท้องฟ้าออก เพื่อไม่ให้โปร่งใสแล้วเห็นสีขาวข้างใต้ */
+.sky { -webkit-mask-image:none; mask-image:none; }
+
+/* ให้เลเยอร์ท้องฟ้าคลุมทั้งจอ และคอนเทนต์วางทับ */
+.sky { position:fixed; inset:0; z-index:0; }
+.page-wrap { position:relative; z-index:1; }
+
+/* กล่องต่าง ๆ ไม่ให้ขาวทึบเกินไป */
+.node-box, .chart-box, .table-wrapper, .report-card{
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(6px);
+  color:#fff;
+}
