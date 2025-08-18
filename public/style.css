@@ -270,7 +270,7 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
 .error-box{
   color:#313030; background:rgba(255,0,0,.15); border:1px solid rgba(255,0,0,.5);
   padding:10px; margin:10px 0; border-radius:6px; max-height:200px; overflow-y:auto;
-  /*backdrop-filter: blur(6px);*/ box-shadow:0 0 10px rgba(255,0,0,.3);
+  box-shadow:0 0 10px rgba(255,0,0,.3);
 }
 .error-box.hidden{ display:none; }
 .error-box h4{ margin-top:0; color:#cc0000; }
