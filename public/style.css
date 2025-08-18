@@ -655,3 +655,34 @@ tbody tr:hover {
 #water-section { margin-top: calc(var(--topbar-h) + var(--topbar-gap)); }
 /* หรือถ้าอยากขยับเฉพาะหัวเรื่อง */
 .title { margin-top: calc(var(--topbar-h) + var(--topbar-gap)); }
+/* ตัด padding-top ส่วนเกินของแต่ละ section (กันขอบบนหนา) */
+#water-section,
+#charts-section,
+#map-section,
+#table-section,
+#reportSection{
+  padding-top: 0 !important;
+}
+
+/* บีบการ์ดให้ขอบบนบางลง */
+.chart-box,
+.table-wrapper,
+.report-card{
+  padding-top: 12px !important;   /* เดิม 20px */
+}
+
+/* หัวข้อบนการ์ดไม่ให้ดันขอบบน */
+.chart-box h3,
+.table-header h3{
+  margin-top: 0 !important;
+  margin-bottom: 12px;            /* เหลือห่างพอดี */
+  line-height: 1.2;
+}
+
+/* กล่องแผนที่: เว้นห่างหัวข้อเล็กน้อยแล้วเริ่มแผนที่ทันที */
+.chart-box.map-box{ padding-top: 10px !important; }
+#map{ margin-top: 6px !important; }
+
+/* ตาราง: บีบหัวตารางให้พอดี */
+.table-wrapper{ padding-top: 12px !important; }
+.table-wrapper h3{ margin-top: 0 !important; }
