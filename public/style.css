@@ -92,7 +92,7 @@ body{
 #map-section,
 #table-section,
 #reportSection{
-  padding-top: 0 !important;
+  /*padding-top: 0 !important;*/
   scroll-margin-top: calc(var(--topbar-h) + var(--topbar-gap) + var(--safe-top));
 }
 #water-section{ margin-top: calc(var(--topbar-h) + var(--topbar-gap)); }
