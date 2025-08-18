@@ -1,3 +1,9 @@
+
+body.sky-page{
+  padding: 0 !important;
+  background: none !important;   /* กันพื้นหลังเดิมโผล่ */
+}
+.sky{ padding: 0; }               /* ถ้าอยากให้ชิดขอบจริง ๆ */
 /* ===== Sky states ===== */
 .sky{position:relative;min-height:100vh;overflow:hidden;transition:background .8s ease,filter .8s ease}
 .sky.morning{background:linear-gradient(180deg,#314d70 0%,#5d86a6 100%)}
