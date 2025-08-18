@@ -586,4 +586,26 @@ tbody tr:hover {
   .report-controls button {
     width: 100%;
   }
+  :root{
+  /* ระยะเผื่อรอยบากมือถือ */
+  --safe-top: calc(12px + env(safe-area-inset-top));
+}
+
+/* ให้ topbar ติดหน้าจอตลอด */
+.topbar{
+  position: fixed;
+  top: var(--safe-top);
+  left: 12px;
+  right: 12px;
+  z-index: 1300;
+  /* ของเดิมที่มี เช่น height, display, background ฯลฯ คงไว้ได้ */
+}
+
+/* กัน topbar ทับคอนเทนต์ข้างล่าง */
+.sky,
+.sky-page .sky{
+  /* 54px = ความสูงแทบ + 24px ระยะห่าง ปรับตามของจริงได้ */
+  padding-top: calc(54px + 24px + var(--safe-top));
+}
+
 }
