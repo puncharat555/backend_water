@@ -503,10 +503,10 @@ tbody tr:hover {
 /* === กรอบใสแบบ glass และเงาเนียน === */
 .report-card {
   width: 100%;          
-  max-width: 1300px;      
+  max-width: 1280px;      
   margin: 24px auto 0;
   background: rgba(255,255,255,.11);
-  border: 1px solid rgba(255,255,255,.22);
+  /*border: 1px solid rgba(255,255,255,.22);*/
   border-radius: 16px;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);

@@ -1,44 +1,49 @@
-/* พื้นหลังเต็มจอ */
-#background {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  z-index: -1;
-  transition: background 2s ease;
-}
+/* ===== Sky states ===== */
+.sky{position:relative;min-height:100vh;overflow:hidden;transition:background .8s ease,filter .8s ease}
+.sky.morning{background:linear-gradient(180deg,#314d70 0%,#5d86a6 100%)}
+.sky.day{background:linear-gradient(180deg,#3a6fa5 0%,#6faad2 100%)}
+.sky.evening{background:linear-gradient(180deg,#243b55 0%,#51577c 100%)}
+.sky.night{background:linear-gradient(180deg,#0f2027 0%,#203a43 60%,#2c5364 100%)}
+/* ดาวกลางคืน (ไม่เป็นลายตาราง) */
+.sky.night::before{content:"";position:absolute;inset:0;background-image:
+  radial-gradient(#fff 1px,transparent 1.4px),
+  radial-gradient(#fff 1px,transparent 1.4px),
+  radial-gradient(#fff 1px,transparent 1.4px);
+background-size:220px 220px,360px 360px,520px 520px;background-position:-40px -20px,120px 100px,-160px 80px;opacity:.25;filter:blur(.3px);pointer-events:none}
 
-/* เช้า */
-.bg-morning {
-  background: linear-gradient(to bottom, #87cefa, #e0f7ff); /* ฟ้าใส + ขาวนวล */
-}
+/* Sun & Moon */
+.sun,.moon{position:absolute;border-radius:50%;left:50%;transform:translateX(-50%);filter:drop-shadow(0 10px 24px rgba(0,0,0,.25));transition:opacity .4s ease,transform 1.2s ease;pointer-events:none}
+.sun{width:140px;height:140px;top:18%;background:radial-gradient(circle at 35% 35%,#fffad1 0%,#ffe17a 40%,#ffb648 70%,#ff9a2e 100%)}
+.moon{width:110px;height:110px;top:22%;background:radial-gradient(circle at 30% 30%,#fff 0%,#eaeaea 60%,#d3d3d3 100%);box-shadow:inset -8px -10px 20px rgba(0,0,0,.12)}
+@keyframes drift{0%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}100%{transform:translate(-50%,0)} 
+} .sun,.moon{animation:drift 8s ease-in-out infinite}
 
-/* กลางวัน */
-.bg-day {
-  background: linear-gradient(to bottom, #4ca1af, #ccefff); /* ฟ้าเข้ม */
-}
+/* FAB + เมนูมุมขวาบน */
+.bg-fab{position:fixed;top:12px;right:12px;z-index:1200}
+.bg-fab .fab-btn{position:relative;width:44px;height:44px;border-radius:999px;display:grid;place-items:center;cursor:pointer;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.25);color:#eaf7ff;font-size:20px;backdrop-filter:blur(6px);transition:transform .18s ease;overflow:hidden}
+.bg-fab .fab-btn:hover{filter:brightness(1.07)}
+.bg-fab.open .fab-btn{transform:rotate(10deg) scale(1.06)}
+/* ripple press */
+.bg-fab .fab-btn::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle,rgba(255,255,255,.55) 10%,rgba(255,255,255,0) 40%);transform:scale(0);opacity:0;transition:transform .45s ease,opacity .6s ease}
+.bg-fab .fab-btn.press::after{transform:scale(2.2);opacity:.35}
+/* เมนู reveal */
+.bg-fab .menu{position:absolute;right:0;top:52px;min-width:180px;padding:8px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(15,23,42,.82);color:#e8f6ff;backdrop-filter:blur(8px);box-shadow:0 12px 28px rgba(0,0,0,.35);opacity:0;transform:scale(.96) translateY(-6px);visibility:hidden;pointer-events:none;transition:opacity .18s ease,transform .18s ease}
+.bg-fab.open .menu{opacity:1;transform:scale(1) translateY(0);visibility:visible;pointer-events:auto}
+.bg-fab .item{width:100%;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;border:1px solid transparent;background:transparent;color:inherit;font-weight:700;opacity:0;transform:translateY(4px);transition:opacity .18s ease,transform .18s ease}
+.bg-fab.open .item{opacity:1;transform:translateY(0)}
+.bg-fab .item .dot{width:8px;height:8px;border-radius:999px}
+.bg-fab .divider{margin:6px 4px;height:1px;background:rgba(255,255,255,.18)}
+/* stagger */
+.bg-fab.open .item[data-mode="auto"]{transition-delay:20ms}
+.bg-fab.open .item[data-mode="morning"]{transition-delay:60ms}
+.bg-fab.open .item[data-mode="evening"]{transition-delay:100ms}
+.bg-fab.open .item[data-mode="night"]{transition-delay:140ms}
+@media (max-width:480px){.bg-fab .menu{min-width:160px}}
 
-/* เย็น */
-.bg-evening {
-  background: linear-gradient(to bottom, #f39c12, #2c3e50); /* ส้มอมคราม */
-}
-
-/* กลางคืน */
-.bg-night {
-  background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364); /* ครึ้มเข้ม */
-}
-/* ดาว layer */
-.stars {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: transparent url("https://www.transparenttextures.com/patterns/stardust.png") repeat;
-  animation: twinkle 8s infinite;
-  z-index: -1;
-  pointer-events: none; /* ไม่ให้บังการคลิก */
-}
-
-@keyframes twinkle {
-  0%   { opacity: 0.9; }
-  50%  { opacity: 0.6; }
-  100% { opacity: 0.9; }
-}
+/* Pulse overlay ตอนเปลี่ยนโหมด */
+.bg-pulse{--tone:255,255,255;--x:95%;--y:6%;position:fixed;inset:0;z-index:1100;pointer-events:none;opacity:0;mix-blend-mode:screen;background:radial-gradient(circle at var(--x) var(--y),rgba(var(--tone),.45) 0%,rgba(var(--tone),.25) 22%,rgba(var(--tone),0) 52%)}
+.bg-pulse.show{animation:pulse 720ms ease-out forwards}
+.bg-pulse.morning{--tone:96,170,210}
+.bg-pulse.evening{--tone:255,160,80}
+.bg-pulse.night{--tone:120,210,255}
+@keyframes pulse{0%{clip-path:circle(0% at var(--x) var(--y));opacity:.75}65%{clip-path:circle(140% at var(--x) var(--y));opacity:.25}100%{clip-path:circle(160% at var(--x) var(--y));opacity:0}}
