@@ -268,7 +268,7 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
 /* Error box */
 .error-toggle{ cursor:pointer; color:#ff4d4d; margin-left:10px; font-size:18px; }
 .error-box{
-  color:#313030; background:rgba(255,0,0,.15); border:1px solid rgba(255,0,0,.5);
+  color:#ffffff; background:rgba(255,0,0,.15); border:1px solid rgba(255,0,0,.5);
   padding:10px; margin:10px 0; border-radius:6px; max-height:200px; overflow-y:auto;
   box-shadow:0 0 10px rgba(255,0,0,.3);
 }
@@ -330,7 +330,7 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
 .btn-chip{
   background: rgba(0,0,0,.25);
   color:#e8f6ff; border:1px solid rgba(255,255,255,.2);
-  border-radius:99px; padding:8px 12px;
+  /*border-radius:99px;*/ padding:8px 12px;
 }
 .btn-chip.active, .btn-chip:hover{ background: rgba(24,195,255,.28); border-color:#18c3ff; color:#18c3ff; }
 
