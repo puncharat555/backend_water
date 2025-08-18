@@ -386,3 +386,51 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
   .report-controls{ flex-direction:column; align-items:stretch; }
   .report-controls label, .report-controls input, .report-controls button{ width:100%; }
 }
+/* ==== Report controls (แก้บัคคอนโทรลยืดเต็มบรรทัด) ==== */
+.report-controls{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;                 /* ระยะห่างระหว่างชิ้น */
+}
+
+.report-controls label{
+  font-weight: 700;
+  opacity: .9;
+}
+
+/* datetime-local ให้เข้าธีมและสูงเท่าปุ่ม */
+.report-controls input[type="datetime-local"]{
+  appearance: none;
+  background: rgba(255,255,255,.16);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 10px;
+  height: 36px;
+  padding: 6px 10px;
+  outline: none;
+}
+.report-controls input[type="datetime-local"]::placeholder{ color: #e6eef6; opacity:.7; }
+
+/* ปุ่มควิกเรนจ์ + ปุ่มหลัก ให้กว้างพอดี ไม่ยืดเต็มแถวในจอปกติ */
+.report-controls .range-btn,
+.report-controls .btn{
+  min-width: 120px;
+  height: 36px;
+  padding: 0 14px;
+}
+
+/* จอเล็ก: ค่อยยืดเต็มความกว้าง (ใช้งานนิ้วง่าย) */
+@media (max-width: 600px){
+  .report-controls{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .report-controls label,
+  .report-controls input,
+  .report-controls .range-btn,
+  .report-controls .btn{
+    width: 100%;
+  }
+}
+
