@@ -17,3 +17,23 @@ function updateBackground() {
 
 updateBackground();
 setInterval(updateBackground, 60 * 60 * 1000); // อัปเดตทุกชั่วโมง
+
+function updateBackground() {
+  const hour = new Date().getHours();
+  const bg = document.getElementById("background");
+  const stars = document.querySelector(".stars");
+
+  bg.className = "";
+  stars.style.display = "none"; // ซ่อนก่อน
+
+  if (hour >= 6 && hour < 11) {
+    bg.classList.add("bg-morning");
+  } else if (hour >= 11 && hour < 16) {
+    bg.classList.add("bg-day");
+  } else if (hour >= 16 && hour < 19) {
+    bg.classList.add("bg-evening");
+  } else {
+    bg.classList.add("bg-night");
+    stars.style.display = "block"; // แสดงดาวตอนกลางคืน
+  }
+}
