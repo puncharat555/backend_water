@@ -349,7 +349,7 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
   /*border-radius:16px; backdrop-filter: blur(var(--glass-blur));*/
   box-shadow: 0 14px 34px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16);
 }
-.report-card{ padding:10px; }
+.report-card{ padding:10px;border-radius:14px; }
 .report-card .card-header{ padding:14px 18px; }
 .table-wrap{ padding:6px 10px 10px; }
 
@@ -432,5 +432,33 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
   .report-controls .btn{
     width: 100%;
   }
+}
+/* ==== Fix report card layout / table width ==== */
+/* กันเคสที่มี .card จากที่อื่นตั้งเป็น flex */
+#reportSection.card.report-card{
+  display: block !important;
+  width: 100% !important;
+}
+
+/* หัวกล่องอยู่บรรทัดของมันเองเต็มความกว้าง */
+#reportSection .card-header{
+  display: block !important;
+  width: 100% !important;
+}
+
+/* กล่องตารางต้องกว้าง 100% และไม่โดนหด */
+#reportWrap.table-wrap{
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto;    /* ถ้าตารางกว้าง ให้เลื่อนแนวนอน */
+  clear: both;         /* กันผลจาก float ที่อาจตกค้าง */
+  box-sizing: border-box;
+}
+
+/* ตารางด้านใน */
+#reportWrap table{
+  width: 100%;         /* ให้กินเต็มกล่องเวลาหน้าจอกว้างพอ */
+  min-width: 900px;    /* แต่ถ้าหน้าจอแคบ จะมีสกอลล์ */
 }
 
