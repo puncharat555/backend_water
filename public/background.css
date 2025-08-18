@@ -53,3 +53,20 @@ background-size:220px 220px,360px 360px,520px 520px;background-position:-40px -2
 .bg-pulse.evening{--tone:255,160,80}
 .bg-pulse.night{--tone:120,210,255}
 @keyframes pulse{0%{clip-path:circle(0% at var(--x) var(--y));opacity:.75}65%{clip-path:circle(140% at var(--x) var(--y));opacity:.25}100%{clip-path:circle(160% at var(--x) var(--y));opacity:0}}
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+  --orb-top: 90px;     /* ← ปรับสูง–ต่ำที่นี่ เช่น 60px/120px */
+  --orb-left: 50vw;    /* กลางจอแนวนอน (อยากไปขวาใช้ 92vw, ไปซ้ายใช้ 8vw) */
+}
+
+.sun, .moon{
+  position: fixed !important;                 /* ติดจอ */
+  top:  calc(var(--safe-top) + var(--orb-top)) !important;
+  left: var(--orb-left) !important;
+  transform: translate(-50%, 0) !important;   /* จัดให้อยู่กึ่งกลางตาม --orb-left */
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ให้คอนเทนต์อยู่เหนือแสง */
+.sky > *:not(.sun):not(.moon){ position:relative; z-index:1; }
