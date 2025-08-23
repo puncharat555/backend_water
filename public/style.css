@@ -493,7 +493,3 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
 }
 
 /* อิโมจิหน้า “ระดับน้ำปัจจุบัน” (ถ้าอยากให้มี) */
-.main-water-level::before{
-  content: "🌊 ";
-  margin-right: .2em;
-}
