@@ -462,3 +462,38 @@ tbody tr:hover{ background: rgba(0,192,255,.12); transition: background .3s ease
   min-width: 900px;    /* แต่ถ้าหน้าจอแคบ จะมีสกอลล์ */
 }
 
+/* ==== Emoji icons for node info (วางท้ายไฟล์) ==== */
+
+/* ให้บรรทัดข้อมูลในการ์ดเว้นที่ด้านซ้ายสำหรับอิโมจิ */
+.node-box p[id^="rssiNode"],
+.node-box p[id^="voltageNode"],
+.node-box p[id^="currentNode"],
+.node-box p[id^="timeNode"]{
+  position: relative;
+  padding-left: 1.8em;
+}
+
+/* อิโมจิแต่ละประเภท */
+.node-box p[id^="rssiNode"]::before    { content: "📶"; }
+.node-box p[id^="voltageNode"]::before { content: "🔋"; }
+.node-box p[id^="currentNode"]::before { content: "⚡"; }
+.node-box p[id^="timeNode"]::before    { content: "🕒"; }
+
+/* สไตล์ร่วมของอิโมจิ */
+.node-box p[id^="rssiNode"]::before,
+.node-box p[id^="voltageNode"]::before,
+.node-box p[id^="currentNode"]::before,
+.node-box p[id^="timeNode"]::before{
+  position: absolute;
+  left: 0;
+  top: .05em;
+  font-size: 1.05em;
+  line-height: 1;
+  opacity: .95;
+}
+
+/* อิโมจิหน้า “ระดับน้ำปัจจุบัน” (ถ้าอยากให้มี) */
+.main-water-level::before{
+  content: "🌊 ";
+  margin-right: .2em;
+}
