@@ -5,7 +5,7 @@ body.sky-page{
 .sky{ padding: 0; }               /* ถ้าอยากให้ชิดขอบจริง ๆ */
 /* ===== Sky states ===== */
 .sky{position:relative;min-height:100vh;overflow:hidden;transition:background .8s ease,filter .8s ease}
-.sky.morning{background:linear-gradient(180deg,#314d70 0%,#5d86a6 100%)}
+.sky.morning{background:linear-gradient(180deg,#69a0e4 0%,#77b0db 100%)}
 .sky.day{background:linear-gradient(180deg,#3a6fa5 0%,#6faad2 100%)}
 .sky.evening{background:linear-gradient(180deg,#2b64af 0%,#8595ee 100%)}
 .sky.night{background:linear-gradient(180deg,#000814 0%, #001D3D 100%)}
