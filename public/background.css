@@ -7,7 +7,7 @@ body.sky-page{
 .sky{position:relative;min-height:100vh;overflow:hidden;transition:background .8s ease,filter .8s ease}
 .sky.morning{background:linear-gradient(180deg,#314d70 0%,#5d86a6 100%)}
 .sky.day{background:linear-gradient(180deg,#3a6fa5 0%,#6faad2 100%)}
-.sky.evening{background:linear-gradient(180deg,#243b55 0%,#51577c 100%)}
+.sky.evening{background:linear-gradient(180deg,#84b0e2 0%,#2b64af 100%)}
 .sky.night{background:linear-gradient(180deg,#0f2027 0%,#203a43 60%,#2c5364 100%)}
 /* ดาวกลางคืน (ไม่เป็นลายตาราง) */
 .sky.night::before{content:"";position:absolute;inset:0;background-image:
