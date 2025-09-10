@@ -86,3 +86,8 @@ html, body { background:#0e2329; }  /* โทนกลางคืน */
   backdrop-filter: blur(6px);
   color:#fff;
 }
+/* ขยายเฉพาะกราฟ 1 ชั่วโมง */
+#waterLevelChart1h {
+  height: 460px !important;   /* เดิม 360px → ขยาย */
+}
+
