@@ -354,7 +354,7 @@ async function createOneHourChart() {
     }
 
     // กรอง outlier ≤ 50 cm (ตามเดิม)
-    water = water.filter(p => p.y <= 50);
+    water = water.filter(p => p.y >= 0 && p.y <= fixedDepth);
 
     const hasData = water.length > 0;
     const xMin = hasData ? water[0].x : undefined;
