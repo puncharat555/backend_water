@@ -82,7 +82,7 @@ html, body { background:#0e2329; }  /* โทนกลางคืน */
 /* กล่องต่าง ๆ ไม่ให้ขาวทึบเกินไป */
 .node-box, .chart-box, .table-wrapper, .report-card{
   background: rgba(255,255,255,.10);
-  border: 1px solid rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.10);
   backdrop-filter: blur(6px);
   color:#fff;
 }
