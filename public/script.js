@@ -380,7 +380,7 @@ async function createOneHourChart() {
       options: {
         parsing:false,
         spanGaps: 20*60*1000,
-        layout:{ padding:{ top:0, bottom:0 } },
+        layout:{ padding:{ top:40, bottom:0 } },
         scales:{
           x: xScaleOpts('1h', xMin, xMax),
           y: { beginAtZero:false, min:yB.min, max:yB.max, ticks:{ color:'white' }, grid:{ color:'rgba(255,255,255,0.12)' } }
